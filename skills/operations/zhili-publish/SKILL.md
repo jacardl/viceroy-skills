@@ -1,728 +1,949 @@
 ---
 name: zhili-publish
-description: |
-  微信公众号草稿箱发布全流程。从 access_token 获取、草稿创建、HTML 排版到飞书汇报。用于 zhiliGitHub 长文（1500-2000字）和 zhiliComments 短评（800-2000字，2026-05-30 佳哥确认扩写到2000）的发布环节。
-
-  ⚠️ 关键约束（2026-05-23 修正）：
-  - 获取 token 必须用 POST https://api.weixin.qq.com/cgi-bin/stable_token，不能用 GET /cgi-bin/token（后者返回的 token 在素材接口报 errcode 40001）
-  - 凭证预检 / token 刷新 / 上传封面 / 上传截图 / 创建草稿，每一步之前都要单独调用一次 stable_token
-  - 作者字段固定填 `刘生`（2个中文字符不触发45110；留空也可，但填 `刘生` 更稳定）
-  - 成功响应用 `if "media_id" in resp.json()` 判断，不能用 `errcode == 0`
-  - 飞书汇报用 OC 格式：feishu:oc_034bc08420a2daed53561bfceba5b3bf
+description: >
+  微信公众号草稿箱发布技能，专为「直隶按察使」公众号定制。
+  支持：AI 封面图生成（Sensenova 首选，MiniMax 备选）、创建草稿、设置原创、分类标签、自动排版。
+  触发条件：用户说「发布公众号」「推送草稿」「发布到公众号」「生成草稿」或直接说「发布直隶按察使」（注意：要先判断内容格式，见下方路由规则）。
 ---
 
-# 微信草稿箱发布流程（zhili-publish）
-
-适用于「直隶按察使」公众号文章的草稿箱创建和发布。
-
----
-
-## 卡兹克写作风格（zhili 统一文风规范）
-
-> 本节为 khazix-style skill 的规范内容，所有 zhiliGitHub 长文和 zhiliComments 短评必须严格遵守。完整 canonical 参考：khazix-writer skill（KKKKhazix/khazix-skills）。
-
-### 一句话概括
-
-「有见识的普通人在认真聊一件打动他的事。」
-
-### 核心价值观
-
-- 永远好奇：面对新工具，不是「我会被取代吗」，是「我能用它玩点什么有意思的？」
-- 讲人话：AI时代最稀缺的是「活人感」，大胆用「我觉得」「我认为」
-- 真诚：可以不写，但绝不骗人
-- 有所为有所不为：不追逐违背价值观的流量
-
-### 五种文章原型
-
-- 调查实验型：核心是「我替你去做了这件事」
-- 产品体验型：核心是「跟我一起玩」
-- 现象解读型：核心是「你注意到了吗？背后是什么？」
-- 工具分享型：核心是「我发现了一个好东西」
-- 方法论分享型：核心是「我把压箱底的东西掏给你了」
-
-### 风格内核
-
-节奏感：像跟朋友聊天，不像写报告。大量逗号制造口语停顿感，经常一句话自成一段来制造重点。
-
-句式断裂：短句独立成段，制造停顿和重量感。如「壁垒。这个词以前是优势。现在是负债。」
-
-知识输出方式：知识是「聊着聊着顺手掏出来」的，不是「下面我来给大家科普一下」。
-
-亲自下场：最核心的写作基因，让读者感觉到「这个人真的做了这件事」。
-
-人物画像法：从一个数据点出发，3-5句话让一个人物立体。
-
-文化升维：聊完具体事情后，连接到更大的文化/哲学/历史参照物。
-
-回环呼应：前面埋的钩子后面要响，文章要有闭合感。
-
-对立面的理解与承认：先承认对方处境合理，再切入自己的角度。
-
-### 绝对禁区
-
-| 禁用词 | 替代表达 |
-|--------|---------|
-| 说白了 | 换句话说、说到底 |
-| 意味着什么 | 说明、指向 |
-| 这意味着 | 这说明 |
-| 本质上 | 归根结底、说到底 |
-| 换句话说 | 换言之、也就是说 |
-| 不可否认 | 确实 |
-| 综上所述 | 总之 |
-| 总的来说 | 整体看 |
-
-- **禁用标点**：冒号`：`、破折号`——`、双引号`""`
-- **禁用开头**：`在当今AI快速发展的时代`、`随着技术的不断进步`、`让我们来看看`
-- **禁用结构**：连续bullet list超过3个；大量加粗；不必要的小标题
-- **假设性例子**：不能用「比如有一次...」编造场景
-- **空泛工具名**：必须说具体名字（Claude Code、Seedance 2.0），不能说「AI工具」「某个模型」
-
-### 推荐口语化词组
-
-- 转场：说真的、怎么说呢、其实吧、回到xxx这块、顺着上面的再聊聊
-- 判断：我有时候觉得、反正我觉得、这话听着有点刺耳但
-- 自嘲：说实话我也不确定、愚钝如我、我自己也在摸索
-- 情绪：太特么离谱了、给我整懵了、你敢信？？？、尼玛
-- 拉近距离：很多朋友可能不知道、你想想看、屏幕前的你
-- 口头禅：这玩意、不是哥们、有个屁的xxx、比较骚的事
-
-### 开头必杀技
-
-- 「事情是这样的。」简单直接
-- 直接抛出一个让人？？？的荒诞事实
-- 「最近被xxx刷屏了」
-- 「这两天在网上刷到了一张图，很有意思」
-
-### 四层质检体系
-
-**L1 硬性规则**：禁用词零命中、禁用标点零命中、结构性套话零命中、空泛工具名零命中
-
-**L2 风格一致性**：开头具体当下、长短句交替、一句话独立成段至少3次、口语化词组至少8-10个、疑问句作为节奏刹车
-
-**L3 内容质量**：每个观点有具体人/场景/细节支撑、知识聊着聊着顺手掏出来、至少一处文化升维、对立面的理解与承认
-
-**L4 活人感终审**：情绪是体感记忆而非知识性描述、有只有卡兹克才会写出来的角度、语气是有见识的普通人在认真聊、从头到尾无断点
-
-### 字数标准
-
-| Skill | 字数 |
-|-------|------|
-| `zhiliGitHub` | 1500-2000字（纯中文，不含HTML/CSS标签） |
-| `zhiliComments` | **800-1500字**（纯中文，不含HTML/CSS标签） |
-
-> ⚠️ **2026-05-24 佳哥确认**：zhiliComments 短评规格为 800-1500字。过往 4000-5000字 规格已校正。字数验证命令：
-> ```python
-> import re
-> html = open('/tmp/draft.html').read()
-> cn = re.sub(r'<[^>]+>', '', html)
-> cn = re.sub(r'[^\u4e00-\u9fff]', '', cn)
-> print(f"中文字数: {len(cn)}")  # zhiliComments 必须在 800-1500
-> ```
-
-不求Star/转发/关注，纯观点文观点本身即是结束。
-
-### zhiliGitHub 专属格式补充
-
-- **截图上传**：使用 khazix-writer 的 `references/scripts/wechat-screenshot_upload.py`，批量传入 GitHub raw 截图 URL，自动下载并上传到微信素材库，返回 mmbiz URL。
-- **固定尾部（必须包含）**：正文末尾必须包含 GitHub URL，字体用 Level 6 样式（`font-size:14px;color:#6b665b;font-family:monospace`）。
-- **禁止 branding**：禁止在 HTML 正文中出现任何内部 branding（卡兹克/zhiliGitHub/zhiliComments/自动发布等）。
-
----
-
-## 凭证预检（第一步，必做）
-
-在任何耗时的写作工作之前，先验证 WeChat API 凭证：
-
-## 凭证信息（直隶按察使）
-
-> ⚠️ **AppSecret 绝对不能硬编码在 skill 里。** 优先从 `~/.hermes/keys/wx_appsecret.txt` 读取；文件不存在或读取失败时，向用户询问当前 AppSecret。
-
-**读取顺序**：
-1. `~/.hermes/keys/wx_appsecret.txt`（优先，自动更新）
-2. 用户直接提供（文件不存在时）
-
-**凭证预检 Python 示例（从文件读取）**：
-```python
-import urllib.request, json, os
-
-# 读取 AppSecret
-secret_file = os.path.expanduser("~/.hermes/keys/wx_appsecret.txt")
-if os.path.exists(secret_file):
-    with open(secret_file) as f:
-        app_secret = f.read().strip()
-else:
-    raise FileNotFoundError("请先提供当前 AppSecret，或将其写入 ~/.hermes/keys/wx_appsecret.txt")
-
-req = urllib.request.Request(
-    "https://api.weixin.qq.com/cgi-bin/stable_token",
-    data=json.dumps({
-        "grant_type": "client_credential",
-        "appid": "wx38a91c353554588a",
-        "secret": app_secret
-    }).encode(),
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
-with urllib.request.urlopen(req, timeout=10) as r:
-    result = json.loads(r.read())
-if "access_token" in result:
-    print("凭证有效，access_token:", result["access_token"][:20] + "...")
-else:
-    print("凭证无效:", result)
-    raise Exception(f"AppSecret 无效，请更新 ~/.hermes/keys/wx_appsecret.txt，当前值已失效")
-```
-
-- **有效响应**：包含 `access_token` 字段
-- **无效凭证**：返回 `errcode 40125` = AppSecret 无效，更新文件后重试
-- 凭证无效时立即汇报，不要先写文章
-
-### Token 获取方式
->
-> stable_token 返回有效 token 时权限更完整（素材接口推荐用）；GET 返回的 token 有效期同样是 7200 秒，但在部分接口可能报 40001，此时回退到 stable_token。
-
-**标准流程**：
-```python
-import urllib.request, json, os
-
-def get_token():
-    secret_file = os.path.expanduser("~/.hermes/keys/wx_appsecret.txt")
-    with open(secret_file) as f:
-        app_secret = f.read().strip()
-
-    # ① 尝试 stable_token POST
-    try:
-        req = urllib.request.Request(
-            "https://api.weixin.qq.com/cgi-bin/stable_token",
-            data=json.dumps({
-                "grant_type": "client_credential",
-                "appid": "wx38a91c353554588a",
-                "secret": app_secret
-            }).encode(),
-            headers={"Content-Type": "application/json"},
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=10) as r:
-            result = json.loads(r.read())
-        if "access_token" in result:
-            return result["access_token"]
-        # stable_token 失败，打印错误继续尝试 GET
-        print(f"stable_token 失败: {result.get('errmsg', result)}")
-    except Exception as e:
-        print(f"stable_token 异常: {e}")
-
-    # ② 尝试 GET /cgi-bin/token（stable_token 失败时的 fallback）
-    try:
-        url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=wx38a91c353554588a&secret=" + app_secret
-        with urllib.request.urlopen(url, timeout=10) as r:
-            result = json.loads(r.read())
-        if "access_token" in result:
-            print("使用 GET /cgi-bin/token 获取的 token")
-            return result["access_token"]
-        print(f"GET /cgi-bin/token 也失败: {result.get('errmsg', result)}")
-    except Exception as e:
-        print(f"GET /cgi-bin/token 异常: {e}")
-
-    # ③ 都失败
-    raise Exception("无法获取 access_token，请确认 AppSecret 是否已更新")
-
-ACCESS_TOKEN = get_token()
-```
-
-> ⚠️ **凭证失效是高频事件**：AppSecret 每次重置后旧凭证永久失效（errcode 40125）。当 API 返回 40125 或 40013 时，不要换其他接口重试，立即向用户要新凭证。流程：验证凭证有效性 → 写作 → 上传素材前再次验证凭证有效性（如果中间间隔较长）。
-
-> ⚠️ **Token 有效期与多步发布的矛盾**：access_token 有效期 7200 秒，但完整发布流程（验证→写作→上传封面→上传截图→创建草稿）可能跨多步。mid-session 遇到 `errcode: 40001` = token 过期，立即重新获取 token 再重试。**已上传的 media_id 是永久素材，无需重新上传。**
->
-> 推荐时序：①获取token → ②写作 → ③重新获取token → ④上传封面 → ⑤上传截图 → ⑥重新获取token → ⑦创建草稿
-# 若文件 /root/.hermes/keys/wx_appsecret.txt 不存在，raise Exception 提示用户写入
-- errcode 40125 表示凭证永久无效，需用户提供新的 AppSecret 并更新文件
-
-## 发布流程
-
-### 步骤 0：草稿删除禁令（2026-05-27 最高优先级）
-
-**未经用户明确允许，绝不删除草稿箱中的任何内容。**
-
-即使发现编码问题需要重建草稿，也必须先确认用户意图。可以同时存在多篇正常草稿，待用户确认后再清理。**绝不在未验证修复有效前删除任何草稿。**
-
-### 步骤 1：获取 access_token（必须用 stable_token）
-
-> ⚠️ 旧版 `cgi-bin/token`（GET）返回的 token 在素材接口报 40001。**必须用 `cgi-bin/stable_token`（POST）**。
-
-### 步骤 2：清空旧草稿
-
-微信草稿箱 API 不支持批量删除，需要逐个查询并删除。
-
-**查询草稿列表**：
-```bash
-curl -s -X GET "https://api.weixin.qq.com/cgi-bin/draft/count?access_token=ACCESS_TOKEN"
-# 返回 {"count": N}
-```
-
-**获取草稿 media_id 列表**：
-```bash
-curl -s -X POST "https://api.weixin.qq.com/cgi-bin/draft/batchget?access_token=ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"offset": 0, "count": 50, "no_content": 0}'
-```
-
-从响应中提取每篇草稿的 `media_id`。
-
-**删除旧草稿**（每篇一条）：
-```bash
-curl -s -X POST "https://api.weixin.qq.com/cgi-bin/draft/delete?access_token=ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"media_id": "MEDIA_ID"}'
-```
-
-### 步骤 2.5：上传封面和正文图片（先于草稿创建）
-
-**⚠️ 全角标点清理（每次发布前必做）**：
-
-微信草稿创建前，必须用 Python 检查并清理 HTML 中的全角标点：
-```python
-html = open('/tmp/article.html').read()
-html = html.replace('\uff1a', '')   # 全角冒号 U+FF1A
-html = html.replace('\u2014', '-') # em dash U+2014
-html = html.replace('\u2013', '-') # en dash U+2013
-html = html.replace('\uff02', '"')  # 全角双引号
-with open('/tmp/article.html', 'w') as f:
-    f.write(html)
-```
-禁用标点清单：`：` `——` `""` `''`（任何出现都必须在发布前清理）
-
-**⚠️ 必须用 `type=image`！** 旧版 `type=thumb` 会导致草稿创建报 40007 invalid media_id。实测正确流程：封面图 resize 到 300×300 px + quality=85，调用 `add_material?type=image`，返回的 `media_id` 即作为 `thumb_media_id` 传入草稿。
-
-**生成封面图**：短评文章若无可用截图，用 Python PIL 生成纯色封面（800×400，背景色 `#1B365D`，白色居中标题文字），保存到 `/tmp/cover_{article_slug}.png`，上传后得到 `thumb_media_id`。**封面字体必须用 `NotoSansCJK-Bold.ttc` 完整路径**，路径：`/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc`（实测此路径可用，其他路径可能报错）。
-
-**⚠️ Token 刷新原则（必须用 stable_token）**：每执行一次写操作（上传素材 / 创建草稿）之前，单独调用一次 POST `cgi-bin/stable_token` 获取最新 token，再执行操作。不要跨操作复用 token。
-
-```bash
-# 获取（刷新）token — 必须用 stable_token POST，GET /cgi-bin/token 返回的 token 在素材接口报 40001
-ACCESS_TOKEN=$(python3 -c "
-import urllib.request, json, os
-secret_file = os.path.expanduser('~/.hermes/keys/wx_appsecret.txt')
-with open(secret_file) as f:
-    app_secret = f.read().strip()
-req = urllib.request.Request(
-    'https://api.weixin.qq.com/cgi-bin/stable_token',
-    data=json.dumps({'grant_type':'client_credential','appid':'wx38a91c353554588a','secret':app_secret}).encode(),
-    headers={'Content-Type':'application/json'},
-    method='POST'
-)
-with urllib.request.urlopen(req, timeout=10) as r:
-    print(json.loads(r.read())['access_token'])
-")
-
-# 上传封面（type=image，⚠️ 不是 type=thumb！草稿封面必须用 type=image 才会被接受）
-curl -s -X POST \
-  "https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=${ACCESS_TOKEN}&type=image" \
-  -H "Content-Type: multipart/form-data; boundary=----PythonFormBoundary7MA4YWxkTrZu0gW" \
-  -d $'------PythonFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="media"; filename="cover.jpg"\r\nContent-Type: image/jpeg\r\n\r\n'"$(cat /tmp/cover.jpg | base64)"$'\r\n------PythonFormBoundary7MA4YWxkTrZu0gW--'
-
-# 上传正文截图（type=image，返回 mmbiz URL）
-curl -s -F "access_token=$ACCESS_TOKEN" -F "type=image" \
-  -F "media=@/tmp/screenshot.png" \
-  "https://api.weixin.qq.com/cgi-bin/material/add_material"
-```
-
-响应示例（成功）：
-```json
-{"media_id":"kiuyle4KZHC7JKxpTQssMKFZgn...","url":"http://mmbiz.qpic.cn/mmbiz_png/...","item":[]}
-```
-- `media_id`：封面用 thumb_media_id，正文图片取响应中 `url` 字段作为 mmbiz URL
-- **遇到 40001 → 重新获取 token 重试**，已上传成功的 media_id 不需要重新上传
-
-**写完 Python 脚本后、发送 API 请求前，必须执行以下检查**。任何一项不通过，立即汇报用户，不要继续。
-
-**检查项 1 — JSON 结构**：确认 `thumb_media_id`、`title`、`digest`、`content` 四个必填字段存在且非空。
-
-**检查项 2 — 正文 branding 清理**：
-```python
-content = draft_data["articles"][0]["content"]
-forbidden = ["zhiliGitHub", "zhiliComments", "卡兹克", "zhiligithub", "zhilicomments"]
-for kw in forbidden:
-    assert kw not in content, f"正文包含禁止词: {kw}"
-assert "自动发布" not in content, "正文包含禁止词: 自动发布"
-```
-
-两项都通过后，方可发送 `draft/add` 请求。
-
-### 步骤 3：创建新草稿
-
-使用 `mpnews` 类型（图文消息）创建草稿，HTML 内容通过 `content` 字段传输。
-
-**CSS 固定格式**：
-```html
-<body style="background-color:#f5f4ed;font-family:Georgia,'Times New Roman',serif;margin:0;padding:0;">
-  <h1 style="font-size:28px;color:#1B365D;margin:20px 0 10px;">标题</h1>
-  <h2 style="font-size:20px;color:#1B365D;margin:18px 0 8px;">章节标题</h2>
-  <p style="font-size:16px;line-height:1.85;margin:12px 0;">正文段落...</p>
-</body>
-```
-
-**注意**：
-- 标题和正文中如有 `**粗体**`，转为 `<strong style="color:#e63946;">粗体文字</strong>`
-- 换行符保留 `\n`
-- 图片用 `【图片】` 标注，最终由编辑手动插入
-
-**创建草稿请求**：
-```bash
-curl -s -X POST "https://api.weixin.qq.com/cgi-bin/draft/add?access_token=ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "articles": [{
-      "thumb_media_id": "THUMB_MEDIA_ID",
-      "title": "文章标题",
-      "author": "刘生",
-      "digest": "摘要（可选）",
-      "content": "<body>...</body>",
-      "need_open_comment": 1,
-      "only_fans_can_comment": 0,
-      "original": 1
-    }]
-  }'
-```
-- `thumb_media_id`：**必须字段**，来自 `material/add_material?type=image`（⚠️ 不是 type=thumb）。封面图必须 resize 到 ≤64KB（建议 300×300 px + quality=85 → ~15KB）。草稿不带 thumb_media_id 会报 `40007 invalid media_id`；用 type=thumb 传也会报 40007，必须用 type=image。
-- `author`：**固定填 `刘生`**，不要留空（实测留空不影响创建，但不填更稳定）
-- ⚠️ **`content_source_url` 字段禁止出现**：API 文档列出此字段，但实测包含该字段（即使是空字符串 `"content_source_url": ""`）会导致 **44003 empty news data**。完全不传该字段才能创建成功。
-- ⚠️ **`articles` 必须小写**：`Articles`（大写A）会导致 44003，只接受小写 `articles`
-- 成功响应：`{"media_id": "xxx", "item": [{"index": 0, "ad_count": 0}]}`
-- ⚠️ **成功响应不返回 `errcode` 字段！** 不能用 `if resp.json().get("errcode") == 0` 判断成功，必须用 `if "media_id" in resp.json()`。
-
-> ⚠️ **中文乱码问题（`\\uXXXX` 序列在 WeChat API 响应中的含义）**：
-> - WeChat `draft/get` API 对 title/author 字段的响应永远以 `\\uXXXX` 格式序列化（这是 WeChat 的序列化行为，不是错误）
-> - `ensure_ascii=True`（默认）时：中文 JSON 序列化为 `\uXXXX`，WeChat 存储后**前端草稿箱正确显示中文**（正常）
-> - `ensure_ascii=False` 时：中文以 UTF-8 原始字节发送，WeChat 存储后**前端草稿箱显示 `\uXXXX` 字面量**（bug）
-> ### 中文乱码：标题正常但正文显示 `\uXXXX` 的差异根因
->
-> `ensure_ascii=False` 对 title 和 content 的影响**不一致**：
-> - **title 字段**（纯文本）：WeChat 存储/检索时 raw UTF-8 处理正常，标题在前端显示中文，**不受 ensure_ascii=False 影响**
-> - **content 字段**（含 HTML）：WeChat 有额外的 HTML 处理管道，raw UTF-8 在该 pipeline 中被错误处理，导致 `\uXXXX` 字面量泄露到前端草稿箱
->
-> **验证方式**：对比同一草稿的标题和正文在前端的显示——标题正常、正文显示 `\uXXXX` → 确认是 `ensure_ascii=False` 的 content 字段特有 bug
->
-> **结论**：必须用 `json.dumps(payload)` 默认参数（`ensure_ascii=True`），不能用 `ensure_ascii=False`。仅修复 title 的 JSON 序列化是不够的，必须 content 也用 `ensure_ascii=True`。
->
-> ⚠️ **`draft/get` API 返回值永远包含 `\uXXXX`**：这是 WeChat API 对所有字段的序列化行为，不是错误判断依据。**判断标准是前端草稿箱显示**，不是 API 返回值。
-
-### 步骤 3：创建新草稿
-
-草稿创建成功后，通过飞书汇报：
-
-**飞书 target ID（必须用 OC 格式，不要用 topic 格式）**：
-
-```
-feishu:oc_034bc08420a2daed53561bfceba5b3bf
-```
-
-> ⚠️ `send_message` API 若使用 `topic:xxx` 格式会报 `invalid receive_id`（errcode 230001）。正确格式是 `feishu:` + oc ID，不是 `feishu:topic:`。
->
-> ⚠️ **常见 target 错误**：
-> - `target: "feishu"` → `invalid receive_id`：平台层要求 oc 格式，必须用 `feishu:oc_...`
-> - `target: "origin"` → `Unknown platform: origin`：不是有效平台名
-> - `target: "feishu:oc_..."` → 正确格式
->
-> 如果不确定当前可用的飞书 target，先用 `send_message action=list` 列出所有可用 target，再取 `feishu:oc_...` 格式的那个（通常第一个 DM 目标）。
-```
-feishu:oc_034bc08420a2daed53561bfceba5b3bf
-```
-> ⚠️ `send_message` API 若使用 `topic:xxx` 格式会报 `invalid receive_id`（errcode 230001）。正确格式是 `feishu:` + oc ID，不是 `feishu:topic:`。
-
-**成功汇报模板**：
-```markdown
-✅ 文章已推送到微信草稿箱
-
-标题：xxx
-作者：刘生
-中文字数：xxx 字
-截图：x张（已上传微信素材库）
-封面：已上传
-
-⚠️ freepublish/submit 需要高级权限，订阅号请手动发布：
-1. 登录 mp.weixin.qq.com
-2. 进入内容与互动 → 草稿箱
-3. 找到文章 → 编辑 → 发布
-
-**本次任务模型调用记录**
-
-| 调用项 | 模型/工具 |
-|--------|----------|
-| 文章生成 | MiniMax-M2.7-highspeed |
-| 项目数据采集 | CDP Browser |
-| 封面图生成 | Python PIL (Pillow) |
-| 微信草稿箱发布 | WeChat Draft API（手动发布） |
-
-**本次任务全部完成 ✅**
-```
-
-**失败汇报模板**：
-```
-❌ 发布失败
-错误码：xxx
-错误信息：xxx
-原因：...
-```
-
-## 关键教训（血泪教训，实录）
-
-### 🚫 绝不在未验证修复方案前删除任何草稿
-
-**事件**：草稿正文存在 `ensure_ascii=False` 导致的 Unicode 编码问题，用户要求修复并重新创建草稿。在未验证修复方案是否有效之前，错误地批量删除了所有旧草稿（cmux/AIRI/Olah），导致全部草稿丢失。
-
-**正确流程**：
-1. 用修复后的代码创建**新草稿**（先不删旧草稿）
-2. 验证新草稿前端显示**正常中文**（标题+正文都要正常）
-3. 确认正常后，**再删除**旧的问题草稿
-4. 如果验证失败，**保留旧草稿**作为备份
-
-**核心约束**：在未收到用户明确「可以删除」的许可之前，草稿箱里的任何内容都不得删除。这是一条铁律。
-
-### 📋 草稿删除的正确判断流程
-
-```
-修复代码 → 创建新草稿 → 验证前端显示正常？ → [是] 用户确认可以删除旧草稿 → 删除旧草稿
-                                                        ↓
-                                                    [否] → 保留旧草稿，修复代码后重试
-```
-
-### 🐛 thumb_media_id 不可复用（2026-05-29 新增）
-
-**现象**：复用上一草稿的 thumb_media_id 创建新草稿时，报 `40007 invalid media_id`。
-
-**根因**：微信 `material/add_material` 上传的封面图 media_id 是**一次性绑定**的，与该次上传会话绑定。上一草稿的 thumb_media_id 对新草稿无效。
-
-**正确流程**：
-1. 获取新 token
-2. 上传封面图（`add_material type=image`）→ 获取**新** thumb_media_id
-3. 立即用这个新 thumb_media_id 创建草稿
-
-**错误模式**：
-```python
-# ❌ 错误：复用旧 thumb_media_id
-thumb1 = upload_thumb(token1, cover1)  # 第一次上传
-draft1 = create_draft(token1, thumb1)   # 第一次创建草稿，成功
-token2 = refresh_token()                # token1 可能过期
-thumb2 = upload_thumb(token2, cover2) # 又上传一次封面（浪费）
-draft2 = create_draft(token2, thumb1)  # ❌ thumb1 复用，报 40007
-```
-
-**正确模式**：
-```python
-# ✅ 正确：每次草稿创建前单独上传封面
-token = get_token()
-thumb = upload_thumb(token, cover)  # 只上传一次
-draft = create_draft(token, thumb)
-```
-
-### 🐛 草稿封面：media_id 是「草稿级」绑定，不可跨草稿复用（2026-05-29 新增）
-
-**现象**：复用上一草稿的 `thumb_media_id` 创建新草稿时，报 `40007 invalid media_id`。
-
-**根因**：`material/add_material` 返回的 `media_id` 是一次性绑定到该草稿的，与上传 token 无关（token 刷新后依然有效，但 media_id 本身只绑定它创建时所在的草稿）。
-
-**⚠️ 重要澄清**：不是「token 过期导致 media_id 失效」，而是「每个新草稿必须用新上传的 `type=image` media_id」。上一草稿的封面 media_id 对新草稿来说永远是 `40007`，即使 token 本身有效。
-
-**正确流程**：
-```
-① 获取新 token
-② upload 封面上传（add_material type=image）→ 新 media_id
-③ 创建草稿（立即用②的 media_id）
-```
-不要试图跨草稿复用封面 media_id。
-
-### 中文乱码问题（`\\uXXXX` 序列在 WeChat API 响应中的含义）
-### 中文乱码问题（最终确认，2026-05-30）
-> ⚠️ **2026-05-30 多次实测最终确认**：必须用 `ensure_ascii=False` + `Content-Type: application/json`（无 charset）。
-> - `ensure_ascii=True`（默认）将中文转为 `\\uXXXX`，WeChat 存储后前端显示字面量 ❌
-> - `ensure_ascii=False` 发送原始 UTF-8，WeChat 自己推断编码，前端正确显示中文 ✅
-> - 关键：**Content-Type 绝对不能带 charset=utf-8**（WeChat JSON 处理管线无法解码）
->
-> ```python
-> payload = json.dumps({"articles": [{...content...}]},
->     ensure_ascii=False).encode("utf-8")
-> # Content-Type: application/json（不附带 charset=utf-8）
-> ```
-⚠️ **`draft/get` API 返回值永远包含 `\\uXXXX`**：这是 WeChat API 对所有字段的序列化行为，不是错误判断依据。**判断标准是前端草稿箱显示**，不是 API 返回值。
-
-微信标题有严格的字节限制（errcode 45003）。**先在本地用 Python 预检标题字节数，提前发现问题**，不要等到 API 返回 45003 才去猜。
-
-```python
-def calc_title_bytes(title):
-    """中文全角字符各占3字节，英文/数字/半角各占1字节，空格占1字节"""
-    return sum(3 if ord(c) >= 0x3000 else (2 if '\u4e00' <= c <= '\u9fff' else 1) for c in title)
-
-# 实测通过阈值：纯中文 ≤25字节（实测）；含英文+中文混合 ≤28字节（保守估算）
-# 实测失败案例：65字节（"Anthropic 开源职业插件系统：让 AI 先懂行，再干活"含全角冒号）
-
-title = "让 AI 先懂行再干活"
-print(calc_title_bytes(title))  # 25 → 通过
-title2 = "Anthropic 开源职业插件：让 AI 先懂行，再干活"
-print(calc_title_bytes(title2))  # 65 → 超限，需精简
-```
-
-**经验阈值**（实测 2026-05）：
-- 纯中文标题：≤25字节（约8-9个汉字）
-- 含英文+中文混合标题：≤16字符（**英文单词每个占1-2字节，中文每个占2-3字节，极易超标**）
-- 全角冒号`：`、全角顿号`、`每个额外占3字节，尽量避免
-- **安全实践**：标题中含英文时，先预检实际字节数。`"AI写作去机器味GitHub项目7天"`（18字符）在WeChat报45003，`"AI写作去机器味GitHub项目"`（16字符）成功——差距就在英文字母累加的字节数上。
-
-**安全缩短算法（避免 while 死循环）**：
-
-❌ 错误模式（死循环风险）：无限循环 `while title_bytes > N` + `title.replace("X", "")`，当 replace 返回原字符串时循环永不终止：
-
-```python
-# ❌ 危险代码 — replace 找不到子串时返回原字符串，while 条件不变 → 死循环
-while title_bytes > 28:
-    title = title.replace("来了", "").replace("自托管", "")  # 一旦这两个子串被删光，后续 replace 均返回原字符串，死循环
-    title_bytes = calc_title_bytes(title)
-```
-
-✅ 正确模式（有限次替换，最多7次）：
-
-```python
-def safe_shorten_title(title, max_bytes=25):
-    """逐词删除直到字节数达标，最多尝试预定义列表中的一项，超出则截断"""
-    def calc(t):
-        return sum(3 if ord(c) >= 0x3000 else (2 if '\u4e00' <= c <= '\u9fff' else 1) for c in t)
-    if calc(title) <= max_bytes:
-        return title
-    # 预定义删除计划（按优先级）：优先删短词/虚词，保留实词
-    removals = ["来了", "自托管", "开源", "GitHub", "系统", "4万星"]
-    for pattern in removals:
-        working = title
-        while pattern in working and calc(working) > max_bytes:
-            working = working.replace(pattern, "", 1)
-        if calc(working) <= max_bytes:
-            return working
-    # 保底截断（取前N个字符）
-    chars = []
-    byte_count = 0
-    for c in title:
-        char_bytes = 3 if ord(c) >= 0x3000 else (2 if '\u4e00' <= c <= '\u9fff' else 1)
-        if byte_count + char_bytes > max_bytes:
-            break
-        chars.append(c)
-        byte_count += char_bytes
-    return ''.join(chars)
-
-title = safe_shorten_title("GitHub 4万星！自托管 Waifu 伴侣来了")
-print(title)  # 安全结果，绝不死循环
-```
-
-| errcode | 含义 | 处理方式 |
-|---------|------|----------|
-| 45003 | 标题字节超限 | 用上面函数预检，压缩到 ≤25字节后再重试 |
-| 45004 | digest 字节超限 | 缩短摘要，≤54字节（约18个混合字符） |
-
-**错误码表（已修正）**：
-
-| errcode | errmsg | 含义 | 处理方式 |
-|---------|--------|------|---------|
-| - | （无 errcode 字段） | `draft/add` 成功 | 响应含 `media_id` 字段即成功 |
-| 0 | ok | 其他 API 成功 | - |
-| 40001 | invalid credential | access_token 无效或已过期 | 重新获取 token |
-| 40125 | invalid appsecret | AppSecret 无效 | 不能重试，需用户提供新凭证 |
-| 40007 | invalid media_id | thumb_media_id 无效 | 需先上传封面图（type=image resize到≤64KB），且**不可复用旧草稿的 thumb_media_id**（每次必须重新上传）**必须用 type=image（type=thumb 2026-05-30 实测导致 40007，报错记录已废止）** |
-| 40007 | invalid media_id | thumb_media_id 复用时报40007 | 已创建草稿的 thumb_media_id 不能用于新草稿，每次上传封面必须使用**全新的 media_id** |
-| 44004 | size limit | 多媒体文件超限 | 检查封面图大小 |
-| 40013 | invalid appid | AppID 无效 | 检查 AppID 是否正确 |
-| 41005 | media data missing | 上传文件为空或格式错误 | 用 `curl -F` 替代 urllib.request 构造 multipart（urllib.request 报 41005，curl -F 成功） |
-| 42001 | access_token expired | token 过期 | 重新获取 |
-| 45003 | title size out of limit | 标题字节超限 | 缩短标题，预检函数：纯中文≤25字节，英文+中文混合≤28字节 |
-| 45003 | title size out of limit | 标题字节超限 | 缩短标题，预检函数：纯中文≤10字符（含标点），英文+中文混合≤16字符 |
-| 45003 | title size out of limit | 混合标题18字符仍报45003 | 实测`AI写作去机器味GitHub项目7天`(18字符)失败，`AI写作去机器味GitHub项目`(16字符)成功。根因：微信检查字节数而非字符数，中文×2-3字节+英文×1字节混合后易超限。安全阈值：**含英文时≤16字符**，纯中文≤10字符 |
-| 45003 | title size out of limit | 纯中文12字报45003 | `免费域名这件事，为什么突然变天了`（12字符）报45003，缩短到`免费域名为什么突然变天了`（11字符）成功。微信对标题字段有额外编码开销，实测纯中文安全阈值为**≤10字符**，不是「汉字×2字节」的乐观估算 |
-## 标题字节超限（45003）
-
-**根因**：微信标题字段采用 GBK 编码（中文=2字节，英文/空格=1字节），纯中文12字即可能超限，含英文标题更易超标。
-
-**安全阈值**：纯中文≤25字节，含英文+中文混合≤20字节。安全实践：写完先在本地预检，用 `references/safe_title_shorten.py` 快速验证。
-
-**修复**：用 `safe_shorten_title()` 自动压缩，绝不死循环：
-```bash
-python3 references/safe_title_shorten.py "你的原始标题"
-```
-| 45004 | digest size out of limit | digest 字节超限 | 缩短摘要，≤54字节（约18个混合字符） |
-| 45004 | digest size out of limit | 实测27字符中文摘要仍报45004 | WeChat 计算的是**字节数而非字符数**。`"stop-slop：专治AI机器味，上线一周6000星"`（27字符，~54字节）超限，缩减到 `~`18字符后成功 |
-| 45110 | author field invalid | author 字段含非法字符 | 固定填 `刘生`，不要留空 |
-| 44003 | empty news data | payload 结构不完整 | 检查 `articles`（小写）、`thumb_media_id` 是否存在 |
-| 48001 | api unauthorized | freepublish 权限不足 | 草稿已创建，手动在 mp.weixin.qq.com 发布 |
-
----
-
-## 常见错误处理
-
-> 📋 新增参考：`references/wechat-draft-freepublish.md` — freepublish 权限边界与草稿验证正确方式（2026-05 实测）
-
-> ⚠️ **2026-05-30 最终确认（已实测验证）**：问题根因是 `json.dumps()` 的 `ensure_ascii` 参数与 WeChat HTML 处理管道的交互。
-> - `ensure_ascii=False` 时：中文以 UTF-8 原始字节发送，WeChat HTML pipeline 正确解码，前端**正常显示中文** ✅
-> - `ensure_ascii=True`（默认）时：中文 JSON 序列化为 `\\uXXXX`，WeChat 存储后前端显示 `\uXXXX` 字面量 ❌
->
-> **结论**：必须用 `json.dumps(payload, ensure_ascii=False)` + `Content-Type: application/json`（不附带 `charset=utf-8`）。
-
-### 📋 `ensure_ascii=False` 是错误方案（2026-05-30 已确认）
-
-> ⚠️ **已确认为错误方案**，不要使用 `ensure_ascii=False`。正确的修复方法是：
-> - 全局搜索两个 publish_zhili.py 中的 `ensure_ascii=False`，**全部改为默认参数**（删除 `ensure_ascii=False`）
-> - 同时删除 `Content-Type` 头中的 `; charset=utf-8`
-
-**受影响的位置**：
-- `/root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py` 第 443 行、第 564 行
-- `/root/.openclaw/skills/zhili-publish/scripts/publish_zhili.py` 第 390 行、第 506 行
-
-**验证修复是否完成**：在两个脚本中搜索 `ensure_ascii=False`，搜索结果必须为空。
+# 直隶按察使 · 公众号发布技能
+
+## ⚠️ 短评 vs 长文的路由规则（先判断再发布）
+
+| | zhili-publish（长文） | zhilicomments-publish（短评） |
+|--|----------------------|-------------------------------|
+| 字数 | **4000-8000字** | 500-800字 |
+| 结构 | Evolver 六段式或自定义深度结构，有章节标题 | 轻量三段式（事件+观点+一句话收尾） |
+| 配图 | 项目截图+封面（正文必须有 mmbiz 图） | 1-2张评论配图（可选） |
+| 用途 | 项目介绍/教程/深度分析/行业观察 | 热评/观点/Reaction |
+| 内容来源 | khazix-writer 长文输出 | khazix-writer 短评输出 |
+
+**khazix-writer → zhili-publish 交接规范**：
+
+khazix-writer 产出**纯文本**，含【一、章节名】标注。zhili-publish 接收后：
+1. 将【一、xxx】转为 `<h2>` 标签（18px bold 左对齐）
+2. 正常段落转为 `<p>` 标签（16px 行高1.6 左对齐）
+3. `【重点】句子` 转为 `<strong style="color:#e63946;">`
+4. 嵌入 mmbiz 图片（正文必须至少一张）
 
 **判断标准**：
-- `draft/get` API 返回的 content 永远是 `\\uXXXX` 格式（WeChat API 序列化行为，非错误）
-- 关键看微信公众平台草稿箱前端是否显示正常中文（不是 `\\uXXXX` 字面量）
-- 若前端显示 `\\uXXXX` 字面量，说明草稿创建时用了 `ensure_ascii=True`（默认值），需要删除重建并改用 `ensure_ascii=False`
 
-## 参考文件
+**判断标准**：
 
-- `references/wechat-title-limits.md` — 微信标题字数限制实测（纯中文≤10字符，混合≤16字符，2026-05 更新）
+## 工作流
 
-## 触发条件
+```
+获取文章内容（用户粘贴 / mmx vision） → 生成封面图 → 准备内容图 → 上传封面（thumb） → 上传内容图（mmbiz） → 写文章（含 mxbiz URL） → 创建草稿 → 完成
+```
 
-用户说「发布」「推送到微信」「草稿箱」「发文章」「出稿」且上下文是 zhiliGitHub 或 zhiliComments 文章完成时，触发本 skill。
+### 获取微信文章内容
 
-## 附：发布后草稿验证（确保中文正确显示）
+> ⚠️ **重要更新（2026-05-17）**：9Router 两个实例均已下线，Anspire API (`api.anspire.cn`) DNS 从服务器环境不可达。Bocha Search API (`open.bocha.cn/api/v1/search`) 是当前最有希望的 Web 搜索备选，需用户提供 API Key。详见 `references/wechat-fetch-fallbacks.md`。
 
-创建草稿后，用以下方式验证标题是否正确存储：
+**当前可用方案（按可靠性排序）：**
+
+1. **用户复制粘贴**（最可靠）：请用户打开微信文章 → 全选 → 复制正文 → 粘贴。不需要格式，纯文字即可
+2. **mmx vision describe**：用户截图发给你 → AI 分析截图内容 → 作为写作参考
+3. **Bocha Web Search API**（需要用户提供 key）：调用 `POST https://open.bocha.cn/api/v1/search`，可搜索到微信文章的标题/摘要/引用内容。格式：`{"query": "site:mp.weixin.qq.com <关键词>", "count": 10, "summary": true}`，Header：`Authorization: Bearer <BOCHA-API-KEY>`
+4. **自己重写**（信息不完整）：根据标题/主题从 GitHub/官网/其他信息源重建内容
+
+**已知无效方案（不要再试）：**
+- 9Router fetch-combo / jina/fetch — 两个实例均返回 404
+- Anspire Search — `api.anspire.cn` DNS 从服务器环境不可达（浏览器可访问 www.anspire.cn 但 API 域名无法解析）
+- 搜狗微信搜索 — 超时不可用
+- Scrapling StealthyFetcher / Browserbase CDP — WeChat 滑块验证码无法绕过
+- Google Cache / Wayback Machine — 无缓存
+
+> ⚠️ **微信滑块验证码是最后一层墙**：微信「混元AI」反爬系统在服务端直接拦截所有自动化请求，无需任何人机交互即可判断并返回验证页。**不要浪费时间尝试新工具**。
+
+**⚠️ WeChat URL 项目识别陷阱（republish 场景）**：
+
+当用户说「zhili publish [WeChat URL]」时，不要假设 URL 标题就是文章主题。**必须先用 `mmx search` 交叉验证实际项目名**：
+
+```
+# 错误假设：URL 路径中的关键词就是项目名
+# 例：https://mp.weixin.qq.com/s/6SkupSxgM9618Y-O7ZJUbA
+#     → 误以为是 CodeGraph（上一个项目）
+#     → 实际是 academic-research-skills
+
+# 正确做法：用 mmx search 查询文章标题
+mmx search query "文章标题 全文"
+# 从搜索摘要中提取真实项目名和 GitHub 地址
+```
+
+工作流：
+1. 用 `mmx search` 搜索微信文章标题
+2. 从搜索摘要中识别真实项目（很多微信文章标题不直接提 GitHub 地址）
+3. 用 GitHub API 查真实项目的 stars / description / README
+4. 以真实项目信息为准写文章，不要用上一个项目的上下文
+
+**republish 场景的正确处理：** 用户粘贴已有公众号文章内容后，需要用自己的话重写核心观点（避免抄袭），按 format-guide.md 的 Evolver 六段式重组文章结构。
+
+**获取内容后的处理：**
+- 纯文字内容 → 按 format-guide.md 转换为公众号文章
+- 如果用户粘贴的是已发布公众号文章 → 了解核心观点和结构 → 用自己的话重写（避免抄袭）
+
+## 标准发布流程（重要经验）
+
+### 完整顺序（必须按此顺序执行）
+
+> 🚫 **图片 Gate 规则（已硬编码到 publish_zhili.py）**：
+> HTML 正文中必须包含 `mmbiz` 图片 URL，否则脚本拒绝发布并报错退出。
+> 这意味着：**必须在写 HTML 之前准备好图片，图片必须在 HTML 里可见才能发布**。
+
+**第一步：准备图片**
+1. 📝 标题 + 🏷️ 分类 + 🏷️ 原创
+2. 🖼️ **封面图**（AI生成或项目README图）→ 上传 `material/add_material?type=image` → 获取 `media_id`（**不是 thumb_media_id**）
+3. 📷 **内容图**（项目截图）→ 上传 `media/uploadimg` → 获取 `mmbiz URL`（公网URL）
+
+**第二步：下载项目素材（发布前必须完成，不可跳过）**
+项目截图/GIF 是文章的重要组成部分，**必须在写文章之前下载并上传**：
+1. 用 GitHub API 查项目目录：`GET /repos/{owner}/{repo}/contents/` — 找 `screenshot`、`demo`、`assets` 等图片文件
+2. 下载到 `/tmp/`：用 `?raw=1` 或 base64 解码 GitHub API 响应
+3. 上传到微信永久素材：`upload_article_image()` → 获得 mmbiz URL
+4. **记录每个 mmbiz URL 对应的插入位置**（如「section 二项目banner用」）
+5. 写 HTML 时在对应位置嵌入 `<img src="mmbiz_url" ...>`
+
+**常见项目素材路径（优先查这些目录）**：
+```
+README.md 同级的 .png/.gif/.jpg
+assets/ 目录
+docs/images/ 目录
+screenshots/ 目录
+/demo.gif 或 /demo.mp4
+```
+
+> ⚠️ 如果项目完全没有图片（只有 shields.io 徽章和文字），则：
+> 1. 用 GitHub OG 图代替：`https://opengraph.githubassets.com/1/{owner}/{repo}`
+> 2. 或 AI 生成一张技术示意图
+> 3. 在 HTML 中明确标注「项目暂无截图，用 OG 图代替」
+>
+> **无项目素材时的备选方案：Python PIL 绘制信息结构图作为文章配图**
+>
+> 适用场景：概念解析类文章（如工作流、思维模型）而非项目介绍帖，无需真实项目截图。
+> 方法：用 Python + Pillow 绘制包含图标、色块、标注的工作流示意图（见下方模板），保存为 PNG → 转 JPEG → `curl uploadimg` 上传。
+>
+> ```python
+> # 核心模板：横向三阶段工作流 + 顶部标注 + 底部总结
+> from PIL import Image, ImageDraw
+> W, H = 900, 400
+> img = Image.new('RGB', (W, H), (255, 255, 255))
+> d = ImageDraw.Draw(img)
+> # 背景网格：for y in range(0, H, 30): d.line([(0,y),(W,y)], fill=(245,245,250), width=1)
+> # 三个圆角矩形：d.rounded_rectangle([x1,y1,x2,y2], radius=12, fill=颜色)
+> # 箭头：d.polygon([(x,y1),(x+w,y2),(x,y2),(x,y1)], fill=颜色)  # 三角箭头
+> # 底部总结框：d.rounded_rectangle([x1,y1,x2,y2], radius=10, fill=(255,245,220))
+> img.save('/tmp/diagram.png', 'PNG', quality=95)
+> ```
+>
+> **完整示例（prototype→rewind→summarize三阶段图）**：
+> 见 `references/pil-workflow-diagram-example.py` — 可直接复制修改颜色和文案。
+
+**第三步：写文章**
+- HTML 中直接嵌入内容图的 mmbiz URL
+- `<img src="http://mmbiz.qpic.cn/..." style="width:100%;border-radius:6px;" />`
+- ⚠️ 如果用了带 `id="screenshot"` 的占位图（如 `<img src="placeholder" id="screenshot" />`），**替换时必须替换整个 attribute 字符串** `src="..." id="screenshot"`，不能只替换 `src` 值，否则会残留重复 style 属性或孤立的 id 属性。正确做法：`html = html.replace('src="placeholder" id="screenshot"', f'src="{mmbiz_url}" style="width:100%;border-radius:6px;"')`
+
+**第四步：同步创建草稿**
+- 封面用 `material/add_material?type=thumb` 返回的 `media_id`，传给 `draft/add` 的 `thumb_media_id` 字段
+- 一次性传入：标题 + 作者 + 摘要 + 正文HTML + thumb_media_id
+- 调用 `/cgi-bin/draft/add` → 获取草稿 `media_id`
+
+> ⚠️ **已踩坑（2026-05-17 验证）**：`media/upload?type=thumb` 返回的 `thumb_media_id` 不兼容 `draft/add`，报 `40007 invalid media_id`。必须用 `material/add_material?type=thumb`，取其返回的 `media_id` 字段作为 `thumb_media_id`。
+
+```
+下载项目图 → 上传到微信获取mmbiz → 写HTML（嵌入mmbiz） → 图片Gate检查 → 创建草稿
+```
+
+---
+
+## 凭证配置
+
+在 `references/config.md` 中配置：
+
+| 字段 | 说明 | 获取方式 |
+|------|------|----------|
+| `APPID` | 公众号 AppID | 微信公众平台 → 设置 → 基本配置 |
+| `APPSECRET` | 公众号 AppSecret | 同上页面 |
+| `CATEGORY_ID` | 分类 ID | 发布一次后从返回的 media_id 反推 |
+| `SENSENOVA_KEY` | Sensenova API Key | 存储在 `TOOLS.md`，脚本自动读取（封面图首选） |
+| `MINIMAX_API_KEY` | MiniMax API Key | platform.minimaxi.com 获取（封面图备选） |
+
+> ⚠️ 凭证信息仅存储在 `references/config.md`，绝不输出到对话中。
+
+## 封面图生成
+
+### 封面图生成
+
+> ⚠️ **9Router 路径不可用于 MiniMax 图片生成**：`POST /v1/images/generations` via 9Router 需要 OpenAI key server-side（`No active credentials for provider: openai`）。MiniMax 图片生成必须走**直接 API**。
+
+### 方式一：MiniMax 直接 API（推荐）
+
+MiniMax 图片生成走 `api.minimaxi.com/v1/image_generation`，需要从 `/root/.openclaw/openclaw.json` 读取 key：
 
 ```python
-# python3 -c "
-import json, subprocess, os, ssl, urllib.request
+import json, re, ssl, urllib.request
+
+with open('/root/.openclaw/openclaw.json') as f:
+    raw = f.read()
+m = re.search(r'"minimax"\s*:\s*\{.*?"apiKey"\s*:\s*"([^"]+)"', raw, re.DOTALL)
+api_key = m.group(1)
+
+url = "https://api.minimaxi.com/v1/image_generation"
+headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+payload = {
+    "model": "image-01",
+    "prompt": "封面图描述，浅色背景+强对比",
+    "aspect_ratio": "1:1",
+    "response_format": "url",
+}
+req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+ctx = ssl.create_default_context()
+ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+resp = urllib.request.urlopen(req, timeout=120, context=ctx)
+data = json.loads(resp.read())
+img_url = data["data"]["image_urls"][0]
+
+# 下载并裁剪为 900x900
+urllib.request.urlretrieve(img_url, "/tmp/cover_raw.jpg")
+from PIL import Image
+img = Image.open("/tmp/cover_raw.jpg")
+w, h = img.size
+cropped = img.crop(((w-900)//2, (h-900)//2, (w-900)//2+900, (h-900)//2+900))
+cropped.save("/tmp/cover_900.jpg", "JPEG", quality=90)
+```
+
+**Key 来源**：`/root/.openclaw/openclaw.json` 中 `providers.minimax.apiKey`（注意是 `minimax` provider，不是 `MINIMAX_API_KEY` 环境变量）。
+
+### 方式二：Sensenova（备用）
+
+Sensenova key 从 TOOLS.md 读取（路径在 skill 配置中）。API 端点：`https://token.sensenova.cn/v1/images/generations`，model：`sensenova-u1-fast`。成功率不稳定，优先用 MiniMax 直接 API。
+
+### 方式三：PIL 纯代码生成（无 API 依赖）
+
+当 AI 图片生成 API 不可用时（如 9Router 图片模型返回 401、MiniMax 直连 404），用 Python + Pillow 生成技术信息图风格封面，**完全离线、零外部依赖**：
+
+```python
+from PIL import Image, ImageDraw, ImageFont
+import math
+
+W, H = 900, 383  # 信息结构图比例
+img = Image.new('RGB', (W, H), (255, 255, 255))
+d = ImageDraw.Draw(img)
+
+# 颜色常量
+C = {
+    'hub': (255, 185, 0),        # 金色中心
+    'wechat': (0, 182, 84),
+    'youtube': (255, 45, 45),
+    'web': (0, 120, 212),
+    'podcast': (142, 36, 170),
+    'ppt': (250, 100, 0),
+    'mindmap': (0, 150, 136),
+}
+
+# 中心 hub（发光效果）
+hx, hy, HR = 450, 191, 48
+for i in range(6):
+    r = HR + 18 - i*3
+    d.ellipse([hx-r, hy-r, hx+r, hy+r], fill=C['hub'])
+d.ellipse([hx-HR, hy-HR, hx+HR, hy+HR], fill=C['hub'])
+d.text((hx, hy), 'qiaomu', fill=(255,255,255), font=hub_font, anchor='mm')
+
+# 输入节点（左）
+for (cx, cy, icon, label, color) in inputs:
+    R = 38
+    d.ellipse([cx-R, cy-R, cx+R, cy+R], fill=color)
+    d.ellipse([cx-R+4, cy-R+4, cx+R-4, cy+R-4], outline=(255,255,255), width=2)
+
+# 输出节点（右）
+for (cx, cy, icon, label, color) in outputs:
+    R = 34
+    d.ellipse([cx-R, cy-R, cx+R, cy+R], fill=color)
+    d.ellipse([cx-R+3, cy-R+3, cx+R-3, cy+R-3], fill=(255,255,255))
+
+# 连接线（带箭头）
+def draw_arrow(d, x1, y1, x2, y2, color):
+    d.line([(x1, y1), (x2, y2)], fill=color, width=2)
+
+draw_arrow(d, 162, 191, hx-HR-4, hy, (180, 190, 210))  # 输入→hub
+draw_arrow(d, hx+HR+4, hy, 740, 191, (180, 190, 210))   # hub→输出
+
+img.save('/tmp/cover.png', 'PNG', quality=95)
+```
+
+**常用尺寸**：
+- 信息结构图封面（横向）：900×383
+- 标准方图封面：900×900
+
+**高对比配色板**（适合技术产品封面）：
+```python
+C = {
+    'hub':    (255, 185, 0),   # 金色（品牌色）
+    'blue':   (0, 120, 212),   # 输入蓝
+    'red':    (255, 45, 45),   # YouTube红
+    'green':  (0, 182, 84),    # WeChat绿
+    'purple': (142, 36, 170),  # Podcast紫
+    'orange': (250, 100, 0),   # PPT橙
+    'teal':   (0, 150, 136),   # 思维导图青
+    'line':   (180, 190, 210), # 连接线灰
+}
+```
+
+**上传封面到微信（mmbiz）**：
+```python
+import urllib.request, json, ssl, os
 
 APPID = 'wx38a91c353554588a'
-with open(os.path.expanduser('~/.hermes/keys/wx_appsecret.txt')) as f:
-    APPSECRET = f.read().strip()
+APPSECRET = '07b4dc2d64ddbe6f53707977dbabdbbe'
 
-# get token
-result = subprocess.run(['curl', '-s', '-X', 'POST',
-    'https://api.weixin.qq.com/cgi-bin/stable_token',
-    '-H', 'Content-Type: application/json',
-    '-d', json.dumps({'appid': APPID, 'secret': APPSECRET, 'grant_type': 'client_credential'})],
-    capture_output=True, text=True)
-ACCESS_TOKEN = json.loads(result.stdout)['access_token']
-
-# list drafts
-ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
-req = urllib.request.Request(
-    f'https://api.weixin.qq.com/cgi-bin/draft/batchget?access_token={ACCESS_TOKEN}',
-    data=json.dumps({'offset': 0, 'count': 20}).encode('utf-8'),
-    headers={'Content-Type': 'application/json'}
+# 1. 获取 access_token
+req = urllib.request.urlopen(
+    f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={APPID}&secret={APPSECRET}',
+    timeout=10
 )
-with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
-    items = json.loads(resp.read().decode('utf-8')).get('item', [])
-    for item in items:
-        content = item.get('content', {})
-        ni = content.get('news_item', [{}])[0] if content.get('news_item') else {}
-        print(ni.get('title', 'N/A'), '|', ni.get('author', 'N/A'))
+access_token = json.loads(req.read())['access_token']
+
+# 2. 上传封面（type=image，返回 media_id + url）
+boundary = '----PythonFormBoundary123'
+file_path = '/tmp/cover.png'
+with open(file_path, 'rb') as f:
+    file_data = f.read()
+body = (
+    f'--{boundary}\r\n'
+    f'Content-Disposition: form-data; name="media"; filename="cover.png"\r\n'
+    f'Content-Type: image/png\r\n\r\n'
+).encode() + file_data + f'\r\n--{boundary}--\r\n'.encode()
+
+upload_url = f'https://api.weixin.qq.com/cgi-bin/material/add_material?access_token={access_token}&type=image'
+req = urllib.request.Request(upload_url, data=body, method='POST')
+req.add_header('Content-Type', f'multipart/form-data; boundary={boundary}')
+ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
+    result = json.loads(resp.read())
+    print('mmbiz URL:', result['url'])       # 用于 img src
+    print('media_id:', result['media_id'])   # 用于 draft.add thumb_media_id
+```
+
+### 方式四：跳过封面图
+
+⚠️ `--skip-cover` 会创建无封面草稿，后台体验差。**推荐改用预生成封面图方案**（见下方）。
+
+### 方式四：预生成封面图 + 创建草稿（推荐）
+
+封面图和草稿分两次执行（封面图可复用）：
+
+```bash
+# ① 先生成封面图（保存到 /tmp/cover-thumb.jpg）
+python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
+
+# ② 创建草稿（用 --cover-path 指定预生成封面）
+python3 skills/zhili-publish/scripts/publish_zhili.py \
+  "文章标题" \
+  "作者（≤2个中文字）" \
+  "摘要" \
+  "$(cat /tmp/article.html)" \
+  --cover-path /tmp/cover-thumb.jpg
+```
+
+> ⚠️ **重要**：`--title`、`--author` 等命名参数**只能配合 `--cover-prompt`（自动生成封面）**使用，不支持与 `--cover-path` 混用。必须用**位置参数**顺序传入。
+
+> ⚠️ **标题长度警告**：脚本会提示「标题较长（XX字符），建议≤10个中文字」，这只是警告，实测超过 20 个中文字（~60 字节限制）才会真正报错（45003）。
+
+### 封面图规格
+
+- **生成尺寸**：1024×1024（MiniMax 限制）
+- **上传尺寸**：裁剪为 900×900（中心裁剪，JPEG，85% 质量）
+- **格式**：JPG/JPEG
+- **用途**：永久素材，media_id 存入草稿
+
+### 格式指南不是写作范本（重要警示）
+
+`references/format-guide.md` 描述的是**格式元素清单**（标题公式、数据卡片、列表格式等），**不包含写作风格、语气、行文节奏、结构数量**。如果用户说「学习某篇文章的风格」，必须：
+
+1. 用 `9Router /v1/web/fetch` + `fetch-combo` 抓取那篇文章的**正文全文**（不只是标题）
+2. 分析那篇文章的**实际章节结构**（几段？每段主题？长短？节奏？）
+3. 对照格式清单补齐结构元素
+4. **同时学习那篇文章的写作风格**：语气（亲切/犀利/冷静）、句式长度、段落节奏、收尾方式
+
+**Telegraf 风格是典型 7 段式**（非 format-guide 默认的 6 段）：
+```
+一、痛点切入（3-4个具体场景）
+二、项目介绍 + 数据卡片 + 核心概念列表
+三、架构设计 + 工作流图（代码块箭头流）
+四、快速上手（Step 1/2/3 分层）
+五、实战场景（多个真实案例，含失败→介入→成功弧线）
+六、与竞品对比表
+七、总结 + 收尾金句 + Star号召
+```
+
+**format-guide 是格式清单，不是行文模板**——具体写几段、每段多长，要跟着参考文章的实际结构走，不能套用死板的 6 段式。
+
+### 封面图 Prompt 技巧
+
+**核心原则：浅色背景 + 强对比 + 高辨识度**
+
+微信卡片封面在浅色列表页展示，浅色背景 + 强对比色能让主体更突出、在封面序列中更抓眼。
+
+| 文章类型 | Prompt 方向 | 示例 |
+|----------|-------------|------|
+| AI 工具 | **浅底科技感** + 工具图标 | A clean light-themed tech illustration with a glowing robot brain icon, vibrant blue and orange accents on a white background, minimal, modern style... |
+| 教程类 | **浅色示意** + 操作界面 | A bright minimalist illustration of a terminal with colorful code on a clean light background, friendly and approachable... |
+| 人物 IP | **浅色背景** + 有记忆点的形象 | Portrait illustration on a soft light gradient background, a developer at a futuristic desk, warm colors with sharp contrast... |
+| 数据分析 | **白底图表** + 数字感 | Clean white background data visualization with vibrant glowing charts and sharp contrast, professional dashboard aesthetic... |
+
+**通用 Prompt 模板（可叠加到任意类型）：**
+```
+on a clean white/light gray background, high contrast, vibrant accent colors (blue, orange, purple), minimalist modern style, flat design, no dark backgrounds
+```
+
+### ⚠️ CSS margin 规范（防止微信叠加空行的关键）
+
+**所有 block 元素只能设 `margin-bottom`，不能用 `margin-top`**：
+```html
+<!-- ✅ 正确：只设 bottom，微信叠加后依然只有 16px；全文左对齐 -->
+<p style="margin:0 0 16px 0;line-height:1.6;text-align:left;">正文内容</p>
+
+<!-- ⚠️ 危险：上下都设时，微信容器级 margin 会叠加，产生非预期大间距 -->
+<p style="margin:16px 0;line-height:1.6;text-align:left;">正文内容</p>
+
+<!-- ✅ h2 标题：bottom 控制下方间距，top 为 0 防止被上方撑开，左对齐 -->
+<h2 style="margin:24px 0 12px 0;font-size:18px;font-weight:bold;color:#111;text-align:left;">二、项目介绍</h2>
+
+<!-- ✅ 图片：margin 控制与上下文的间距 -->
+<img src="..." style="width:100%;border-radius:6px;margin:16px 0;" />
+```
+
+### ⚠️ HTML 格式规范（zhili-publish 强制标准）
+
+发布任何文章到「直隶按察使」时，必须严格遵守以下 CSS 规格：
+
+| 属性 | 值 | 说明 |
+|------|-----|------|
+| 行高 | `1.6` | 正文 line-height |
+| 两侧间距 | `0 8px` | 容器 padding |
+| 大标题 h2 | `font-size:18px;font-weight:bold` | 章节标题 |
+| 正文字号 | `font-size:16px` | 所有正文段落 |
+| 对齐方式 | `text-align:left` | **全部左对齐**，严禁居中或两端对齐 |
+| 关键词高亮 | `<strong style="color:#e63946;">` | 重点语句红色 |
+| 容器 | `max-width:678px;margin:0 auto;padding:0 8px;font-size:16px;line-height:1.6;color:#333;text-align:left;` | 文章正文外层 div |
+
+> ⚠️ 2026-05-18 用户明确要求：所有文字格式左对齐。这不是可选的样式偏好，是强制要求。
+
+### ⚠️ 代码块换行必须用 `<br>`，不能用真实换行符
+
+```html
+<!-- ✅ 正确：多行命令用 <br> 分隔 -->
+<pre style="background:#1e1e1e;border-radius:6px;padding:14px 16px;margin:12px 0;overflow-x:auto;"><code style="font-family:Consolas,Monaco,Courier New,monospace;color:#e8e8e8;font-size:14px;line-height:1.5;">git clone https://github.com/nexu-io/html-anything&lt;br&gt;cd html-anything&lt;br&gt;pnpm install&lt;br&gt;pnpm dev</code></pre>
+
+<!-- ❌ 错误：代码中有真实换行符会在草稿 JSON payload 里产生 \\n，微信渲染产生多余段落 -->
+<pre style="..."><code style="...">git clone https://...
+cd html-anything
+pnpm install
+pnpm dev</code></pre>
+```
+
+### ⚠️ execute_code sandbox 无法读取 config.md 凭证
+
+`execute_code` 的 Python sandbox 与文件系统隔离，**看不到** `references/config.md` 中的 APPSECRET。遇到需要调用微信 API 的 Python 脚本时：
+
+```bash
+# ✅ 正确：写脚本到 /tmp，用 terminal python3 执行（能读取 config.md）
+python3 /tmp/publish_article.py
+
+# ❌ 错误：用 execute_code 内联包含 APPSECRET 的代码（sandbox 看不到 config.md）
+```
+
+**凭证必须从 terminal 中读取 config.md 后内联进脚本**，或用 `scripts/publish_zhili.py`（它已内置 `load_config()`）。
+
+### ⚠️ 标题安全长度
+
+微信限制标题 **≤60字节**（UTF-8 中文 = 3字节/字）：
+- **安全范围**：≤50 字节（约 16 个中文字）
+- 超过 60 字节会报 `errcode: 45003`（`title size out of limit`）
+- 建议中文标题 ≤20 个字，英文 ≤50 字符
+
+### ⚠️ cleanup_html.py 清理盲区
+
+`cleanup_html.py` 只能移除**整行都是空白**的行。无法清除嵌在 HTML 标签**内部**的换行符：
+
+```html
+<!-- cleanup_html.py 处理不了这种块内部的换行 -->
+<p style="margin:0 0 16px 0;line-height:1.6;">
+  这是段落内容
+</p>
+```
+
+**预防胜于清理**：生成阶段就不要在块内部写换行（inline 单行块 + `''.join()`）。
+
+### 验证命令
+```bash
+# 统计纯空行数量（应为 0）
+grep -c '^$' /tmp/article_draft.html
+
+# 验证 JSON payload 不含意外换行（发布前最后一道检查）
+python3 -c "
+import json
+with open('/tmp/article_draft.html') as f:
+    html = f.read()
+payload = {'content': html}
+data = json.dumps(payload, ensure_ascii=False)
+newlines = data.count('\\n')
+print(f'JSON payload 换行符数量: {newlines} (应为 0)')
 "
 ```
 
-**判断标准**：
-- `draft/get` API 返回的 title 永远是 `\uXXXX` 格式（WeChat API 序列化行为，非错误）
-- 关键看微信公众平台草稿箱前端是否显示正常中文（不是 `\uXXXX` 字面量）
-- 若前端显示乱码（`\uXXXX` 字面量），说明草稿创建时用了 `ensure_ascii=False`，需要删除重建
-- **根因**：`ensure_ascii=False` 导致中文以 UTF-8 原始字节发送，WeChat 存储错误；修复方法是用 `json.dumps(payload)` 默认参数（`ensure_ascii=True`）
+### ⚠️ 内容写作 → HTML 转换规则（format-guide 与草稿 HTML 的区别）
+
+format-guide.md 中的 `**标题**` 和 `### 子标题` 是**内容写作阶段**的格式指引（用 Markdown 语法组织内容）。微信编辑器不会将 Markdown 转换为 HTML，**必须由 agent 在生成 HTML 时主动转换**：
+
+| 内容写法（format-guide） | HTML 转换结果 |
+|--------------------------|---------------|
+| `**粗体文字**` | `<strong style="color:#e63946;">粗体文字</strong>` |
+| `**一、项目名称**`（章节标题） | `<h2 style="font-size:18px;font-weight:bold;margin:24px 0 12px 0;color:#111;">一、项目名称</h2>` |
+| `**小节标题**`（bold p 标签内） | `<p style="font-weight:bold;">小节标题</p>` — **不要嵌套 `<strong>`** |
+| `### 子标题` | `<p style="font-weight:bold;">子标题</p>` — **去掉 `###` 前缀** |
+| `• **概念名**：描述`（列表项） | `<li style="margin:0 0 4px 0;"><strong>概念名</strong>：描述</li>` — **不要手动加 `•`** |
+
+**⚠️ 双重加粗陷阱**：`<p style="font-weight:bold;"><strong>**文字**</strong></p>` 会产生 `<strong>**文字**</strong>`（冗余）。正确做法是 p bold 标签内直接放纯文本。
+
+**生成后必查**：
+```bash
+# 检查是否还有未转换的 ** 和 ###
+grep -n '\*\*\|###' /tmp/article.html
+# 应返回空
+```
+
+### 诊断工具：mmx CLI 图片分析（排查草稿截图）
+
+`mmx vision describe` 是诊断微信草稿格式问题的首选工具（比内置 `vision_analyze` 更可靠）。
+
+完整排版问题诊断参考：`references/wechat-draft-debug.md`（含有序列表渲染异常、多余空行、Markdown 残留、双重加粗、thumb_media_id invalid 等常见问题的根因和解决方案）。
+
+```bash
+# 安装 mmx CLI（全局）
+npm install -g mmx-cli
+
+# 登录（API key 从 ~/.hermes/.env 读取 MINIMAX_API_KEY）
+bash -c 'source ~/.hermes/.env && mmx auth login --api-key "$MINIMAX_API_KEY"'
+
+# 分析微信草稿截图
+mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众号草稿截图，找出所有多余的空行、空白段落或格式问题。精确描述具体位置。" --output json
+```
+
+- 正文：`font-size:16px; line-height:1.6; margin:0 0 16px 0; padding:0 8px`
+- 标题 h2：`font-size:18px; font-weight:bold`
+- 小标题 h3：`font-size:17px; font-weight:bold`
+- 代码块：深色背景 `#1e1e1e`，白色等宽字体
+- 内联代码：`background:#f6f8fa; border-radius:3px; padding:1px 4px`
+- 重点词红色高亮：`color:#e63946`
+- 链接：`<a href="...">...</a>`
+- 图片：`width:100%;border-radius:6px`
+
+## 脚本使用
+
+### 标准发布（无封面图）
+
+```bash
+python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
+```
+
+⚠️ **字段长度限制（超限会报 45003 错误，必须严格执行）**：
+- 标题：**≤60字节**（UTF-8 中文 = 3字节/字，所以约 ≤20 个中文字；60字节约 8~10 个中文字安全）
+- 作者：**≤2个中文字**（超出必报 `author size out of limit`）
+- 摘要：建议≤50字
+
+**常见报错**：
+- `errcode: 45003` = 标题超长，必须缩短后重试
+- `errcode: 0` + `media_id` = 成功
+
+**实测结论（大段 HTML 的两种可行传参方式）：**
+
+```python
+# ✅ 方式一：Python API（推荐，sandbox 可见 config.md）
+import sys
+sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhili-publish/scripts')
+import publish_zhili as pz
+token = pz.get_access_token(appid, appsecret)
+thumb_media_id = pz.upload_thumb_material(token, '/tmp/cover.jpg')
+with open('/tmp/article.html', encoding='utf-8') as f:
+    content = f.read()
+result = pz.create_draft(token, title, author, digest, content, thumb_media_id)
+
+# ✅ 方式二：CLI + bash 命令替换（实测可用）
+# 原理：$(python3 -c ...) 在 shell 层展开为 HTML 文本，作为第4个位置参数传入
+python3 /path/to/publish_zhili.py \
+  "文章标题" \
+  "作者（≤2个中文字）" \
+  "摘要" \
+  "$(python3 -c \"import sys; sys.stdout.write(open('/tmp/article.html', encoding='utf-8').read())\")"
+```
+
+**更新已有草稿的正确顺序**：
+1. 调用 `draft/delete?access_token=...` 删除旧草稿（必须先删）
+2. 重新上传封面图 `add_material?type=image`（每次新建都要重新上传，不能复用旧 thumb_media_id）
+3. 上传内容图 `media/uploadimg`
+4. 调用 `draft/add` 创建新草稿
+```
+
+### 自动生成封面图发布
+
+```bash
+python3 skills/zhili-publish/scripts/publish_zhili.py \
+  --title "文章标题" \
+  --author "作者" \
+  --digest "摘要" \
+  --content "<html内容>" \
+  --cover-prompt "AI 封面图描述"
+```
+
+### 仅生成封面图（不上传）
+
+```bash
+python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
+```
+
+脚本自动完成：
+1. **封面图生成**：调用 MiniMax image-01，1024×1024
+2. **裁剪**：Pillow 中心裁剪为 900×900 JPEG
+3. **上传**：微信永久素材 API（type=thumb）
+4. **创建草稿**：含原创标志、封面 media_id
+
+## ⚠️ format-guide 是格式清单，不是写作范本
+
+`references/format-guide.md` 描述的是**格式元素清单**（标题公式、数据卡片、列表格式等），但**不包含写作风格、语气、行文节奏**。如果用户要求「按某篇文章的风格重写」，必须：
+
+1. 先获取那篇文章的**正文内容**（不只是格式）
+2. 对照格式清单补齐结构元素
+3. **同时学习那篇文章的写作风格**：语气（亲切/犀利/冷静）、句式长度、段落节奏、收尾方式
+
+**无法获取文章内容时的处理：**
+- ⚠️ **微信文章有「混元AI」滑块验证码墙**：直接 curl / 浏览器 / Browserbase CDP 均无法绕过，会卡在"环境异常 → 去验证 → 滑块拼图"页面。这是微信的主动反爬，无法自动化突破。
+- 备选：搜狗微信搜索（部分可查，但本次 session 测试超时不可用）
+- **唯一可行方案：请用户把文章内容复制粘贴过来**（纯文字即可，不需要格式）
+
+## ⚠️ 已发布草稿的自我检查清单（发布前必查）
+
+- [ ] **先查格式指南**，对照清单补齐所有结构元素
+- [ ] **再对标参考文章**，学习写作风格（不是只抄格式）
+- [ ] 正文（二、项目介绍）中至少一张项目截图
+- [ ] `**` Markdown 语法全部转为 HTML `<strong>`，无残留
+- [ ] block 元素之间无换行符
+- [ ] 代码块用 `<br>` 换行，不用真实换行符
+- [ ] 所有间距只设 `margin-bottom`，不用 `margin-top`
+- [ ] `grep -n '^$'` 确认 0 个空行
+
+⚠️ **关键发现**：微信公众平台会过滤 `<style>` 标签和 CSS 类选择器，所有样式必须在 HTML 元素上直接用 `style="..."` 内联，否则格式全部失效。
+
+### 正确的 HTML 结构（全部内联样式）
+
+```html
+<div style="max-width:678px;margin:0 auto;padding:0 8px;font-size:16px;line-height:1.6;color:#333;text-align:left;">
+  <!-- 正文用内联 style，不使用 class，全部左对齐 -->
+  <h2 style="font-size:18px;font-weight:bold;margin:24px 0 16px 0;padding-top:8px;text-align:left;">标题</h2>
+  <p style="margin:0 0 16px 0;line-height:1.6;text-align:left;">正文内容</p>
+  <pre style="background:#1e1e1e;border-radius:6px;padding:14px 16px;margin:16px 0;overflow-x:auto;"><code style="font-family:'Consolas','Monaco','Courier New',monospace;color:#e8e8e8;font-size:14px;line-height:1.5;">代码内容</code></pre>
+  <strong style="color:#e63946;">重点强调</strong>
+</div>
+```
+
+**⚠️ 代码块关键规则：**
+- `<code>` 必须设置 `color:#e8e8e8`（浅灰白），否则微信渲染时文字与深色背景融为一体看不见
+- 必须设置等宽字体：`font-family:'Consolas','Monaco',monospace`
+- 字号 14px，行高 1.5
+- 禁止裸 `<code>` 没有外层 `<pre>` 包裹
+
+### 文章模板文件（强制使用）
+
+⚠️ 写新文章时，**必须**从 `references/article-template.html` 复制模板作为起点，不要从零写 HTML。
+
+模板路径：`references/article-template.html`
+
+### ⚠️ 写文章前必读：Evolver 六段式格式对照（先读再写，不要写完再查）
+
+⚠️ **本 session 教训**：写完文章后再查格式清单 = 被用户打回重写。正确做法是**写之前**就读一遍，写完立刻对照。
+
+- `references/enforcement-gate.md` — 发布前强制图片检查 Gate 机制（check_article_images 函数 + 拦截逻辑）
+- `references/project-screenshot-workflow.md` — 配图强制工作流：Step1下载→Step2上传→Step3记录位置→Step4写HTML嵌URL→Step5发布。核心原则：先拿mmbiz URL，后写HTML，不要倒过来。
+- `references/format-guide.md`（Evolver 文章格式规范）
+
+| 规范元素 | 格式要求 |
+|----------|----------|
+| 标题 | 数字 + 感叹 + 核心洞察 + 开源背景，如「8.9k stars！AI Agent 终于会自我进化了？中国团队开源的这个项目让我看到了智能体的未来！」 |
+| 数据卡片 | `**GitHub**: url \| **Stars**: Xk \| **License**: XXX \| **Language**: XXX`（同行排列） |
+| 核心概念列表 | `• **概念名（加粗）**：一句话定义 + 举例说明`，用 `•` 不要用 `<ul>` |
+| 引擎职责列表 | `1. 2. 3. 4. 5.` 编号，每条 `**职责名**：描述` |
+| 工作流图示 | `[步骤1] → [步骤2] → [步骤3]`，放在代码块中 |
+| 实战案例 | `• **第N次尝试（状态）**：动作 + 结果`，含失败→介入→成功→创新弧线 |
+| 技术亮点 | `**1. 标题**：解释文字`（编号列表，不是纯段落） |
+| 收尾金句 | 有洞察力的判断句，用类比或行业判断收尾 |
+| Star 号召 | `如果你觉得这个XXX有意思，欢迎 Star 支持开源 🧬` |
+| 数据来源 | `📌 数据来源：GitHub Trending，YYYY-MM-DD | 项目：xxx` |
+
+**⚠️ 高频踩坑：`**` Markdown 粗体残留（两种形态）**
+生成 HTML 时，内容中的 `**文字**` 会被 agent 误写成 HTML 字符串 `**文字**` 而不是 `<strong>文字</strong>`。
+
+**形态一（块级，容易发现）**：`**一、章节标题**` 写成 `<strong>**一、章节标题**</strong>` → grep 能查到
+**形态二（行内，难发现）**：`这是段落内容**加粗**也是正文` 写成 `<p>这是段落内容**加粗**也是正文</p>` → grep 查不到，因为 `**` 不在行首
+
+写完 HTML 后必查两步：
+```bash
+# 查块级残留
+grep -n '\\*\\*' /tmp/article.html          # 应返回空
+
+# 查行内残留（检查 content 属性中是否有未被 <strong> 包裹的 **）
+python3 -c "
+import re
+with open('/tmp/article.html') as f:
+    html = f.read()
+# 找所有 ** 出现位置及上下文
+for m in re.finditer(r'.{20}\*{2}.{20}', html):
+    print(f'行内残留: ...{m.group()}...')
+"
+# 应返回空
+```
+
+**预防方法**：写 HTML 时用 Python 列表 + `''.join(blocks)` 拼接，不要在块内写任何 `**`。
+
+
+### ⚠️ 格式合规必须在写文章之前检查，不是写完之后
+
+**核心教训（本session深刻教训）**：格式检查必须在**提笔之前**做，不是在写完之后才检查。正确顺序：
+
+```
+获取项目信息（GitHub API + README）
+    ↓
+格式合规预检（对照下方清单确认格式要素齐全）
+    ↓
+开始写 HTML
+    ↓
+写完后验证 Markdown 残留（`**` 和 `###`）
+    ↓
+空行检查
+    ↓
+发布
+```
+
+**格式预检清单（下笔前必读）：**
+- [ ] 标题公式：数字 + 感叹 + 核心洞察（参考格式指南）
+- [ ] 数据卡片：GitHub · Stars · Language · License 同行
+- [ ] 核心概念列表：5项 `• **概念名**：定义+举例
+- [ ] 工作流图示：`[步骤1] → [步骤2] → [步骤3]`
+- [ ] 实战案例：三次尝试弧线（失败→介入→成功→创新）
+- [ ] 技术亮点：编号列表 `1. 2. 3. 4. 5.`
+- [ ] 收尾金句 + Star号召 + 数据来源
+
+### 格式检查清单（发布前必查）
+
+- [ ] **写之前已读** `references/format-guide.md` 并对照六段式结构
+- [ ] 从 `references/article-template.html` 模板开始写文章
+- [ ] HTML 中无 `**`（Markdown bold 残留），`grep -n '\*\*' /tmp/article.html` 返回空
+- [ ] 不使用 `<style>` 标签，全部样式内联
+- [ ] 正文包裹容器：`style="max-width:678px;margin:0 auto;padding:0 8px;font-size:16px;line-height:1.6;"`
+- [ ] 发布前必须执行空行清理（见下方「强制清理流程」，这一步不可跳过）
+- [ ] **生成脚本检查**：确认脚本使用 `''.join(blocks)` 拼接 block，不使用 `'\n\n'.join()` 或多行字符串块
+- [ ] block 元素（h2/h3/p/ul/ol/div/pre/blockquote）之间不能有换行，微信会识别为段落加间距——全部写成一行，无换行符
+- [ ] 正文字号 16px，标题 h2 18px，h3 17px
+- [ ] 行高 1.6，段间距 16px
+- [ ] 列表禁止用 `<ul><li>` 和 `<ol><li>`（微信对两者都有渲染 bug），改用 `•` 符号 + `<p style="text-indent:-16px;padding-left:16px;">` 或 `①②③` + `<p>` 段落
+- [ ] 所有间距只使用 `margin-bottom`，不使用 `margin-top` 或 `padding-top`
+- [ ] block 元素之间无任何换行符
+- [ ] 重点强调用 `<strong style="color:#e63946;">`
+- [ ] 链接：`style="color:#1a73e8;"`
+- [ ] **代码块 `<code>` 必须设置 `color:#e8e8e8` + 等宽字体**，不能用默认颜色（深色背景+默认黑色文字会看不见）
+- [ ] **正文（二、项目介绍）中至少插入一张项目截图**（mmbiz URL 必须嵌入 HTML，脚本 Gate 会强制检查，无图则拒绝发布）
+
+### ⚠️ HTML 拼接技术规范（防止多余空行的根本方法）
+
+**问题根因**：用 Python 字符串列表 + `'\n\n'.join()` 或 `'\n'.join()` 拼接 HTML，会在每个 block 之间插入换行符，导致 JSON payload 的 `content` 字段携带 `\n`，微信渲染时将连续换行识别为段落分隔符，产生多余空白段落（视觉上表现为间隔点和空白行）。
+
+**清理脚本的局限性**：`cleanup_html.py` 只能移除「纯空行」（整行都是空白），无法移除嵌在多行 HTML 块内部的新行。例如下面这段 HTML：
+```html
+<p style="margin:0 0 16px 0;">
+  这是第一段内容
+</p>
+
+<p style="margin:0 0 16px 0;">
+  这是第二段内容
+</p>
+```
+`cleanup_html.py` 只能去掉 `}\n\n<p` 之间的空行，但块内部的 `\n  这是第一段内容\n` 依然存在。
+
+**正确做法**：生成 HTML 时每个 block 完全写成一行，用 `''.join(blocks)` 直接拼接（零分隔符）。
+
+```python
+# ✅ 正确：每个块完全内联一行，块之间零分隔符
+blocks = [
+    '<p style="margin:0 0 16px 0;font-size:16px;line-height:1.8;color:#333;">第一段内容</p>',
+    '<p style="margin:0 0 16px 0;font-size:16px;line-height:1.8;color:#333;">第二段内容</p>',
+    '<h2 style="margin:24px 0 12px 0;font-size:20px;font-weight:bold;color:#111;">二、项目名是什么？</h2>',
+    '<img src="..." style="width:100%;border-radius:6px;margin:16px 0;" />',
+]
+html_content = ''.join(blocks)  # ← 无任何分隔符，所有间距通过 style 属性控制
+
+# ❌ 错误1：'\n\n'.join() —— JSON payload 携带 \n，微信渲染产生多余段落
+html_content = '\n\n'.join(blocks)
+
+# ❌ 错误2：多行字符串块 —— 块内部换行无法被 cleanup 移除
+blocks = [
+    '<p style="margin:0 0 16px 0;font-size:16px;">\n  第一段内容\n</p>',  # ← 块内部有换行
+    '<p style="margin:0 0 16px 0;font-size:16px;">\n  第二段内容\n</p>',
+]
+html_content = '\n\n'.join(blocks)  # ← 双重错误
+
+# ❌ 错误3：字符串列表 + '\n\n' 拼接后再写成多行
+html = (
+    '<p style="...">第一段</p>'
+    + '\n\n'
+    + '<p style="...">第二段</p>'
+)
+```
+
+**所有间距通过 CSS `style` 属性的 `margin`/`padding` 控制**，不要依赖源码换行来产生间距。
+
+**验证**：生成后用 `grep -n '^$' article.html` 检查是否有纯空行（应为 0）。如有，再用 `cleanup_html.py` 处理。
+
+### ⚠️ 强制空行清理流程（预防为主，清理为辅）
+
+**核心原则**：空行问题要预防在生成阶段，不要依赖清理作为主要手段。生成脚本必须遵守「inline 单行块 + `''.join()`」规范。
+
+**生成后验证（必须执行）**：
+
+```bash
+# 检查是否有纯空行（应为 0）
+grep -n '^$' /tmp/article_draft.html
+
+# 如果有，执行清理（自动备份 .bak）
+python3 scripts/cleanup_html.py /tmp/article_draft.html
+
+# 再次验证
+grep -n '^$' /tmp/article_draft.html  # 应仍为 0
+python3 scripts/cleanup_html.py --check /tmp/article_draft.html  # 应返回 [OK] 0 空行
+```
+
+**验证通过标准**：0 个纯空行（`grep -n '^$'` 返回空，或 `--check` 返回 `[OK] ... 0 空行，干净`）
+
+**重要**：`cleanup_html.py` 只能移除整行都是空白的行，无法移除 HTML 块内部的新行。如果生成阶段用了多行字符串块（错误写法），清理后依然会有新行残留，这时必须修复生成脚本重新生成。
+
+## 发送图片到飞书
+
+调用 `send_message` 时必须用**完整 target ID**（飞书 OC ID），不能用裸平台名：
+
+```
+# ✅ 正确
+target="feishu:oc_034bc08420a2daed53561bfceba5b3bf"
+
+# ❌ 错误（会报 invalid receive_id）
+target="feishu"
+```
+
+先查 ID：`send_message(action='list')` → 返回 `feishu:oc_...` 格式。
+
+## 典型完整流程
+
+1. **从模板开始**：写新文章前，先复制 `references/article-template.html` 作为起点
+2. 用户确认文章内容，选择发布
+3. **检查文章 HTML 格式**（见上方格式检查清单）
+4. 生成封面图 + 创建草稿
+5. 告知用户 media_id，建议手动选择分类后发布
+
+## 凭证配置
+
+发布文章时，图片必须通过以下两步才能在草稿中正常显示：
+
+### 配图位置：多图按章节嵌入，不是只有一张封面
+
+| 文章章节 | 配图类型 | 插入位置 |
+|----------|----------|----------|
+| 二、项目介绍 | 项目截图 / banner | 项目简介段落下方 |
+| 三、架构设计 | 架构图 / 工作流图 | 架构文字说明前 |
+| 五、实战场景 | demo GIF / 操作视频 | 场景描述下方 |
+
+**流程**：先上传所有正文图获取 mmbiz URL → 按位置写入 HTML → 最后发布草稿（封面图单独走 add_material）。
+
+### 第一步：上传图片获取公网 URL
+
+⚠️ **不要**用 `add_material?type=image`（返回 media_id，无法直接渲染）
+✅ **正确做法**：用 `media/uploadimg` 接口（返回公网 URL，可直接用于 img src）
+
+```python
+# 正确方式：返回公网 URL（用于 img src）
+POST /cgi-bin/media/uploadimg?access_token=...
+→ {"url": "http://mmbiz.qpic.cn/mmbiz_png/.../0?from=appmsg"}
+
+# 注意：add_material?type=image 返回的是 media_id，不适合直接做 img src
+# 只有 thumb 用 add_material?type=thumb（返回 media_id）
+# 内容图必须用 media/uploadimg（返回公网 URL）
+```
+
+### 第二步：用返回的 URL 嵌入文章 HTML
+
+```html
+<img src="http://mmbiz.qpic.cn/mmbiz_png/.../0?from=appmsg" style="width:100%;border-radius:6px;" />
+```
+
+### 完整流程（Python）
+
+```python
+import json, urllib.request, ssl
+
+def upload_article_image(token, image_path):
+    """上传文章内容图片，返回公网 URL"""
+    url = f"https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token={token}"
+    boundary = "----PythonFormBoundary123456789"
+    with open(image_path, 'rb') as f:
+        file_data = f.read()
+    body = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="media"; filename="img.png"\r\n'
+        f"Content-Type: image/png\r\n\r\n"
+    ).encode() + file_data + f"\r\n--{boundary}--\r\n".encode()
+    req = urllib.request.Request(url, data=body, method='POST')
+    req.add_header('Content-Type', f'multipart/form-data; boundary={boundary}')
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    with urllib.request.urlopen(req, timeout=20, context=ctx) as r:
+        resp = json.loads(r.read())
+        return resp['url']  # 直接返回公网 URL
+
+# 用法
+img_url = upload_article_image(token, '/path/to/image.png')
+html = f'<img src="{img_url}" style="width:100%;border-radius:6px;" />'
+```
+
+### 内容图获取技巧
+
+- **GitHub OG 社交预览图（最通用）**：`https://opengraph.githubassets.com/1/{owner}/{repo}` — 无需认证，直接返回 1200×600 PNG，适合做正文配图/项目 banner。**优先使用**，即使 README 无图也能获取。
+- **GitHub user-attachments 公开资产**：`https://github.com/user-attachments/assets/<hash>` 是 GitHub 公开 CDN，curl 直接可下载（无需认证），通常是 README 内嵌的截图/GIF。例：`curl -s -L "https://github.com/user-attachments/assets/f168182f-4d9a-44e0-94d7-08d018cc8a3a" -o /tmp/demo.png --max-time 30`。**这类图片质量高、与项目内容高度相关，优先于 OG 图使用。**
+- **GitHub 项目 README 图**：用 `https://api.github.com/repos/{owner}/{repo}/contents/{path}` + `Accept: application/vnd.github.raw+json` 获取 raw URL
+- **GitHub 社交预览图备选**：`https://opengraph.github.com/?repo=owner%2Frepo`（可能返回 404）
+- **截图 fallback**：若项目既无 README 图也无 OG 图，用 AI 生成一张技术示意图代替
+- 裁剪封面图：`Pillow` 中心裁剪 + 缩放到 900×900
+
+### 封面图 vs 内容图片
+
+| 类型 | 接口 | 返回值 | 用途 |
+|------|------|--------|------|
+| 封面图（缩略图） | `material/add_material?type=image` | **media_id**（注意不是 thumb_media_id 字段） | 草稿封面，传给 draft/add 的 `thumb_media_id` 字段 |
+| 文章内容图 | `media/uploadimg` | url（公网） | 草稿正文 img src |
+
+> ⚠️ **封面图必须用 `type=image`（不是 `type=thumb`）**：`media/upload?type=thumb` 返回的 `thumb_media_id` 格式不兼容 `draft/add`，会报 `invalid media_id`。正确做法是用 `material/add_material?type=image` 上传 JPEG/PNG，将返回的 `media_id` 字段作为 `thumb_media_id` 传入草稿。
+
+## 已知限制
+
+| 功能 | 状态 | 解决方案 |
+|------|------|----------|
+| 部分分类 | ⚠️ category_id 不稳定 | 手动在后台选择「GitHub好项目推荐合集」 |
+| 直接群发 | ❌ 个人号无权限 | 草稿箱手动发布 |
+| 格式丢失 | ⚠️ HTML 无内联样式时平台渲染异常 | 发布前按格式规范检查文章 HTML 结构 |
+| 草稿图片不显示 | ⚠️ API 返回的 media_id 直接用无法渲染 | 必须用 `media/uploadimg` 返回的公网 URL |
+| 中文乱码 | ⚠️ 读取 HTML 文件时必须指定 `encoding="utf-8"`，否则中文变 Unicode 转义序列 | 用 `json.dumps(ensure_ascii=False)` + `encode("utf-8")` |
+| raw.githubusercontent.com 超时 | ⚠️ GitHub raw 文件无法直接下载 | 用 `api.github.com/repos/{owner}/{repo}/contents/{path}` + base64 解码 |
+| mmx vision describe 替代 vision_analyze | `vision_analyze` 工具返回 401 时，`mmx vision describe` CLI 仍可用 | `mmx vision describe "/path/to/screenshot.jpg" --prompt "..."` |
+| 微信草稿有序列表（`<ol>`）渲染异常 | 有序列表第 1、3 项在预览中显示为空，但 HTML 源码所有 `<li>` 完整；去掉 `<strong>` 后仍无法解决 | **根因**：WeChat 编辑器对 `<ol><li>...</li></ol>` 结构有渲染 bug，原因不明。**已验证的 definitive 解决方案**：将整个 `<ol>` 替换为 `①②③④⑤` 前缀的 `<p>` 段落。示例：`<ol><li>文本正则化（TN）...</li><li>Grapheme-to-Phoneme（G2P）...</li>...</ol>` → `<p style="margin:0 0 6px 0;font-size:15px;line-height:1.6;">① 文本正则化（TN）...</p><p style="margin:0 0 6px 0;font-size:15px;line-height:1.6;">② Grapheme-to-Phoneme（G2P）...</p>`。每项 `margin:0 0 6px 0`，行高 `line-height:1.6`。**不要再用 `<ol>` 或 `<ul>`**，一律用带圈数字前缀的 `<p>` 段落代替有序列表。 |
+| WeChat `uploadimg` 返回 40137 格式错误 | PNG 图片上传失败 | WeChat `uploadimg` 只接受 JPEG，PNG 一律转 JPEG 再上传。若 PIL 报 `image file is truncated`，说明源文件损坏，需找其他图片 |
+| `urllib.request` multipart 上传报 41005 | Python urllib.request 上传图片返回 `media data missing` | 改用 subprocess + curl：`curl -s -F 'media=@img.jpg' 'https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=TOKEN&type=image'` |
+| execute_code 的 Python sandbox 看不到 `~/.hermes/.env` 中的 API Key | `os.environ.get('MINIMAX_API_KEY')` 返回空（sandbox 环境隔离） | 用 `bash -c 'source ~/.hermes/.env && python3 -c "import os; print(os.environ[...])"'` 或直接用 `terminal` 执行含凭证的脚本 |
+| WeChat `access_token` 缓存路径 | sandbox 内写 `~/.hermes/mp_token_cache.json` 后，sandbox 下次运行看不到（路径重置） | WeChat API 调用必须在 `terminal` 执行，或通过 `scripts/publish_zhili.py`（它从 `load_config()` 读取 APPSECRET 后内联进脚本）调用 |
+| mmx CLI 读取 `~/.hermes/.env` | mmx CLI 用 Node.js 读取环境变量，直接 `mmx auth login` 会报 key 无效 | 用 `bash -c 'source ~/.hermes/.env && mmx auth login --api-key "$MINIMAX_API_KEY"'` 确保环境变量展开 |
