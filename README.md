@@ -21,33 +21,36 @@ npx skills add jacardl/skillshub --skill neat-freak
 - [9router](skills/ai/9router/SKILL.md)
 - [mmx-cli](skills/ai/mmx-cli/SKILL.md)
 
-### 助理（assistant，4个）
+### 助理（assistant，8个）
 - [find-skills](skills/assistant/find-skills/SKILL.md)
+- [markitdown](skills/assistant/markitdown/SKILL.md)
+- [markdown-to-report](skills/assistant/markdown-to-report/SKILL.md)
+- [neat-freak](skills/assistant/neat-freak/SKILL.md)
 - [obsidian](skills/assistant/obsidian/SKILL.md)
 - [obsidian-cli](skills/assistant/obsidian-cli/SKILL.md)
 - [wechat-article-to-markdown](skills/assistant/wechat-article-to-markdown/SKILL.md)
+- [youtube-transcript](skills/assistant/youtube-transcript/SKILL.md)
 
-### 创意（creative，3个）
+### 创意（creative，4个）
 - [khazix-writer](skills/creative/khazix-writer/SKILL.md)
-- [zhiligithub](skills/creative/zhiligithub/SKILL.md)
 - [zhilicomments](skills/creative/zhilicomments/SKILL.md)
+- [zhili-publish](skills/creative/zhili-publish/SKILL.md)
+- [zhiligithub](skills/creative/zhiligithub/SKILL.md)
 
 ### 开发（developer，5个）
-- [markitdown](skills/developer/markitdown/SKILL.md)
 - [setup-matt-pocock-skills](skills/developer/setup-matt-pocock-skills/SKILL.md)
 - [skill-creator](skills/developer/skill-creator/SKILL.md)
 - [skill-github-sync](skills/developer/skill-github-sync/SKILL.md)
 - [skill-maintenance](skills/developer/skill-maintenance/SKILL.md)
+- [markitdown](skills/developer/markitdown/SKILL.md)
 
-### 运营（operations，39个）
+### 运营（operations，35个）
 - [aihot](skills/operations/aihot/SKILL.md)
 - [baoyu-url-to-markdown](skills/operations/baoyu-url-to-markdown/SKILL.md)
 - [geo-content-strategy](skills/operations/geo-content-strategy/SKILL.md)
 - [geo-keyword-research](skills/operations/geo-keyword-research/SKILL.md)
 - [geo-strategy-report](skills/operations/geo-strategy-report/SKILL.md)
 - [github-daily-trending](skills/operations/github-daily-trending/SKILL.md)
-- [neat-freak](skills/operations/neat-freak/SKILL.md)
-- [patent-disclosure-skill](skills/operations/patent-disclosure-skill/SKILL.md)
 - [radar-daily-report](skills/operations/radar-daily-report/SKILL.md)
 - [radar-data-collection](skills/operations/radar-data-collection/SKILL.md)
 - [scrapling](skills/operations/scrapling/SKILL.md)
@@ -76,14 +79,13 @@ npx skills add jacardl/skillshub --skill neat-freak
 - [seo-sitemap](skills/operations/seo-sitemap/SKILL.md)
 - [seo-sxo](skills/operations/seo-sxo/SKILL.md)
 - [seo-technical](skills/operations/seo-technical/SKILL.md)
-- [youtube-transcript](skills/operations/youtube-transcript/SKILL.md)
-- [zhili-publish](skills/operations/zhili-publish/SKILL.md)
 
 ### 产品（product，6个）
 - [brand-product-audience-relevance](skills/product/brand-product-audience-relevance/SKILL.md)
 - [competitor-discovery](skills/product/competitor-discovery/SKILL.md)
 - [hv-analysis](skills/product/hv-analysis/SKILL.md)
 - [markdown-to-report](skills/product/markdown-to-report/SKILL.md)
+- [patent-disclosure-skill](skills/product/patent-disclosure-skill/SKILL.md)
 - [software-copyright-materials](skills/product/software-copyright-materials/SKILL.md)
 
 共 6 个分类，58 个技能。
