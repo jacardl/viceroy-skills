@@ -21,13 +21,14 @@ npx skills add jacardl/skillshub --skill neat-freak
 - [9router](skills/ai/9router/SKILL.md)
 - [mmx-cli](skills/ai/mmx-cli/SKILL.md)
 
-### 助理（assistant，8个）
+### 助理（assistant，9个）
 - [find-skills](skills/assistant/find-skills/SKILL.md)
 - [markitdown](skills/assistant/markitdown/SKILL.md)
 - [markdown-to-report](skills/assistant/markdown-to-report/SKILL.md)
 - [neat-freak](skills/assistant/neat-freak/SKILL.md)
 - [obsidian](skills/assistant/obsidian/SKILL.md)
 - [obsidian-cli](skills/assistant/obsidian-cli/SKILL.md)
+- [storage-analyzer](skills/assistant/storage-analyzer/SKILL.md)
 - [wechat-article-to-markdown](skills/assistant/wechat-article-to-markdown/SKILL.md)
 - [youtube-transcript](skills/assistant/youtube-transcript/SKILL.md)
 
@@ -88,4 +89,4 @@ npx skills add jacardl/skillshub --skill neat-freak
 - [patent-disclosure-skill](skills/product/patent-disclosure-skill/SKILL.md)
 - [software-copyright-materials](skills/product/software-copyright-materials/SKILL.md)
 
-共 6 个分类，58 个技能。
+共 6 个分类，59 个技能。
