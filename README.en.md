@@ -117,11 +117,19 @@ Install khazix-writer
 | [**geo-content-strategy**](skills/operations/geo-content-strategy/SKILL.md) | Build a GEO content strategy |
 | [**geo-keyword-research**](skills/operations/geo-keyword-research/SKILL.md) | Research keywords for GEO |
 | [**geo-strategy-report**](skills/operations/geo-strategy-report/SKILL.md) | Generate a GEO strategy report |
+| [**scrapling**](skills/operations/scrapling/SKILL.md) | Scrape this website |
+| **GEO Series (3)** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
+| **SEO Series (25)** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
+
+---
+
+### 📊 Operations — Other
+
+| Name | How to trigger |
+|------|----------------|
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | What's trending on GitHub today |
 | [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | Give me the Radar daily report |
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | Public opinion data collection standards |
-| [**scrapling**](skills/operations/scrapling/SKILL.md) | Scrape this website |
-| **SEO Series (25)** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
 
 ---
 

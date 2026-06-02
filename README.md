@@ -115,14 +115,19 @@
 |------|----------|
 | [**aihot**](skills/operations/aihot/SKILL.md) | 今天 AI 圈有什么新东西 / 最近一周 AI 论文 |
 | [**baoyu-url-to-markdown**](skills/operations/baoyu-url-to-markdown/SKILL.md) | 这个链接转成 markdown |
-| [**geo-content-strategy**](skills/operations/geo-content-strategy/SKILL.md) | 做一下 GEO 内容策略 |
-| [**geo-keyword-research**](skills/operations/geo-keyword-research/SKILL.md) | 帮我研究一下关键词 |
-| [**geo-strategy-report**](skills/operations/geo-strategy-report/SKILL.md) | 生成一份 GEO 策略报告 |
+| [**scrapling**](skills/operations/scrapling/SKILL.md) | 帮我爬这个网站 |
+| **GEO 系列（3个）** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
+| **SEO 系列（25个）** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
+
+---
+
+### 运营（operations）— 其他
+
+| 名字 | 触发示例 |
+|------|----------|
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 今天 GitHub 有什么黑马项目 |
 | [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | 给我一份 Radar 日报 |
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | 舆情数据采集规范 |
-| [**scrapling**](skills/operations/scrapling/SKILL.md) | 帮我爬这个网站 |
-| **SEO 系列（25个）** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
 
 ---
 
