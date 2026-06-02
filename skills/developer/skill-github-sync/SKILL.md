@@ -1,7 +1,7 @@
 ---
 name: skill-github-sync
 description: >
-  将 Skills 同步到 GitHub 仓库（skillshub 公开仓库 + 私有专属仓库），并维护符合 khazix-skills 标准的 README。当用户说"同步skills到GitHub"、"上传skill到github"、"推送skill到远程"、"更新skillshub仓库"、"维护GitHub上的skill仓库"、"更新 README"时使用此技能。包含完整的 GitHub 推送流程和标准 README 生成规范。
+  将 Skills 同步到 GitHub 仓库（viceroy-skills 公开仓库 + 私有专属仓库），并维护符合 khazix-skills 标准的 README。当用户说"同步skills到GitHub"、"上传skill到github"、"推送skill到远程"、"更新viceroy-skills仓库"、"维护GitHub上的skill仓库"、"更新 README"时使用此技能。包含完整的 GitHub 推送流程和标准 README 生成规范。
 ---
 
 # Skill GitHub Sync
@@ -33,7 +33,7 @@ description: >
 
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.github.com/repos/jacardl/skillshub/contents/skills" | \
+  "https://api.github.com/repos/jacardl/viceroy-skills/contents/skills" | \
   grep '"name"'
 ```
 
@@ -41,7 +41,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 使用 git 原生 push 方式（比 GitHub API 更稳定）：
 
-1. `git clone https://github.com/jacardl/skillshub.git /tmp/skillshub_sync`
+1. `git clone https://github.com/jacardl/viceroy-skills.git /tmp/viceroy-skills_sync`
 2. 复制技能文件到对应分类目录
 3. `git add → commit → GIT_ASKPASS=echo git push`
 
@@ -54,7 +54,7 @@ chmod 600 ~/.netrc
 
 远程 URL 嵌入 Token：
 ```bash
-git remote set-url origin https://jacardl:$(cat ~/.hermes/keys/github_token.txt)@github.com/jacardl/skillshub.git
+git remote set-url origin https://jacardl:$(cat ~/.hermes/keys/github_token.txt)@github.com/jacardl/viceroy-skills.git
 ```
 
 ### 第四步：同步后必须更新 README
@@ -84,7 +84,7 @@ git remote set-url origin https://jacardl:$(cat ~/.hermes/keys/github_token.txt)
 ### 安装命令格式（必须用 `--skill`）
 
 ```bash
-npx skills add jacardl/skillshub --skill <skill-name>
+npx skills add jacardl/viceroy-skills --skill <skill-name>
 ```
 
 示例触发：
@@ -114,7 +114,7 @@ npx skills add jacardl/skillshub --skill <skill-name>
 # 标题 + Badge 区
 <div align="center">
 [中英切换]
-# Skillshub
+# viceroy-skills
 [描述]
 [Badge: License, Skills, AgentSkills]
 [平台徽章]
@@ -157,14 +157,14 @@ npx skills add jacardl/skillshub --skill <skill-name>
 
 ```bash
 # 克隆
-git clone https://github.com/jacardl/skillshub.git /tmp/skillshub_sync
+git clone https://github.com/jacardl/viceroy-skills.git /tmp/viceroy-skills_sync
 
 # 复制技能（如 storage-analyzer 到 assistant）
-mkdir -p /tmp/skillshub_sync/skills/assistant/storage-analyzer
-cp -r /path/to/skill/* /tmp/skillshub_sync/skills/assistant/storage-analyzer/
+mkdir -p /tmp/viceroy-skills_sync/skills/assistant/storage-analyzer
+cp -r /path/to/skill/* /tmp/viceroy-skills_sync/skills/assistant/storage-analyzer/
 
 # 提交
-cd /tmp/skillshub_sync
+cd /tmp/viceroy-skills_sync
 git add <files>
 git commit -m "feat: add storage-analyzer skill"
 GIT_ASKPASS=echo git push

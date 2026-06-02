@@ -72,11 +72,11 @@ description: 维护技能库整洁，系统性整理、分类、清理重复和�
 
 ## GitHub API 推送权限要求（陷阱）
 
-向 jacardl/skillshub 推送技能文件使用 GitHub REST API（blobs/trees/commits/refs）。**必须使用有写入权限的 Token**：
+向 jacardl/viceroy-skills 推送技能文件使用 GitHub REST API（blobs/trees/commits/refs）。**必须使用有写入权限的 Token**：
 
 - **Classic PAT**（推荐）：在 https://github.com/settings/tokens/new 创建，勾选 `repo` scope
 - **Fine-grained PAT**：在 https://github.com/settings/tokens 创建，需单独设置：
-  - Permissions → Repository access → 选择具体仓库（如 `jacardl/skillshub`）
+  - Permissions → Repository access → 选择具体仓库（如 `jacardl/viceroy-skills`）
   - Repository permissions → Contents 设置为 **Read and write**（默认只有 Read）
 
 **验证方法**：创建 blob 时不报 403 即代表有写入权限
@@ -84,7 +84,7 @@ description: 维护技能库整洁，系统性整理、分类、清理重复和�
 curl -s -X POST -H "Authorization: token <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"content":"test","encoding":"utf-8"}' \
-  "https://api.github.com/repos/jacardl/skillshub/git/blobs"
+  "https://api.github.com/repos/jacardl/viceroy-skills/git/blobs"
 # 成功返回 {"sha":"..."}，403 = 无写入权限
 ```
 
@@ -92,7 +92,7 @@ Token 凭证保存路径：`~/.hermes/keys/github_token.txt`
 
 ### GitHub 推送路径规范
 
-所有技能推送到 `jacardl/skillshub` 时，路径格式统一为：
+所有技能推送到 `jacardl/viceroy-skills` 时，路径格式统一为：
 
 ```
 skills/{category}/{skill-name}/SKILL.md
@@ -112,7 +112,7 @@ skills/ai/9router/SKILL.md
 ```bash
 # 列出所有技能路径
 curl -s -H "Authorization: token $TOKEN" \
-  "https://api.github.com/repos/jacardl/skillshub/git/trees/main?recursive=1" | \
+  "https://api.github.com/repos/jacardl/viceroy-skills/git/trees/main?recursive=1" | \
   python3 -c "import sys,json; [print(f['path']) for f in json.load(sys.stdin)['tree'] if f['path'].endswith('SKILL.md')]"
 ```
 

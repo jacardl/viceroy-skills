@@ -2,7 +2,7 @@
 
 [中文](./README.md) · **English**
 
-# 🧰 Skillshub
+# viceroy-skills
 
 #### My personal Skill library — organized by role, ready to use
 
@@ -43,7 +43,7 @@ Each skill was running in my own projects long enough to prove it actually saves
 In any agent that supports Skills, just say:
 
 ```
-Install this skill: https://github.com/jacardl/skillshub/tree/main/<skill-name>
+Install this skill: https://github.com/jacardl/viceroy-skills/tree/main/<skill-name>
 ```
 
 Examples:

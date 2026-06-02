@@ -2,7 +2,7 @@
 
 **中文** · [English](./README.en.md)
 
-# 🧰 Skillshub
+# viceroy-skills
 
 #### 佳哥私人 Skill 库，按岗位分类，开箱即用
 
@@ -44,7 +44,7 @@
 在支持 Skill 的 Agent 里直接说：
 
 ```
-帮我安装这个 skill：https://github.com/jacardl/skillshub/tree/main/<skill-name>
+帮我安装这个 skill：https://github.com/jacardl/viceroy-skills/tree/main/<skill-name>
 ```
 
 示例：
