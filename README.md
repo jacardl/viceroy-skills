@@ -75,6 +75,7 @@
 
 | 名字 | 触发示例 |
 |------|----------|
+| [**baoyu-url-to-markdown**](skills/assistant/baoyu-url-to-markdown/SKILL.md) | 这个链接转成 markdown |
 | [**find-skills**](skills/assistant/find-skills/SKILL.md) | 帮我找一下 ClawHub 上有关 SEO 的 skill |
 | [**markitdown**](skills/assistant/markitdown/SKILL.md) | 这个 PDF 转成 markdown |
 | [**markdown-to-report**](skills/assistant/markdown-to-report/SKILL.md) | 把这份报告转成信息图风格 HTML |
@@ -114,7 +115,6 @@
 | 名字 | 触发示例 |
 |------|----------|
 | [**aihot**](skills/operations/aihot/SKILL.md) | 今天 AI 圈有什么新东西 / 最近一周 AI 论文 |
-| [**baoyu-url-to-markdown**](skills/operations/baoyu-url-to-markdown/SKILL.md) | 这个链接转成 markdown |
 | [**scrapling**](skills/operations/scrapling/SKILL.md) | 帮我爬这个网站 |
 | **GEO 系列（3个）** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
 | **SEO 系列（25个）** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
