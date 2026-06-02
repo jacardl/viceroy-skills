@@ -1,6 +1,6 @@
 # Database Notes
 
-更新时间：2026-05-28
+更新时间：2026-06-02
 
 ## 连接信息
 
@@ -15,17 +15,53 @@ POSTGRES_SCHEMA=cid
 
 ## 当前状态
 
-当前 PostgreSQL 中已校验的是原 30 个人生阶段城市表版本：
+当前 PostgreSQL 中已导入并校验 70 个 Persona Report：
+
+- 40 个 `年龄段 x 城市级别` 主分析切片，`segment_type='age_city'`
+- 30 个 `人生阶段 x 城市级别` 辅助切片，`segment_type='life_stage_city'`
 
 | 表 | 行数 |
 |---|---:|
-| `cid.dim_report_source` | 30 |
-| `cid.dim_audience_segment` | 30 |
-| `cid.fact_segment_profile_value` | 15450 |
-| `cid.fact_segment_entity_metric` | 51729 |
-| `cid.fact_segment_entity_bucket` | 620932 |
+| `cid.dim_report_source` | 70 |
+| `cid.dim_audience_segment` | 70 |
+| `cid.dim_audience_segment where segment_type='age_city'` | 40 |
+| `cid.dim_audience_segment where segment_type='life_stage_city'` | 30 |
+| `cid.fact_segment_profile_value` | 36050 |
+| `cid.fact_segment_entity_metric` | 118765 |
+| 购买指标行 | 109540 |
+| 媒体行为指标行 | 9225 |
+| `cid.fact_segment_entity_bucket` | 1424020 |
 
-新增 40 个年龄城市主分析表尚未正式落库。当前 `scripts/analyze_brand_product.py` 直接读取 Excel，确保 40 个主分析人群已经可以分析。
+40 个主分析人群的城市线级已统一为 `一线 / 新一线 / 二线 / 三线 / 四五线`；新增文件中的 `四线五线` 保存在 `city_tier_raw`，标准值保存在 `city_tier='四五线'`。
+
+## 随 Skill 携带的迁移备份
+
+本 skill 内含当前 70 表版本 PostgreSQL 迁移备份：
+
+```text
+references/db_dumps/radar_cid_70_20260602.dump
+```
+
+备份信息：
+
+- 格式：PostgreSQL custom format (`pg_dump -Fc`)
+- 数据库：`radar`
+- schema：`cid`
+- PostgreSQL / pg_dump 版本：15.18
+- 文件大小：约 8.4MB
+- SHA-256：`c2ae9c1275e7cd18bdb0ff1b2d23dfd96c53bfd9c8a9bf9d3dc4fac22ceefa68`
+- 内容：70 个 Persona Report，即 40 个 `age_city` 主分析切片 + 30 个 `life_stage_city` 辅助切片
+
+恢复示例：
+
+```bash
+docker cp skills/brand-product-audience-relevance/references/db_dumps/radar_cid_70_20260602.dump \
+  radar-db:/tmp/radar_cid_70_20260602.dump
+
+docker exec -e PGPASSWORD=radar radar-db pg_restore \
+  -U radar -d radar --clean --if-exists \
+  /tmp/radar_cid_70_20260602.dump
+```
 
 ## 数据库检查
 
@@ -53,9 +89,9 @@ select * from cid.v_segment_entity_metrics;
 select * from cid.v_segment_entity_affinity;
 ```
 
-## 70 表目标 schema 扩展
+## 70 表 schema 扩展
 
-为了同时保存 40 个主分析切片和 30 个辅助切片，`cid.dim_audience_segment` 建议增加以下字段：
+为了同时保存 40 个主分析切片和 30 个辅助切片，`cid.dim_audience_segment` 已增加以下字段：
 
 ```sql
 alter table cid.dim_audience_segment
