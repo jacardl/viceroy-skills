@@ -1,17 +1,28 @@
 <div align="center">
 
-**中文** · English
+**中文** · [English](./README.en.md)
 
 # 🧰 Skillshub
 
 #### 佳哥私人 Skill 库，按岗位分类，开箱即用
 
-[![Skills](https://img.shields.io/badge/Skills-59-10B981?style=for-the-badge)](#-skills)
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
+[![Skills](https://img.shields.io/badge/Skills-59-10B981?style=for-the-badge)](#-skills)
+[![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
-支持 Claude Code、Codex、OpenClaw 等 Agent
+![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
+![Codex](https://img.shields.io/badge/Codex-Skill-10B981?style=flat-square&logo=openai&logoColor=white)
+![OpenCode](https://img.shields.io/badge/OpenCode-Skill-3B82F6?style=flat-square)
+![OpenClaw](https://img.shields.io/badge/OpenClaw-Skill-8B5CF6?style=flat-square)
 
 </div>
+
+---
+
+都是自己在项目里跑通了一段时间、确实省事才开源的东西。没什么花活，就是几个挺实用的技能。
+
+- **Skills** — Agent 能直接加载的结构化指令集，遵循 [Agent Skills](https://agentskills.io) 开放标准。Claude Code、Codex、OpenCode、OpenClaw 都能装
+- 支持 Claude Code、Codex、OpenClaw 等主流 Agent
 
 ---
 
@@ -39,6 +50,8 @@
 示例：
 ```
 帮我安装 storage-analyzer
+帮我安装 hv-analysis
+帮我安装 khazix-writer
 ```
 
 ---
@@ -60,70 +73,91 @@
 
 ### 🧑‍💼 助理（assistant）
 
-| 名字 | 一句话 |
-|------|--------|
-| [**find-skills**](skills/assistant/find-skills/SKILL.md) | 从 ClawHub / AgentSkills.io 搜索和安装 Skill |
-| [**markitdown**](skills/assistant/markitdown/SKILL.md) | 把 PDF、Word、PPT、HTML 丢进去，出来干净 Markdown |
-| [**markdown-to-report**](skills/assistant/markdown-to-report/SKILL.md) | 把 Markdown 转成排版精美的 HTML 报告（信息图风格） |
-| [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | 每次任务跑完，把文档、CLAUDE.md、Agent 记忆全部对齐一遍 |
-| [**obsidian**](skills/assistant/obsidian/SKILL.md) | 读取、搜索、新建、编辑 Obsidian 笔记库 |
-| [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | Obsidian CLI 版本，支持所有主流 Obsidian 插件 |
-| [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | 一句话扫描 Mac / Windows 磁盘，三色分级，网页上一键清理 |
-| [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | 把微信公众号文章转成干净 Markdown |
-| [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | 拉 YouTube 字幕，按时间戳整理成结构化笔记 |
+| 名字 | 触发示例 |
+|------|----------|
+| [**find-skills**](skills/assistant/find-skills/SKILL.md) | 帮我找一下 ClawHub 上有关 SEO 的 skill |
+| [**markitdown**](skills/assistant/markitdown/SKILL.md) | 这个 PDF 转成 markdown |
+| [**markdown-to-report**](skills/assistant/markdown-to-report/SKILL.md) | 把这份报告转成信息图风格 HTML |
+| [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | /neat（任务结束后整理文档和记忆） |
+| [**obsidian**](skills/assistant/obsidian/SKILL.md) | 搜一下我的 Obsidian 笔记库 |
+| [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | 新建一条 Obsidian 笔记 |
+| [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | 帮我看看存储 / C盘满了 / 清理磁盘 |
+| [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | 这篇公众号文章转成 markdown |
+| [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | 这个 YouTube 视频的字幕拉下来 |
 
 ---
 
 ### 🎨 创意（creative）
 
-| 名字 | 一句话 |
-|------|--------|
-| [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | 用卡兹克的写作风格写公众号长文（节奏、禁忌词、风格示例全有） |
-| [**zhili-publish**](skills/creative/zhili-publish/SKILL.md) | 把 HTML 草稿发布到「直隶按察使」公众号，支持封面图、摘要、自动发布 |
-| [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | 把短评发布到「独立小扎喝不醉每天都在天上飞」公众号 |
-| [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | 把 GitHub 项目写成公众号文章（标题 + 介绍 + 要点） |
+| 名字 | 触发示例 |
+|------|----------|
+| [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | 用卡兹克的风格写篇公众号文章 |
+| [**zhili-publish**](skills/creative/zhili-publish/SKILL.md) | 把这个 HTML 草稿发布到公众号 |
+| [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | 发一条短评到公众号 |
+| [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | 把这个 GitHub 项目写成公众号文章 |
 
 ---
 
 ### 🛠️ 开发（developer）
 
-| 名字 | 一句话 |
-|------|--------|
-| [**setup-matt-pocock-skills**](skills/developer/setup-matt-pocock-skills/SKILL.md) | 在 AGENTS.md 里一键搭建 Matt Pocock 的 Skill 规范 |
-| [**skill-creator**](skills/developer/skill-creator/SKILL.md) | 从零创建一个符合规范的 Skill，包含 SKILL.md、references、scripts |
-| [**skill-github-sync**](skills/developer/skill-github-sync/SKILL.md) | 把本地 Skill 同步到 GitHub 仓库，支持 README 自动生成 |
-| [**skill-maintenance**](skills/developer/skill-maintenance/SKILL.md) | 整理技能库：分类、查重、清理低频技能 |
+| 名字 | 触发示例 |
+|------|----------|
+| [**setup-matt-pocock-skills**](skills/developer/setup-matt-pocock-skills/SKILL.md) | 帮我装 Matt Pocock 的 Skill 规范 |
+| [**skill-creator**](skills/developer/skill-creator/SKILL.md) | 帮我从零创建一个 skill |
+| [**skill-github-sync**](skills/developer/skill-github-sync/SKILL.md) | 同步本地 skill 到 GitHub 仓库 |
+| [**skill-maintenance**](skills/developer/skill-maintenance/SKILL.md) | 整理一下技能库 / 查重 |
 
 ---
 
 ### 📊 运营（operations）
 
-| 名字 | 一句话 |
-|------|--------|
-| [**aihot**](skills/operations/aihot/SKILL.md) | 每天 AI 圈动态：日报、精选条目、模型发布、产品动态 |
-| [**baoyu-url-to-markdown**](skills/operations/baoyu-url-to-markdown/SKILL.md) | 把链接转成干净 Markdown（支持公众号、知乎、微博等） |
-| [**geo-content-strategy**](skills/operations/geo-content-strategy/SKILL.md) | GEO 内容策略：覆盖度 × 权威性 × 信任度三维度 |
-| [**geo-keyword-research**](skills/operations/geo-keyword-research/SKILL.md) | 从搜索和社交挖掘高频关键词，生成 10+10 GEO 关键词报告 |
-| [**geo-strategy-report**](skills/operations/geo-strategy-report/SKILL.md) | GEO 策略报告：四象限矩阵、竞品分析、预算分配、执行路线图 |
-| [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 黑马发现引擎，多源项目选题 → 公众号文章全流程 |
-| [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | Radar 日报：黄金价格 + AI 圈 + 国际大事件 |
-| [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | Radar 数据采集规范：严谨、完整、有据可查 |
-| [**scrapling**](skills/operations/scrapling/SKILL.md) | 自适应爬虫框架，处理 Cloudflare、反检测、动态内容 |
-| **SEO 系列** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical（共 25 个） |
+| 名字 | 触发示例 |
+|------|----------|
+| [**aihot**](skills/operations/aihot/SKILL.md) | 今天 AI 圈有什么新东西 / 最近一周 AI 论文 |
+| [**baoyu-url-to-markdown**](skills/operations/baoyu-url-to-markdown/SKILL.md) | 这个链接转成 markdown |
+| [**geo-content-strategy**](skills/operations/geo-content-strategy/SKILL.md) | 做一下 GEO 内容策略 |
+| [**geo-keyword-research**](skills/operations/geo-keyword-research/SKILL.md) | 帮我研究一下关键词 |
+| [**geo-strategy-report**](skills/operations/geo-strategy-report/SKILL.md) | 生成一份 GEO 策略报告 |
+| [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 今天 GitHub 有什么黑马项目 |
+| [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | 给我一份 Radar 日报 |
+| [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | 舆情数据采集规范 |
+| [**scrapling**](skills/operations/scrapling/SKILL.md) | 帮我爬这个网站 |
+| **SEO 系列（25个）** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
 
 ---
 
 ### 📦 产品（product）
 
-| 名字 | 一句话 |
-|------|--------|
-| [**brand-product-audience-relevance**](skills/product/brand-product-audience-relevance/SKILL.md) | 品牌/产品 vs CID 人群数据分析：关联度、转化、Chi-Square 证据 |
-| [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | 从 AI 回答文本中高精度识别竞品，支持知识库持久化 |
-| [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | 横纵分析法：纵向追时间深度，横向追同期广度，万字 PDF 报告 |
-| [**markdown-to-report**](skills/product/markdown-to-report/SKILL.md) | Markdown → 精美 HTML 报告（信息图风格） |
-| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 专利交底书生成：从会议纪要/架构文档提取技术方案，输出规范格式 |
-| [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | 软件著作权申请材料：从真实项目自动生成（操作手册 + 源码比对） |
+| 名字 | 触发示例 |
+|------|----------|
+| [**brand-product-audience-relevance**](skills/product/brand-product-audience-relevance/SKILL.md) | 分析这个品牌和 CID 人群的关联度 |
+| [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | 从这段 AI 回答里识别竞品 |
+| [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | 帮我研究一下这个公司 / 产品 |
+| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 生成一份专利交底书 |
+| [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | 生成软件著作权申请材料 |
 
 ---
 
-共 6 个分类，59 个技能。
+## 🌟 关于
+
+我是佳哥，这个 Skill 库里的技能都是我自己每天在项目里用的。如果对你有帮助，给个 ⭐ 就好。有问题或建议，欢迎在 Issues / Discussions 里说一声。
+
+---
+
+## ⭐ 支持这个项目
+
+如果这个项目对你有用，可以通过以下方式支持：
+
+- **给个 ⭐** — 在 GitHub 上 star 这个仓库
+- **提 Issue** — 有问题或功能建议
+- **贡献 Skill** — 一起完善这个技能库
+
+---
+
+<div align="center">
+
+[MIT License](./LICENSE) · 自由使用 / 修改 / 再分发
+
+Made by [@jacardl](https://github.com/jacardl)
+
+</div>
