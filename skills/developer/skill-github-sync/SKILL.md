@@ -15,8 +15,8 @@ description: >
 | `ai` | AI模型 | 9router, mmx-cli |
 | `assistant` | 助理 | **baoyu-url-to-markdown**, find-skills, markitdown, markdown-to-report, neat-freak, obsidian, obsidian-cli, storage-analyzer, wechat-article-to-markdown, youtube-transcript |
 | `creative` | 创意 | khazix-writer, zhili-publish, zhilicomments, zhiligithub |
-| `developer` | 开发 | setup-matt-pocock-skills, skill-creator, skill-github-sync, skill-maintenance |
-| `operations` | 运营 | aihot, geo系列(3个), github-daily-trending, radar系列(3个), scrapling, SEO系列(25个) |
+| `developer` | 开发 | scrapling, setup-matt-pocock-skills, skill-creator, skill-github-sync, skill-maintenance |
+| `operations` | 运营 | aihot, geo系列(3个), github-daily-trending, radar系列(3个), SEO系列(25个) |
 | `product` | 产品 | brand-product-audience-relevance, competitor-discovery, hv-analysis, patent-disclosure-skill, software-copyright-materials |
 
 **铁律**：不要新增分类，只在现有分类中添加技能。

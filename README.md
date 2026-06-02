@@ -103,6 +103,7 @@
 
 | 名字 | 触发示例 |
 |------|----------|
+| [**scrapling**](skills/developer/scrapling/SKILL.md) | 帮我爬这个网站 |
 | [**setup-matt-pocock-skills**](skills/developer/setup-matt-pocock-skills/SKILL.md) | 帮我装 Matt Pocock 的 Skill 规范 |
 | [**skill-creator**](skills/developer/skill-creator/SKILL.md) | 帮我从零创建一个 skill |
 | [**skill-github-sync**](skills/developer/skill-github-sync/SKILL.md) | 同步本地 skill 到 GitHub 仓库 |
@@ -115,7 +116,6 @@
 | 名字 | 触发示例 |
 |------|----------|
 | [**aihot**](skills/operations/aihot/SKILL.md) | 今天 AI 圈有什么新东西 / 最近一周 AI 论文 |
-| [**scrapling**](skills/operations/scrapling/SKILL.md) | 帮我爬这个网站 |
 | **GEO 系列（3个）** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
 | **SEO 系列（25个）** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
 
