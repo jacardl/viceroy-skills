@@ -16,6 +16,17 @@ LOAD_DIR = OUT_DIR / "load"
 SCHEMA_SQL = OUT_DIR / "cid_persona_schema.sql"
 LOAD_SQL = OUT_DIR / "load_cid_persona.sql"
 
+AGE_LABELS = {
+    "1825": "[18,25)",
+    "2530": "[25,30)",
+    "3035": "[30,35)",
+    "3540": "[35,40)",
+    "4045": "[40,45)",
+    "4550": "[45,50)",
+    "5055": "[50,55)",
+    "55+": "[55,+)",
+}
+
 
 def clean(value):
     if value is None:
@@ -46,18 +57,70 @@ def dt_from_file(date_s, time_s):
         return None
 
 
+def normalize_city_tier(value):
+    if value in {"四线五线", "四五线"}:
+        return "四五线"
+    return value
+
+
+def parse_file_metadata(name):
+    life_match = re.match(r"(.+?)x(.+?) Persona Report (\d{8}) (\d{6})\.xlsx$", name)
+    if life_match:
+        life_stage, city_tier_raw, date_s, time_s = life_match.groups()
+        city_tier = normalize_city_tier(city_tier_raw)
+        return {
+            "segment_code": f"{life_stage}x{city_tier}",
+            "segment_type": "life_stage_city",
+            "segment_axis": "life_stage",
+            "lifecycle_stage": life_stage,
+            "life_stage": life_stage,
+            "age_band_code": None,
+            "age_band_label": None,
+            "city_tier_raw": city_tier_raw,
+            "city_tier": city_tier,
+            "is_primary_analysis_segment": False,
+            "is_auxiliary_segment": True,
+            "date_s": date_s,
+            "time_s": time_s,
+        }
+
+    age_match = re.match(r"(.+?) (.+?) Persona Report (\d{8}) (\d{6})\.xlsx$", name)
+    if age_match:
+        age_band_code, city_tier_raw, date_s, time_s = age_match.groups()
+        city_tier = normalize_city_tier(city_tier_raw)
+        age_band_label = AGE_LABELS.get(age_band_code, age_band_code)
+        return {
+            "segment_code": f"{age_band_code}x{city_tier}",
+            "segment_type": "age_city",
+            "segment_axis": "age_band",
+            "lifecycle_stage": None,
+            "life_stage": None,
+            "age_band_code": age_band_code,
+            "age_band_label": age_band_label,
+            "city_tier_raw": city_tier_raw,
+            "city_tier": city_tier,
+            "is_primary_analysis_segment": True,
+            "is_auxiliary_segment": False,
+            "date_s": date_s,
+            "time_s": time_s,
+        }
+
+    raise ValueError(f"Unexpected file name: {name}")
+
+
 def parse_file(path):
     name = path.name
-    m = re.match(r"(.+?)x(.+?) Persona Report (\d{8}) (\d{6})\.xlsx$", name)
-    if not m:
-        raise ValueError(f"Unexpected file name: {name}")
-    lifecycle, city_tier, date_s, time_s = m.groups()
+    meta = parse_file_metadata(name)
 
     wb = load_workbook(path, read_only=True, data_only=True)
     ws = wb["人群画像"]
     rows = [tuple(clean(v) for v in row) for row in ws.iter_rows(values_only=True)]
 
-    segment_name = text(rows[4][5]) if len(rows) > 4 and len(rows[4]) > 5 else f"{lifecycle}x{city_tier}"
+    excel_segment_name = text(rows[4][5]) if len(rows) > 4 and len(rows[4]) > 5 else None
+    if meta["segment_type"] == "age_city":
+        segment_name = f"{meta['age_band_label']}x{meta['city_tier']}"
+    else:
+        segment_name = excel_segment_name or meta["segment_code"]
     segment_definition = text(rows[5][5]) if len(rows) > 5 and len(rows[5]) > 5 else None
 
     ecom_header = None
@@ -83,13 +146,21 @@ def parse_file(path):
         "file_name": name,
         "file_path": str(path),
         "sheet_name": "人群画像",
-        "report_generated_at": dt_from_file(date_s, time_s),
+        "report_generated_at": dt_from_file(meta["date_s"], meta["time_s"]),
     }
     segment = {
-        "segment_code": f"{lifecycle}x{city_tier}",
+        "segment_code": meta["segment_code"],
         "segment_name": segment_name,
-        "lifecycle_stage": lifecycle,
-        "city_tier": city_tier,
+        "segment_type": meta["segment_type"],
+        "segment_axis": meta["segment_axis"],
+        "lifecycle_stage": meta["lifecycle_stage"],
+        "life_stage": meta["life_stage"],
+        "age_band_code": meta["age_band_code"],
+        "age_band_label": meta["age_band_label"],
+        "city_tier_raw": meta["city_tier_raw"],
+        "city_tier": meta["city_tier"],
+        "is_primary_analysis_segment": meta["is_primary_analysis_segment"],
+        "is_auxiliary_segment": meta["is_auxiliary_segment"],
         "segment_definition": segment_definition,
         "segment_total_one_id": total,
         "file_name": name,
@@ -302,8 +373,16 @@ create temp table stg_reports (
 create temp table stg_segments (
   segment_code text,
   segment_name text,
+  segment_type text,
+  segment_axis text,
   lifecycle_stage text,
+  life_stage text,
+  age_band_code text,
+  age_band_label text,
+  city_tier_raw text,
   city_tier text,
+  is_primary_analysis_segment boolean,
+  is_auxiliary_segment boolean,
   segment_definition text,
   segment_total_one_id bigint,
   file_name text
@@ -364,14 +443,31 @@ on conflict (file_name) do update set
   report_generated_at = excluded.report_generated_at,
   ingested_at = now();
 
-insert into cid.dim_audience_segment(segment_code, segment_name, lifecycle_stage, city_tier, segment_definition, segment_total_one_id, report_id)
-select s.segment_code, s.segment_name, s.lifecycle_stage, s.city_tier, s.segment_definition, s.segment_total_one_id, r.report_id
+insert into cid.dim_audience_segment(
+  segment_code, segment_name, segment_type, segment_axis, lifecycle_stage, life_stage,
+  age_band_code, age_band_label, city_tier_raw, city_tier,
+  is_primary_analysis_segment, is_auxiliary_segment,
+  segment_definition, segment_total_one_id, report_id
+)
+select
+  s.segment_code, s.segment_name, s.segment_type, s.segment_axis, s.lifecycle_stage, s.life_stage,
+  s.age_band_code, s.age_band_label, s.city_tier_raw, s.city_tier,
+  s.is_primary_analysis_segment, s.is_auxiliary_segment,
+  s.segment_definition, s.segment_total_one_id, r.report_id
 from stg_segments s
 join cid.dim_report_source r on r.file_name = s.file_name
 on conflict (segment_code) do update set
   segment_name = excluded.segment_name,
+  segment_type = excluded.segment_type,
+  segment_axis = excluded.segment_axis,
   lifecycle_stage = excluded.lifecycle_stage,
+  life_stage = excluded.life_stage,
+  age_band_code = excluded.age_band_code,
+  age_band_label = excluded.age_band_label,
+  city_tier_raw = excluded.city_tier_raw,
   city_tier = excluded.city_tier,
+  is_primary_analysis_segment = excluded.is_primary_analysis_segment,
+  is_auxiliary_segment = excluded.is_auxiliary_segment,
   segment_definition = excluded.segment_definition,
   segment_total_one_id = excluded.segment_total_one_id,
   report_id = excluded.report_id;
@@ -557,7 +653,23 @@ def main():
         buckets.extend(bucket_rows)
 
     write_csv(LOAD_DIR / "reports.csv", ["file_name", "file_path", "sheet_name", "report_generated_at"], reports)
-    write_csv(LOAD_DIR / "segments.csv", ["segment_code", "segment_name", "lifecycle_stage", "city_tier", "segment_definition", "segment_total_one_id", "file_name"], segments)
+    write_csv(LOAD_DIR / "segments.csv", [
+        "segment_code",
+        "segment_name",
+        "segment_type",
+        "segment_axis",
+        "lifecycle_stage",
+        "life_stage",
+        "age_band_code",
+        "age_band_label",
+        "city_tier_raw",
+        "city_tier",
+        "is_primary_analysis_segment",
+        "is_auxiliary_segment",
+        "segment_definition",
+        "segment_total_one_id",
+        "file_name",
+    ], segments)
     write_csv(LOAD_DIR / "profile.csv", ["segment_code", "level1_category", "level2_category", "level3_value", "one_id", "ratio", "tgi", "is_zero_row", "source_row"], profiles)
     write_csv(LOAD_DIR / "entities.csv", ["segment_code", "domain", "level1_category", "level2_category", "entity_type", "entity_name", "taxonomy_node_type", "taxonomy_node_name", "one_id", "ratio", "tgi", "avg_daily_usage_frequency", "avg_daily_usage_minutes", "is_zero_row", "source_row", "label_path", "raw_label"], entities)
     write_csv(LOAD_DIR / "buckets.csv", ["segment_code", "source_row", "metric_family", "bucket_label", "bucket_order", "one_id"], buckets)
