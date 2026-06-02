@@ -26,8 +26,9 @@ npx skills add jacardl/skillshub --path skills/operations/aihot
 - [obsidian-cli](skills/assistant/obsidian-cli/SKILL.md)
 - [wechat-article-to-markdown](skills/assistant/wechat-article-to-markdown/SKILL.md)
 
-### 创意（creative，2个）
+### 创意（creative，3个）
 - [khazix-writer](skills/creative/khazix-writer/SKILL.md)
+- [zhiligithub](skills/creative/zhiligithub/SKILL.md)
 - [zhilicomments](skills/creative/zhilicomments/SKILL.md)
 
 ### 开发（developer，5个）
@@ -88,7 +89,6 @@ npx skills add jacardl/skillshub --path skills/operations/aihot
 - [markdown-to-report](skills/product/markdown-to-report/SKILL.md)
 - [software-copyright-materials](skills/product/software-copyright-materials/SKILL.md)
 
-### 社交媒体（social-media，1个）
-- [zhilicomments](skills/social-media/zhilicomments/SKILL.md)
 
-共 8 个分类，59 个技能。
+
+共 7 个分类，59 个技能。
