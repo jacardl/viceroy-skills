@@ -23,8 +23,14 @@ def main() -> None:
     queries = [
         ("cid.dim_report_source", "select count(*) from cid.dim_report_source"),
         ("cid.dim_audience_segment", "select count(*) from cid.dim_audience_segment"),
+        ("cid.dim_audience_segment age_city", "select count(*) from cid.dim_audience_segment where segment_type = 'age_city'"),
+        ("cid.dim_audience_segment life_stage_city", "select count(*) from cid.dim_audience_segment where segment_type = 'life_stage_city'"),
+        ("cid.dim_audience_segment primary", "select count(*) from cid.dim_audience_segment where is_primary_analysis_segment"),
+        ("cid.dim_audience_segment auxiliary", "select count(*) from cid.dim_audience_segment where is_auxiliary_segment"),
         ("cid.fact_segment_profile_value", "select count(*) from cid.fact_segment_profile_value"),
         ("cid.fact_segment_entity_metric", "select count(*) from cid.fact_segment_entity_metric"),
+        ("cid.fact_segment_entity_metric purchase", "select count(*) from cid.fact_segment_entity_metric where domain = 'purchase'"),
+        ("cid.fact_segment_entity_metric media", "select count(*) from cid.fact_segment_entity_metric where domain = 'media'"),
         ("cid.fact_segment_entity_bucket", "select count(*) from cid.fact_segment_entity_bucket"),
     ]
 
