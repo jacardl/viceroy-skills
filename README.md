@@ -5,13 +5,14 @@
 ## 安装命令
 
 ```bash
-npx skills add jacardl/skillshub --path <path>
+npx skills add jacardl/skillshub --skill <skill-name>
 ```
 
-完整路径示例：
+示例：
 ```bash
-npx skills add jacardl/skillshub --path skills/developer/skill-github-sync
-npx skills add jacardl/skillshub --path skills/operations/aihot
+npx skills add jacardl/skillshub --skill zhilicomments
+npx skills add jacardl/skillshub --skill zhili-publish
+npx skills add jacardl/skillshub --skill neat-freak
 ```
 
 ## 岗位分类索引
@@ -37,9 +38,6 @@ npx skills add jacardl/skillshub --path skills/operations/aihot
 - [skill-creator](skills/developer/skill-creator/SKILL.md)
 - [skill-github-sync](skills/developer/skill-github-sync/SKILL.md)
 - [skill-maintenance](skills/developer/skill-maintenance/SKILL.md)
-
-### openclaw导入（openclaw-imports，1个）
-- [zhiligithub](skills/openclaw-imports/zhiligithub/SKILL.md)
 
 ### 运营（operations，39个）
 - [aihot](skills/operations/aihot/SKILL.md)
@@ -80,15 +78,12 @@ npx skills add jacardl/skillshub --path skills/operations/aihot
 - [seo-technical](skills/operations/seo-technical/SKILL.md)
 - [youtube-transcript](skills/operations/youtube-transcript/SKILL.md)
 - [zhili-publish](skills/operations/zhili-publish/SKILL.md)
-- [zhiligithub](skills/operations/zhiligithub/SKILL.md)
 
-### 产品（product，5个）
+### 产品（product，6个）
 - [brand-product-audience-relevance](skills/product/brand-product-audience-relevance/SKILL.md)
 - [competitor-discovery](skills/product/competitor-discovery/SKILL.md)
 - [hv-analysis](skills/product/hv-analysis/SKILL.md)
 - [markdown-to-report](skills/product/markdown-to-report/SKILL.md)
 - [software-copyright-materials](skills/product/software-copyright-materials/SKILL.md)
 
-
-
-共 7 个分类，59 个技能。
+共 6 个分类，58 个技能。
