@@ -36,23 +36,27 @@ POSTGRES_SCHEMA=cid
 
 ## 随 Skill 携带的迁移备份
 
-本 skill 内含当前 70 表版本 PostgreSQL 迁移备份：
+本 skill 内含两份 PostgreSQL 迁移备份，文件路径必须区分使用：
+
+| 文件 | 用途 | 数据范围 | 大小 | SHA-256 |
+|---|---|---|---:|---|
+| `references/db_dumps/radar_cid_70_20260602.dump` | 当前默认迁移备份 | 40 个 `age_city` 主分析切片 + 30 个 `life_stage_city` 辅助切片 | 约 8.4MB | `c2ae9c1275e7cd18bdb0ff1b2d23dfd96c53bfd9c8a9bf9d3dc4fac22ceefa68` |
+| `references/db_dumps/radar_cid_30_life_stage_20260602.dump` | 历史备份，仅用于回溯旧版本 | 30 个 `life_stage_city` 辅助切片 | 约 3.6MB | `d00ba229defc5a21d6f128f088ebdd3a91c752858daf1151b33feb9eb86238b1` |
+
+当前迁移请优先使用 70 表版本：
 
 ```text
 references/db_dumps/radar_cid_70_20260602.dump
 ```
 
-备份信息：
+两份备份的共同信息：
 
 - 格式：PostgreSQL custom format (`pg_dump -Fc`)
 - 数据库：`radar`
 - schema：`cid`
 - PostgreSQL / pg_dump 版本：15.18
-- 文件大小：约 8.4MB
-- SHA-256：`c2ae9c1275e7cd18bdb0ff1b2d23dfd96c53bfd9c8a9bf9d3dc4fac22ceefa68`
-- 内容：70 个 Persona Report，即 40 个 `age_city` 主分析切片 + 30 个 `life_stage_city` 辅助切片
 
-恢复示例：
+恢复 70 表版本示例：
 
 ```bash
 docker cp skills/brand-product-audience-relevance/references/db_dumps/radar_cid_70_20260602.dump \
