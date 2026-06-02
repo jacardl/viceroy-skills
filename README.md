@@ -91,4 +91,4 @@ npx skills add jacardl/skillshub --skill <skill-name> --agent openclaw -y
 - [software-copyright-materials](skills/product/software-copyright-materials/SKILL.md)
 
 ---
-_README 自动更新：2026-06-02 21:15（Asia/Shanghai）_
+_README 自动更新：2026-06-02 21:16（Asia/Shanghai）_
