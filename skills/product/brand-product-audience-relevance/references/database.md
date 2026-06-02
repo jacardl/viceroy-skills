@@ -183,19 +183,19 @@ create table if not exists brand_product.audience_evidence (
 );
 ```
 
-## 重建导入提醒
+## 重建导入说明
 
-原有入库脚本位置：
+正式入库脚本位置：
 
 ```text
 outputs/cid_persona_design/ingest_cid_persona.py
 ```
 
-当前脚本历史上用于 30 表入库。扩展到 70 表时，需要把 `scripts/analyze_brand_product.py` 中的文件名识别逻辑同步回入库脚本：
+当前入库脚本已支持 70 表导入：
 
 - `{age_code} {city} Persona Report ...`
 - `{life_stage}x{city} Persona Report ...`
 - `四线五线` 标准化为 `四五线`
 - `segment_type`、`segment_axis`、`age_band_code`、`age_band_label`、`life_stage` 等字段写入维表
 
-重建前应先备份或确认可覆盖，再删除旧 schema。
+迁移时优先使用本 skill 携带的 `references/db_dumps/radar_cid_70_20260602.dump`。需要从 Excel 重建时，再运行入库脚本；重建前应先备份或确认可覆盖，再删除旧 schema。
