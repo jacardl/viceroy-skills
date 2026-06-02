@@ -103,6 +103,7 @@ Use `references/common_queries.sql` for reusable query patterns.
 - `references/common_queries.sql`: reusable SQL snippets.
 - `references/config_template.json`: blank analysis config.
 - `references/dabao_jinghuashuang_example.json`: completed example config.
-- `references/db_dumps/radar_cid_70_20260602.dump`: PostgreSQL `cid` schema migration backup for the 70-table dataset.
+- `references/db_dumps/radar_cid_70_20260602.dump`: current PostgreSQL `cid` schema migration backup for the 70-table dataset.
+- `references/db_dumps/radar_cid_30_life_stage_20260602.dump`: historical PostgreSQL `cid` schema migration backup for the original 30 life-stage-city tables.
 
 Load only the specific reference needed for the task.
