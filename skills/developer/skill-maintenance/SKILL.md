@@ -1,85 +1,160 @@
 ---
 name: skill-maintenance
-description: 维护技能库整洁，系统性整理、分类、清理重复和低频技能。当用户说「整理技能库」「skills太乱了」「删除重复技能」「技能库查重」「技能分类」「整理skills」时触发。
+description: 维护技能库整洁，系统性整理、归类、查重、清理废弃技能（含项目源码误入 skills/ 目录的情况）。当用户说「整理技能库」「skills太乱了」「删除重复技能」「技能库查重」「技能分类」「整理skills」时触发。配套 skill-github-sync 使用效果最佳。
 ---
 
 # Skill Maintenance
 
-定期维护技能库，识别重复/低频技能，保持7个岗位分类整洁有序。
+按 `viceroy-skills` 仓库的 6 分类标准维护本地技能库，识别重复/低频/废弃技能，保持 6 大分类整洁有序。配套 `skill-github-sync` 形成"本地整理 → 推到 GitHub"闭环。
 
-## 7个固定岗位分类（2026-05-27 整理）
+## 6 个固定分类（viceroy-skills 标准，2026-06 同步）
 
-- **运营**：zhiliGitHub / zhiliComments / zhili-publish / daily-news-report / github-daily-trending / khazix-writer / aihot / ad-creative / xurl / yuanbao / scrapling / creative-ops-copilot / creative-thought-partner / dogfood / gif-search / humanizer / neat-freak / baoyu-comic / baoyu-infographic / architecture-diagram / ideation
-- **产品**：hv-analysis / arxiv / polymarket / llm-wiki / research-paper-writing / blogwatcher / claude-design / sketch / excalidraw
-- **助理**：himalaya / notion / obsidian / feishu-file-transfer / linear / maps / pdf / pptx / powerpoint / apple-notes / apple-reminders / findmy / imessage / macos-computer-use
-- **开发**：claude-code / codex / opencode / hermes-agent / github-pr-workflow / github-code-review / github-issues / github-repo-management / codebase-inspection / python-debugpy / node-inspect-debugger / debugging-hermes-tui-commands / systematic-debugging / test-driven-development / requesting-code-review / spike / webhook-subscriptions / kanban-orchestrator / kanban-worker / writing-plans / plan / 9router / native-mcp / subagent-driven-development / hermes-agent-skill-authoring / godmode / skill-creator / frontend-design
-- **研究**：evaluating-llms-harness / weights-and-biases / jupyter-live-kernel / dspy / scrapling
-- **创意**：ascii-art / p5js / pixel-art / manim-video / excalidraw / sketch / architecture-diagram / popular-web-designs / design-md / brand-guidelines / canvas-design / humanizer / pretext
-- **AI模型**：llama-cpp / serving-llms-vllm / huggingface-hub / obliteratus / claude-api / native-mcp / godmode / 9router / scrapling
+| 英文分类 | 中文 | 用途 | 路径前缀 |
+|---------|------|------|----------|
+| `ai` | AI模型 | LLM/agent runtime | `~/.openclaw/skills/ai/` |
+| `assistant` | 助理 | 通用工具/笔记/存储/陪伴 | `~/.openclaw/skills/assistant/` |
+| `creative` | 创意 | 写作/排版/设计/视频 | `~/.openclaw/skills/creative/` |
+| `developer` | 开发 | 工程化/调试/部署/skill 自身工具 | `~/.openclaw/skills/developer/` |
+| `operations` | 运营 | 数据采集/SEO/GitHub 项目雷达 | `~/.openclaw/skills/operations/` |
+| `product` | 产品 | 调研/分析/竞品/标签打分 | `~/.openclaw/skills/product/` |
 
-**实际统计**：89个 SKILL.md 文件，92个去重技能名
+**铁律**：
+- 不新增分类（与 skill-github-sync 一致）
+- 同名 skill 只能存在一份
+- 「工作区 skills/」是**试装区**，不是常驻位 —— 试跑通后必须推系统级
+
+## Skill 来源优先级（OpenClaw 加载顺序）
+
+OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同名 skill**：
+
+| # | 来源 | 路径 | 可见性 |
+|---|------|------|--------|
+| 1 | **Workspace skills** | `<workspace>/skills` | 仅该 agent |
+| 2 | Project agent skills | `<workspace>/.agents/skills` | 仅该工作区 agent |
+| 3 | Personal agent skills | `~/.agents/skills` | 全机器所有 agent |
+| 4 | **Managed/local skills** | `~/.openclaw/skills` | 全机器所有 agent |
+| 5 | Bundled skills | 安装自带 | 全机器所有 agent |
+| 6 | Extra dirs | `skills.load.extraDirs` | 全机器所有 agent |
+
+**维护原则**：
+- **正式 skill 全部进系统级**（`~/.openclaw/skills/<cat>/`），让所有 agent 共享
+- **工作区 skills/** 只用于**临时试装**（跑通再推系统级）
+- 优先级越高的位置越"私有"，越低的越"共享" —— **共享价值高的放系统级**
 
 ## 维护流程
 
-### 1. 每周检查清单
+### 1. 每周/每两周检查清单
 
-每次维护按顺序执行：
+按顺序执行：
 
-1. **检测新安装技能**：`npx skills list` 找出新增技能
-2. **归类新技能**：对照7个岗位分类，归入现有分类（不新增分类）
-3. **查重**：`skills_list` + `skill_view` 两两对比描述，相似度>70%则标记删除
-4. **清理空目录**：含 DESCRIPTION.md 但无 SKILL.md 的目录 stub
-5. **验证CSS铁律**：检查各技能 references/streambert-reference.html 存在性
+1. **盘点所有 skill**：
+   ```bash
+   # 系统级（含嵌套分类目录）
+   find ~/.openclaw/skills -name "SKILL.md" -type f
+   # 工作区（试装区）
+   find ~/.openclaw/workspace/skills -name "SKILL.md" -type f 2>/dev/null
+   # 内置
+   find /usr/lib/node_modules/openclaw/skills -name "SKILL.md" -type f
+   ```
 
-### 已删除技能记录（2026-05-27）
+2. **识别非 skill 项**（关键！实战中最常踩坑）：
+   - **无 SKILL.md 的目录** —— 通常是**项目源码**误入（如 Rust 源码带 Cargo.toml/.cargo/crates）→ 移出 skills/，建议去 `~/.openclaw/workspace/projects/<name>/`
+   - **只有 README.md 无 SKILL.md** —— 同上
+   - **目录前缀误建**（如 `skills/developer/` 是 skill，但 5-27 误建时把 `skill-maintenance` 嵌进去形成空顶层）→ 整目录审计
 
-- **重复删除**：zhilicomments-publish（与zhiliComments功能完全相同）
-- **低频边缘领域**：spotify / youtube-content / heartmula / airtable / google-workspace / teams-meeting-pipeline / comfyui / touchdesigner-mcp / audiocraft-audio-generation / pretext / songsee / songwriting-and-ai-music / minecraft-modpack-server / pokemon-player / openhue
-- **空目录清理**：diagramming / gaming / smart-home / gifs / inference-sh / domain（含DESCRIPTION.md但无SKILL.md的stub）
-- **功能重复**：ideation（与creative-ideation重复）
+3. **识别重复 / 旧版**：
+   - **同分类下目录名相同**（如 `~/.openclaw/skills/developer/skill-maintenance/` 和 `~/.openclaw/skills/skill-maintenance/`）→ 留新删旧，对比 mtime 或仓库引用
+   - **描述相似度 >70%** 的两个 skill → 标记合并或删除
+   - **指向旧仓库的 SKILL.md**（如 `jacardl/skillshub` → `jacardl/viceroy-skills`）→ 必删
 
-### 2. 删除技能标准
+4. **归类新 skill**：对照 6 分类表，关键词匹配：
+   - 含「github」「trending」「seo」「data collection」→ `operations/`
+   - 含「chat」「情感」「陪伴」「笔记」「flowus」「菜谱」→ `assistant/`
+   - 含「标签」「kano」「调研」「竞品」→ `product/`
+   - 含「writing」「publish」「article」「github 项目」→ `creative/`
+   - 含「skill」「debug」「code」「github-pr」→ `developer/`
+   - 含「llm」「model」「claude-api」「vllm」→ `ai/`
 
-满足以下任意条件建议删除（删除前必须提醒用户确认）：
-- 与现有技能功能完全重复（描述重叠>70%）
-- 长期未使用（边缘领域如音乐/游戏/家居控制）
-- 依赖外部服务已失效
-- 描述过时且无法修复
+5. **检查空目录 stub**：
+   ```bash
+   find ~/.openclaw/skills -maxdepth 2 -name "DESCRIPTION.md" | while read f; do
+     dir=$(dirname "$f")
+     [ ! -f "$dir/SKILL.md" ] && echo "STUB: $dir"
+   done
+   ```
 
-### 分类调整规则
+6. **验证关键引用**：例如 `zhiligithub` 引用 `zhili-publish/scripts/publish_zhili.py`，分类嵌套后路径变成 `skills/creative/zhili-publish/scripts/` —— 跑一次 `publish_zhili.py --help` 验证
 
-- 新技能归入现有7个分类，不新建分类
-- apple/* 技能统一归入助理岗位
-- 公众号相关技能（zhili*）固定在运营岗位
-- anthropics/skills 安装后归入现有分类：brand-guidelines/canvas-design→创意，claude-api→AI模型，frontend-design/skill-creator→开发，pdf/pptx→助理
-- ideation 类技能统一删除，保留主要技能
+### 2. 删除/清理标准
 
-### 4. 删除流程
+满足以下任一条件**建议清理**（删除前必须向用户确认）：
 
-删除前必须：
-1. 列出待删除技能及删除理由
-2. 等待用户确认
-3. 执行 `skill_manage(action='delete', name='xxx')`
-4. 更新分类统计
+| 条件 | 处理方式 |
+|------|----------|
+| 与现有 skill 功能完全重复（描述重叠 >70%） | 删旧留新（或合并） |
+| 长期未使用（边缘领域如音乐/游戏/家居控制） | 删 |
+| 依赖的外部服务已失效 | 删 |
+| 描述过时且无法修复 | 删 |
+| 旧版（指向已废弃仓库） | 删 |
+| 嵌套在错误位置的空顶层目录 | 删整目录 |
+| 项目源码误入 skills/ | 移到 `~/.openclaw/workspace/projects/` 或 `~/.openclaw/workspace/<name>/` |
+
+### 3. 分类调整规则
+
+- 新 skill 归入现有 6 分类，**不新建分类**
+- 公众号相关（zhili*）按功能分散：
+  - `zhili-publish` → `creative/`（内容生产）
+  - `zhiligithub` → `operations/`（GitHub 项目雷达，类比 github-daily-trending）
+  - 未来若加 `zhilicomments` → `creative/`（短评）
+- 工作流类（neat-freak、flowus-crud）→ `assistant/`
+- skill 自身管理类（skill-creator、skill-maintenance、skill-github-sync）→ `developer/`
+- 灰区归属判断用关键词匹配，匹配不上时**主动问用户**（不要硬塞）
+
+### 4. 删除/移动流程（强制备份）
+
+执行前**必须**：
+1. 列出待处理项及理由
+2. **等用户确认**
+3. **先备份**到 `/tmp/skill-mv-backup/` 或 `~/.openclaw/workspace/.backup-pre-skill-cleanup/`
+4. 执行 `mv`（不要用 `rm` —— `mv` 至少可逆；SOUL.md 红线："trash > rm"）
+5. 验证：跑一遍相关 skill 的 `--help` 或最简单命令
+6. 更新引用（SKILL.md 内的路径、MEMORY.md、脚本里的硬编码路径）
 
 ### 5. 验证步骤
 
 维护完成后输出：
-- 当前技能总数（SKILL.md 文件数）
-- 各分类技能数量
-- 本次新增/删除/调整列表
+- 当前 skill 总数（系统级 + 工作区 + 内置分别统计）
+- 各分类 skill 数量 + 与 viceroy-skills 仓库的对照（diff）
+- 本次新增/删除/调整列表（含备份位置）
 - 遗留待处理项
+
+## 跟 skill-github-sync 配合
+
+skill-maintenance 不止是本地整理，**最终目的是跟 viceroy-skills 仓库同步**：
+
+```
+本地整理（skill-maintenance）→ 跟 GitHub 对照 → 推差异（skill-github-sync）
+         ↑                                                  |
+         └──────────────── 验证一致性 ←─────────────────────┘
+```
+
+**联动步骤**：
+1. `skill-maintenance` 整理完本地结构
+2. `skill-github-sync` 拉取 GitHub 端最新 skill 列表
+3. 对比：哪些本地有但 GitHub 没有（push）、哪些 GitHub 有但本地没有（pull 候选）
+4. 用 `skill-github-sync` 推本地独有 + 有价值的 skill
+5. 跟仓库分类标准对齐（参考本 skill 第 1 节的 6 分类表）
 
 ## GitHub API 推送权限要求（陷阱）
 
-向 jacardl/viceroy-skills 推送技能文件使用 GitHub REST API（blobs/trees/commits/refs）。**必须使用有写入权限的 Token**：
+向 `jacardl/viceroy-skills` 推送 skill 文件使用 GitHub REST API（blobs/trees/commits/refs）。**必须使用有写入权限的 Token**：
 
-- **Classic PAT**（推荐）：在 https://github.com/settings/tokens/new 创建，勾选 `repo` scope
-- **Fine-grained PAT**：在 https://github.com/settings/tokens 创建，需单独设置：
-  - Permissions → Repository access → 选择具体仓库（如 `jacardl/viceroy-skills`）
+- **Classic PAT**（推荐）：https://github.com/settings/tokens/new，勾选 `repo` scope
+- **Fine-grained PAT**：需单独设置：
+  - Repository access → 选择 `jacardl/viceroy-skills`
   - Repository permissions → Contents 设置为 **Read and write**（默认只有 Read）
 
-**验证方法**：创建 blob 时不报 403 即代表有写入权限
+**验证方法**（创建 blob 不报 403 即代表有写入权限）：
 ```bash
 curl -s -X POST -H "Authorization: token <TOKEN>" \
   -H "Content-Type: application/json" \
@@ -88,11 +163,11 @@ curl -s -X POST -H "Authorization: token <TOKEN>" \
 # 成功返回 {"sha":"..."}，403 = 无写入权限
 ```
 
-Token 凭证保存路径：`~/.hermes/keys/github_token.txt`
+Token 凭证保存路径：`~/.hermes/keys/github_token.txt`（兼容多环境：`~/.openclaw/openclaw.json` 也可）
 
 ### GitHub 推送路径规范
 
-所有技能推送到 `jacardl/viceroy-skills` 时，路径格式统一为：
+所有 skill 推送到 `jacardl/viceroy-skills` 时，路径格式：
 
 ```
 skills/{category}/{skill-name}/SKILL.md
@@ -101,16 +176,13 @@ skills/{category}/{skill-name}/SKILL.md
 示例：
 ```
 skills/operations/aihot/SKILL.md
-skills/product/hv-analysis/SKILL.md
+skills/product/tag-scoring/SKILL.md
 skills/developer/skill-github-sync/SKILL.md
 skills/ai/9router/SKILL.md
 ```
 
-技能先读取内容 → 推送到新路径 → 删除旧路径文件（如果有）。
-
 推送完成后验证：
 ```bash
-# 列出所有技能路径
 curl -s -H "Authorization: token $TOKEN" \
   "https://api.github.com/repos/jacardl/viceroy-skills/git/trees/main?recursive=1" | \
   python3 -c "import sys,json; [print(f['path']) for f in json.load(sys.stdin)['tree'] if f['path'].endswith('SKILL.md')]"
@@ -119,23 +191,60 @@ curl -s -H "Authorization: token $TOKEN" \
 ## 快速命令
 
 ```bash
-# 统计SKILL.md文件数
-find ~/.hermes/skills -name "SKILL.md" | wc -l
+# 统计 SKILL.md 文件数（系统级）
+find ~/.openclaw/skills -name "SKILL.md" -type f | wc -l
 
-# 列出所有技能名（去重）
-find ~/.hermes/skills -name "SKILL.md" | xargs -I{} dirname {} | xargs -I{} basename {} | sort -u | wc -l
+# 列出所有 skill 名称（去重）
+find ~/.openclaw/skills -name "SKILL.md" -type f | xargs -I{} dirname {} | xargs -I{} basename {} | sort -u
 
-# 清理空目录stub（含DESCRIPTION.md但无SKILL.md）
-find ~/.hermes/skills -maxdepth 2 -name "DESCRIPTION.md" | while read f; do dir=$(dirname "$f"); [ ! -f "$dir/SKILL.md" ] && echo "$dir"; done
+# 按分类统计
+for cat in ai assistant creative developer operations product; do
+  count=$(find ~/.openclaw/skills/$cat -name "SKILL.md" -type f 2>/dev/null | wc -l)
+  echo "$cat: $count"
+done
 
-# 检查重复描述（两两比对）
-skills_list | grep -A2 "description"
+# 清理空目录 stub
+find ~/.openclaw/skills -maxdepth 2 -name "DESCRIPTION.md" | while read f; do
+  dir=$(dirname "$f")
+  [ ! -f "$dir/SKILL.md" ] && echo "STUB: $dir"
+done
+
+# 跟 GitHub 仓库对照（需要 token）
+python3 << 'EOF'
+import urllib.request, json, os
+token = open(os.path.expanduser("~/.hermes/keys/github_token.txt")).read().strip()
+github = {}
+for cat in ['ai','assistant','creative','developer','operations','product']:
+    url = f"https://api.github.com/repos/jacardl/viceroy-skills/contents/skills/{cat}"
+    req = urllib.request.Request(url, headers={'Accept':'application/vnd.github.v3+json', 'Authorization':f'token {token}'})
+    r = json.loads(urllib.request.urlopen(req, timeout=15).read())
+    github.update({item['name']: cat for item in r if item.get('type')=='dir'})
+
+import os
+local = set()
+for root, _, files in os.walk(os.path.expanduser("~/.openclaw/skills")):
+    for f in files:
+        if f == "SKILL.md":
+            local.add(os.path.basename(root))
+
+print("本地独有（候选 push）:", sorted(local - set(github.keys())))
+print("GitHub 独有（候选 pull）:", sorted(set(github.keys()) - local))
+EOF
 ```
 
 ## 注意事项
 
-- 删除技能后需更新分类统计
-- API keys/tokens/credentials 一律 [REDACTED]
-- 技能库实际文件数可能少于技能名数量（存在软链接/重命名）
-- 维护后向用户汇报结果，不要静默完成
-- skill-maintenance 自身归入助理岗位（productivity）
+- **删除/移动前先备份**，不破坏性操作（`mv` 比 `rm` 安全，trash > rm）
+- API keys/tokens/credentials 一律 [REDACTED]，不在 SKILL.md 输出
+- 维护后**主动汇报**给用户（带数量、列表、备份位置），不静默完成
+- skill-maintenance 自身归入 **`developer/`**（skill 自身管理工具）
+- 跨 agent 共享的 skill 必须放系统级，不要留在工作区
+- 「项目源码 vs skill」判断标准：**有 SKILL.md 才算 skill**，只有 README + 源码 = 项目
+
+## 历史优化记录
+
+- **2026-06-04**：从 7 分类改成 6 分类（去掉「研究」「运营」等冗余，对齐 viceroy-skills 实际仓库结构）
+- **2026-06-04**：加入「OpenClaw 加载优先级」章节（解释系统级 vs 工作区差异）
+- **2026-06-04**：加入「项目源码 vs skill」识别规则（应对 obscura 误入场景）
+- **2026-06-04**：跟 skill-github-sync 联动标准化
+- **2026-05-27**：初版，7 分类 + 删除流程
