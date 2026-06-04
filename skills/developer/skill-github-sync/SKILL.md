@@ -21,6 +21,65 @@ description: >
 
 **铁律**：不要新增分类，只在现有分类中添加技能。
 
+## 0. 预检（必读）—— sync 之前先看这里
+
+> ⛔ **铁律**：执行下面"## 核心流程"之前，**必须先读完 L396 起的"⚠️ 踩坑"章节** 和 `references/sync-pitfalls.md`。这 3-5 分钟能省你 30 分钟 debug。
+
+### 为什么需要预检（实战教训）
+
+**2026-06-04 实战案例**：重装云端版 skill-github-sync 时，主文件已经带 5 个坑的精简版（L396-477）+ 详细版 `references/sync-pitfalls.md`（8621B）。**但实战 sync zhiligithub + zhilicomments 时没读**这俩文件，重复踩了 3 个坑：
+
+| 坑 | 实战表现 | 已知解法（已有但被忽略） |
+|----|---------|---------------------|
+| **云端严重落后** | 本地 `1000-1500字` / 云端 `2000-3000字` | SKILL.md L400-417 / sync-pitfalls.md L9-50 |
+| **443 偶发断连** | 第一次 push 超时，sleep 5 秒后成功 | SKILL.md L436-451 / sync-pitfalls.md L101-143 |
+| **push 前需 rebase** | 远端有 cron commit，rejected | SKILL.md L453-466 / sync-pitfalls.md L147-189 |
+
+### 3 个 yes 自检（不通过就别动）
+
+执行 sync 之前，**这 3 个问题** 必须都有答案：
+
+- [ ] **YES 1**：我读完了 SKILL.md L396-477 的 5 个坑章节，并知道每个坑的"症状+处理"
+- [ ] **YES 2**：我读完了 `references/sync-pitfalls.md` 的 4 个坑详细复现
+- [ ] **YES 3**：我刚 `git fetch origin && git log --oneline origin/main -5` 看过远端最近 5 个 commit，知道**本地 HEAD 和远端 HEAD 的关系**
+
+**3 个全 yes** → 走"## 核心流程"。**任一是 no** → 先补读，再走流程。
+
+### 跳过预检的代价（量化）
+
+实战中跳过预检踩坑的成本：
+
+| 坑 | 跳过代价 |
+|----|---------|
+| 云端落后 | push 完后才发现云端字数还是 `4000-8000字` 旧值，要再开一个 commit 修 |
+| 443 断连 | 第一次 push 超时返回，需要 sleep + 重试，**多耗 5-10 秒** |
+| rejected | push 被拒，需要 `pull --rebase --autostash` 后再 push，**多耗 30-60 秒** |
+| **合计** | **5-15 分钟 debug** vs 3-5 分钟预检 |
+
+### 行号引用铁律（改 SKILL.md 必看）
+
+**铁律**：在 SKILL.md 里**引用 SKILL.md 自身的行号**时（"见 L396 起的踩坑章节"这种），**patch 之后必须立即 grep 实测**位置，不能按改动前的位置猜。
+
+**反面教材（本 session 实战）**：
+```
+第一次 patch 后引用了 L361-442（L365-382 / L401-416 / L418-431）
+实际位置：L396-477（L400-417 / L436-451 / L453-466）
+原因：插入新章节后行号下移 +35，但 patch 时没实测
+```
+
+**正确流程**（写 SKILL.md 必走）：
+```bash
+# Step 1: patch 完引用 L 编号的章节
+# Step 2: 立即 grep 实测新位置
+grep -n '^## 踩坑\|^### 坑 [0-9]' /root/.hermes/skills/developer/skill-github-sync/SKILL.md
+# Step 3: 把所有引用更新到实测位置
+# Step 4: 再次 grep 确认引用和实际位置一致
+```
+
+**什么时候不算坑**：引用**其他文件**（如 `references/sync-pitfalls.md L9-50`）的行号可以用，因为没动那个文件；但引用**同一个文件**自己的行号必须实测。
+
+**为什么容易踩**：patch 操作本身不返回行号变化，agent 容易"按记忆里"写 L 编号。等下一个 agent 来读这文件时引用会指向错地方。
+
 ## 核心流程
 
 ### 第一步：读取 Token
@@ -357,6 +416,89 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 6. **README 数字准确性**：每次更新后核实各分类技能数量和总数
 7. **格式一致性**：README.md 和 README.en.md 必须同步更新，两者结构必须一致
 8. **标题图标**：必须为 `# 🧰 viceroy-skills`，禁止其他变体
+
+## ⚠️ 踩坑（2026-06-04 实战 sync 4 个 skill 沉淀）
+
+sync 操作不顺利时按这 4 个坑对号入座。详细复现/诊断命令见 `references/sync-pitfalls.md`。
+
+### 坑 1：云端严重落后于本地（最常踩）
+
+**症状**：push 完后才发现云端 SKILL.md 字数还是 `4000-8000字`（旧版），本地早已是 `1500-2000字`。**会重蹈数周的旧规范。**
+
+**原因**：你可能几周没推过，云端是上次 push 时冻结的版本。其他协作者也可能 push 过（cron 维护等）。
+
+**预防**（sync 第一步，不是最后一步）：
+```bash
+# 看远端最新 commit（不是本地 HEAD）
+git fetch origin
+git log --oneline origin/main -5
+# 对比关键字段：直接读云端 SKILL.md 的 frontmatter
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.github.com/repos/jacardl/viceroy-skills/contents/skills/<cat>/<skill>/SKILL.md" | \
+  python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['content']).decode()[:300])"
+```
+
+**处理**：把云端落后部分也纳入本次 commit（不只是本地新文件）。
+
+### 坑 2：本地路径 ≠ 云端分类路径
+
+**症状**：本地 `~/.hermes/skills/social-media/zhilicomments/`，云端 `skills/creative/zhilicomments/`，**直接 `cp -r` 路径就错**。本地装的 skill 路径由装的位置决定（`social-media/`、`openclaw-imports/` 等），云端按 6 大分类组织。
+
+**规则**：
+- 本地：`~/.hermes/skills/<本地领域>/<skill>/`（本地领域是装的时候定的，可能五花八门）
+- 云端：`skills/<6大分类>/<skill>/`（**只有这 6 个**：ai / assistant / creative / developer / operations / product）
+- **映射原则**：以**云端 README 现有归类**为准，看 README.md 里这个 skill 在哪个分类下，就同步到哪个云端分类
+
+**处理**：
+```bash
+# 错误：cp -r /root/.hermes/skills/social-media/zhilicomments skills/  # 路径错
+# 正确：先 rm -rf 云端旧版本，再 cp 本地到云端分类
+rm -rf skills/<cloud_category>/<skill>/*
+cp -r /root/.hermes/skills/<local_area>/<skill>/* skills/<cloud_category>/<skill>/
+```
+
+### 坑 3：443 偶发 connection timed out
+
+**症状**：`git pull` / `git push` 报 `Failed to connect to github.com port 443: Connection timed out`，**但 `curl https://github.com` 是通的**。
+
+**原因**：git 协议对 443 的连接偶发被路由/防火墙 drop（curl 通常走不同路径或 keep-alive 不一样）。**不是配置问题**，重试就行。
+
+**处理**：
+```bash
+# 第一次失败 → sleep 3-5 秒 → 再试
+sleep 3 && GIT_TERMINAL_PROMPT=0 git push origin main
+# 仍失败 → sleep 10 秒再试
+sleep 10 && GIT_TERMINAL_PROMPT=0 git push origin main
+# 还失败 → 切 SSH 协议（前提 ~/.ssh/id_rsa 是 GitHub key）
+git remote set-url origin git@github.com:jacardl/viceroy-skills.git
+git push origin main
+```
+
+### 坑 4：push 之前要先 rebase
+
+**症状**：`git push` 报 `! [rejected] main -> main (fetch first)`。
+
+**原因**：之前 `git pull` 超时失败了，但远端实际已经写入了新 commit（可能是 GitHub Action / cron / 其他 agent）。你本地还停留在旧 HEAD。
+
+**处理**：
+```bash
+# --autostash：把 working tree 的未提交变更暂存，rebase 后自动恢复
+GIT_TERMINAL_PROMPT=0 git pull --rebase --autostash origin main
+GIT_TERMINAL_PROMPT=0 git push origin main
+```
+
+**注意**：如果 working tree 里有重要的本地文件（比如刚 `cp -r` 进去还没 `git add` 的），`--autostash` 会保留它们；rebase 完会自动 unstash 回来。**不要用普通的 `git stash`，会丢东西。**
+
+### 坑 5（补充）：同步前先备份云端原版
+
+**为什么**：万一本地的版本有 regression（比如漏了某个 reference），可以秒级回滚到云端旧版对比。
+
+**做法**（不是 git 操作，单纯 cp 一份）：
+```bash
+# 备份到 /tmp
+cp -r skills/<cat>/<skill> /tmp/cloud_backup_<skill>_$(date +%Y%m%d)
+# 同步完后想回滚：rm -rf skills/<cat>/<skill>/* && cp -r /tmp/cloud_backup_<skill>_*/* skills/<cat>/<skill>/
+```
 
 ## 推送命令示例
 
