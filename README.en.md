@@ -1,10 +1,10 @@
 <div align="center">
 
-[中文](./README.md) · **English**
+**中文** · [English](./README.en.md)
 
 # 🧰 viceroy-skills
 
-#### 佳哥私人 Skill 库，按岗位分类维护 / My personal Skill library — organized by role, ready to use
+我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
 [![Skills](https://img.shields.io/badge/Skills-59-10B981?style=for-the-badge)](#-skills)
@@ -16,12 +16,6 @@
 ![OpenClaw](https://img.shields.io/badge/OpenClaw-Skill-8B5CF6?style=flat-square)
 
 </div>
-
----
-
-Each skill was running in my own projects long enough to prove it actually saves time before I open-sourced it. No hype — just practical tools.
-
-- **Skills** — Structured instruction sets that agents load directly. Follows the [Agent Skills](https://agentskills.io) open standard. Works with Claude Code, Codex, OpenCode, and OpenClaw
 
 ---
 
@@ -40,17 +34,15 @@ Each skill was running in my own projects long enough to prove it actually saves
 
 ## 📦 Install
 
-In any agent that supports Skills, just say:
-
-```
-Install this skill: https://github.com/jacardl/viceroy-skills/tree/main/<skill-name>
+```bash
+npx skills add jacardl/viceroy-skills --skill <skill-name>
 ```
 
 Examples:
 ```
-Install storage-analyzer
-Install hv-analysis
-Install khazix-writer
+帮我安装 storage-analyzer
+帮我安装 hv-analysis
+帮我安装 khazix-writer
 ```
 
 ---
