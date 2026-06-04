@@ -1,12 +1,12 @@
 # zhiliGitHub 增强版 HTML 格式规范
 
-> 本规范基于 `doc-kami-parchment` + `article-magazine` 整合升级，适用于「直隶按察使」GitHub 黑马长文（4000-8000字）。
+> 本规范基于 `doc-kami-parchment` + `article-magazine` 整合升级，适用于「直隶按察使」GitHub 黑马长文（**1500-2000字**）。
 
 ---
 
 ## 一、视觉签名（核心不变，细节增强）
 
-> **⚠️ 排版理念：章节标题 + 流式正文，与 zhiliComments 共用同一套渲染规范**
+> **⚠️ 排版理念：章节标题 + 流式正文（zhiliGitHub 技能内统一，短评的渲染由独立技能 zhilicomments 规定）**
 >
 > 允许出现「一、XXX」「二、XXX」显性章节 h2 标题，靠装饰分隔线 `· · ·` 做章节内节奏划分。
 

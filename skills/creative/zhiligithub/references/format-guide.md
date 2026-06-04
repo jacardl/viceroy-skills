@@ -103,7 +103,7 @@
 
 ## CSS 渲染层（强制标准，与 article_io2026.html 完全一致）
 
-⚠️ **2026-05-20 统一**：所有文章（zhiligithub 和 zhilicomments）共用 article_io2026.html 同一套 CSS 渲染层，差异仅在内容结构，不在样式。
+⚠️ **2026-05-20 统一**：所有 **zhiliGitHub** 文章共用 article_io2026.html 同一套 CSS 渲染层，差异仅在内容结构，不在样式。（**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**）
 
 | 属性 | 值 |
 |------|-----|
