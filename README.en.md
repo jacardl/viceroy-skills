@@ -2,9 +2,9 @@
 
 [中文](./README.md) · **English**
 
-# viceroy-skills
+# 🧰 viceroy-skills
 
-#### My personal Skill library — organized by role, ready to use
+#### 佳哥私人 Skill 库，按岗位分类维护 / My personal Skill library — organized by role, ready to use
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
 [![Skills](https://img.shields.io/badge/Skills-59-10B981?style=for-the-badge)](#-skills)

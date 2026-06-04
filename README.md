@@ -8,13 +8,13 @@
 ## 安装命令
 
 ```bash
-npx skills add jacardl/skillshub
+npx skills add jacardl/viceroy-skills
 ```
 
 安装单个 skill：
 
 ```bash
-npx skills add jacardl/skillshub --skill <skill-name> --agent openclaw -y
+npx skills add jacardl/viceroy-skills --skill <skill-name>
 ```
 
 ## 分类索引
@@ -91,4 +91,4 @@ npx skills add jacardl/skillshub --skill <skill-name> --agent openclaw -y
 - [software-copyright-materials](skills/product/software-copyright-materials/SKILL.md)
 
 ---
-_README 自动更新：2026-06-02 21:21（Asia/Shanghai）_
+_README 自动更新：2026-06-03 13:30（Asia/Shanghai）_
