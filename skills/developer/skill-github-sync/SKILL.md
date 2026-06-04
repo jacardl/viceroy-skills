@@ -37,7 +37,27 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   grep '"name"'
 ```
 
-### 第三步：同步 Skill 文件
+### 第三步：同步 Skill 文件（完整目录，非仅 SKILL.md）
+
+**⚠️ 重要：同步的是整个技能目录，不是单个文件。**
+
+每个 Skill 包含多个支持文件（参考资料、脚本、模板等），同步时必须复制整个目录：
+
+```
+khazix-writer/
+├── SKILL.md          ← 主文件
+├── references/       ← 参考资料
+│   └── xxx.md
+├── scripts/          ← 执行脚本
+│   └── xxx.py
+├── templates/        ← 模板文件
+│   └── xxx.html
+└── assets/           ← 静态资源
+    └── xxx.png
+```
+
+错误做法：`cp SKILL.md ...`（只复制单个文件）
+正确做法：`cp -r skill-name/ ...`（复制整个目录）
 
 使用 git 原生 push 方式（比 GitHub API 更稳定）：
 
