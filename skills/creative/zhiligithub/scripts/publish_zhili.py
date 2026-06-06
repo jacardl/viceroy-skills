@@ -57,21 +57,24 @@ def load_config():
 
 
 def load_sensenova_key():
-    """从 TOOLS.md 读取 Sensenova API Key"""
-    path = os.path.expanduser(TOOLS_PATH)
-    if not os.path.exists(path):
-        return ""
-    try:
-        with open(path, encoding='utf-8') as f:
-            content = f.read()
-        # 找 Sensenova API Key
-        for line in content.splitlines():
-            if "sk-uRDC" in line:
-                key = line.split("sk-uRDC")[1].split('"')[0].split("'")[0].split()[0]
-                return "sk-uRDC" + key
-        return ""
-    except:
-        return ""
+    """从 secrets 读取 Sensenova API Key（优先本地 secrets，回退到 TOOLS.md 占位符）"""
+    # 优先读本地 secrets（不进 GitHub）
+    secrets_path = os.path.expanduser("~/.openclaw/secrets/api-keys.md")
+    if os.path.exists(secrets_path):
+        try:
+            with open(secrets_path, encoding='utf-8') as f:
+                content = f.read()
+            for line in content.splitlines():
+                line = line.strip()
+                if line.startswith("SENSENOVA_API_KEY:"):
+                    val = line.split(":", 1)[1].strip()
+                    if val and val != "***REDACTED***":
+                        return val
+        except Exception:
+            pass
+
+    # 占位符 / 无 secrets 文件时直接返回空，不再回退到 TOOLS.md
+    return ""
 
 
 def load_minimax_key():

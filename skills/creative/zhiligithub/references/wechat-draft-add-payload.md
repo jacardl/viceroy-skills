@@ -12,7 +12,7 @@
 | 40007 | `invalid media_id` | thumb_media_id 用了 `media/upload?type=thumb` 接口的返回值 | 改用 `material/add_material?type=thumb` 的 media_id |
 | 45003 | `title size out of limit` | 标题 > 60 字节 | 缩到 ≤22 字节（约 7-8 个中文字） |
 | 45003 | `digest size out of limit` | 摘要 > 54 字节 | 缩到 ≤54 字节（约 18 个中文字）|
-| 40001 | `invalid credential` | access_token 过期或 AppSecret 错 | 重新获取 token；AppSecret 别用旧的 `07b4dc2d64ddbe6f53707977dbabdbbe`，从 `references/config.md` 读 |
+| 40001 | `invalid credential` | access_token 过期或 AppSecret 错 | 重新获取 token；AppSecret 从 `references/config.md` 读（真实值保存在 `~/.openclaw/secrets/zhili-credentials.md`，**绝不能**进 GitHub） |
 
 ## 2. 正确 payload 结构（✅ 唯一可用）
 

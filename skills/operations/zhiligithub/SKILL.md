@@ -501,8 +501,11 @@ C = {
 ```python
 import urllib.request, json, ssl, os
 
+# APPID 可公开；APPSECRET 必须从本地 secrets 加载，绝不能进 GitHub
 APPID = 'wx38a91c353554588a'
-APPSECRET = '07b4dc2d64ddbe6f53707977dbabdbbe'
+# 真实 APPSECRET 在 `~/.openclaw/secrets/zhili-credentials.md`（不进 GitHub）
+# 脚本 `load_config()` 会自动从该文件回退加载
+APPSECRET = '***REDACTED***  # 见本地 secrets 文件'
 
 # 1. 获取 access_token
 req = urllib.request.urlopen(
@@ -542,10 +545,10 @@ with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
 
 ```bash
 # ① 先生成封面图（保存到 /tmp/cover-thumb.jpg）
-python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
 
 # ② 创建草稿（用 --cover-path 指定预生成封面）
-python3 skills/zhili-publish/scripts/publish_zhili.py \
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
   "摘要" \
@@ -860,7 +863,7 @@ mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众
 ### 标准发布（无封面图）
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
 ```
 
 ⚠️ **字段长度限制（超限会报 45003 错误，必须严格执行）**：
@@ -913,7 +916,7 @@ python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.
 ### 自动生成封面图发布
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py \
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
   --title "文章标题" \
   --author "作者" \
   --digest "摘要" \
@@ -924,7 +927,7 @@ python3 skills/zhili-publish/scripts/publish_zhili.py \
 ### 仅生成封面图（不上传）
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 ```
 
 脚本自动完成：

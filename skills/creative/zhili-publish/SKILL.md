@@ -1,9 +1,14 @@
 ---
-name: zhili-publish
+name: zhiliGitHub
 description: >
-  微信公众号草稿箱发布技能，专为「直隶按察使」公众号定制。
-  支持：AI 封面图生成（Sensenova 首选，MiniMax 备选）、创建草稿、设置原创、分类标签、自动排版。
-  触发条件：用户说「发布公众号」「推送草稿」「发布到公众号」「生成草稿」或直接说「发布直隶按察使」（注意：要先判断内容格式，见下方路由规则）。
+  微信公众号长文发布技能，专为「直隶按察使」公众号的 GitHub 黑马项目方向定制。
+  适用：GitHub Trending 黑马开源项目介绍文章（1500-2000字，流式叙事）。
+  触发条件：用户说「写文章」「发长文」「GitHub」「黑马」。
+  **执行前必读**：每次写 HTML 前必须按顺序执行以下三步，再开始写作：
+  1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
+  2. 按规范生成 HTML，内联所有 CSS
+  3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
+---
 ---
 
 # 直隶按察使 · 公众号发布技能
@@ -13,22 +18,188 @@ description: >
 | | zhili-publish（长文） | zhilicomments-publish（短评） |
 |--|----------------------|-------------------------------|
 | 字数 | **4000-8000字** | 500-800字 |
-| 结构 | Evolver 六段式或自定义深度结构，有章节标题 | 轻量三段式（事件+观点+一句话收尾） |
+| 结构 | 流式叙事，无显性章节标题 | 轻量三段式（事件+观点+一句话收尾） |
 | 配图 | 项目截图+封面（正文必须有 mmbiz 图） | 1-2张评论配图（可选） |
 | 用途 | 项目介绍/教程/深度分析/行业观察 | 热评/观点/Reaction |
 | 内容来源 | khazix-writer 长文输出 | khazix-writer 短评输出 |
 
 **khazix-writer → zhili-publish 交接规范**：
 
-khazix-writer 产出**纯文本**，含【一、章节名】标注。zhili-publish 接收后：
-1. 将【一、xxx】转为 `<h2>` 标签（18px bold 左对齐）
+khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 接收后：
+1. 将场景标签转为 **bold p 标签**（如 `【核心亮点】` → `<p style="font-weight:bold;">核心亮点</p>`），**不用 h2**
 2. 正常段落转为 `<p>` 标签（16px 行高1.6 左对齐）
-3. `【重点】句子` 转为 `<strong style="color:#e63946;">`
+3. `【重点】句子` 转为 `<strong style="color:#1B365D;">`
 4. 嵌入 mmbiz 图片（正文必须至少一张）
 
-**判断标准**：
+## zhiliGitHub 写作格式：编号盘点 + 底层路线框架
 
-**判断标准**：
+> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，与 zhiliComments 共用同一套 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。
+
+## ✅ CSS 渲染规范：样式A（标准模板，2026-05-30 固化）
+
+### 样式A 核心参数
+
+| 属性 | 值 |
+|------|-----|
+| 背景色 | `#f5f4ed`（羊皮纸） |
+| 正文字体 | `Georgia, 'Noto Serif SC', serif` |
+| H2 标题 | `border-left: 4px solid #1B365D`，左边框墨蓝高亮 |
+| 强调色（数据/核心） | `#c9553d`（红棕色） |
+| 强调色（关键词/重点） | `#1B365D`（墨蓝） |
+| 警示/核心洞察背景 | `#fff3b0`（淡黄底） |
+| 引言/摘要样式 | 左边框 `#1B365D` + `background:#f0efe8` + 斜体 |
+| 分隔线 | `· · ·` 居中，`color:#c9553d` |
+| 代码块 | `background:#1e1e1e`，白色文字 |
+| 适合标签 | 左边框 `#2d6a4f` + `background:#f0f7f4` |
+| 不适合标签 | 左边框 `#7c6f64` + `background:#f7f5f3` |
+| 正文段落 | `font-size:16px; line-height:1.85; color:#2c2c2c` |
+
+### 标签行规范
+
+```html
+<!-- 分类标签（最多2个） -->
+<span style="display:inline-block;background:#1B365D;color:#fff;font-size:12px;padding:3px 10px;border-radius:2px;margin-right:6px">GitHub</span>
+<span style="display:inline-block;background:#c9553d;color:#fff;font-size:12px;padding:3px 10px;border-radius:2px">黑马项目</span>
+```
+
+### 引言/摘要样式
+
+```html
+<div style="border-left:4px solid #1B365D;padding:14px 18px;background:#f0efe8;margin-bottom:28px;font-size:16px;line-height:1.8;color:#333;font-style:italic">
+  <p style="margin:0">「引言金句或核心洞察一句话。」</p>
+  <p style="margin:8px 0 0;color:#7c6f64;font-size:14px">—— 出处</p>
+</div>
+```
+
+### Pull Quote（独立高亮块）
+
+```html
+<div style="border-left:4px solid #1B365D;padding:14px 18px;background:#f0efe8;margin-bottom:28px;font-size:16px;line-height:1.8;color:#333;font-style:italic">
+  <p style="margin:0">「核心观点一句话。」</p>
+</div>
+```
+
+### 适合/不适合标签
+
+```html
+<!-- 适合 -->
+<div style="margin:16px 0;padding:12px 16px;background:#f0f7f4;border-radius:4px;border-left:3px solid #2d6a4f;">
+  <p style="font-size:14px;color:#1f1d18;margin:0 0 4px 0;"><strong style="color:#2d6a4f;">✅ 适合场景：</strong>具体说明</p>
+</div>
+<!-- 不适合 -->
+<div style="margin:10px 0;padding:12px 16px;background:#f7f5f3;border-radius:4px;border-left:3px solid #7c6f64;">
+  <p style="font-size:14px;color:#1f1d18;margin:0 0 4px 0;"><strong style="color:#7c6f64;">❌ 不适合：</strong>具体说明</p>
+</div>
+```
+
+### 正文高亮规则
+
+- **墨蓝高亮**（关键词/重点）：`<strong style="color:#1B365D;">`
+- **红棕高亮**（数据/核心）：`<strong style="color:#c9553d;">`
+- **黄底高亮**（警示/核心洞察）：`<strong style="background:#fff3b0;">`
+
+### 完整模板文件
+
+标准模板已固化在 `references/article-template.html`，生成文章时优先复制此文件修改内容。
+
+### ❌ 禁止事项
+
+- 禁止使用纯白色 `#ffffff` 背景（破坏羊皮纸风格一致性）
+- 禁止使用 `#00d4aa` 等亮绿色作为主色调（仅Styles D/E 实验性布局可用）
+- 禁止删除 `font-family` 中的 `Georgia`（英文衬线保证原文韵味）
+- 禁止省略 mmbiz 图片（草稿箱 API 硬性拦截无图文章）
+
+### 一、「写在前面」开头（必写）
+
+开头用 2-3 段建立背景，不用章节标题，直接进入场景。格式：
+
+```
+最近在找 XXXX 工具的时候，发现了一个有意思的事情：
+（场景描述 1）
+（场景描述 2）
+（核心洞察一句话）
+```
+
+关键：开头不写「一、写在前面」这样的标题，直接以场景描写切入，让读者进入语境。
+
+### 二、编号盘点主体结构
+
+每个项目用统一格式，数据驱动，字段固定：
+
+```
+#N 项目名称
+**GitHub**：https://github.com/{owner}/{repo}
+**Stars**：{Xk} | **语言**：{Language} | **License**：{License}
+（两句话项目描述）
+适合场景：具体说明
+不适合场景：具体说明
+```
+
+**元信息表格式**（所有项目统一在文末或文初汇总）：
+
+| # | 项目 | Stars | 语言 | 适合场景 |
+|---|------|-------|------|----------|
+| 1 | name | Xk | Python | xxx |
+| 2 | name | Xk | Go | xxx |
+
+### 三、底层路线框架（适合多项目技术分类场景）
+
+当盘点项目涉及同一技术领域时，用底层路线分层：
+
+```
+（底层路线介绍）
+（上层路线介绍）
+（应用层介绍）
+```
+
+每层之间用简短过渡句连接，不用 h2 标题过渡，直接用句子承接。
+
+### 四、分类收尾小结
+
+每个分类结束后写一段小结，格式：
+
+```
+（这一类工具的核心共同点）
+（它们解决的是同一个什么根本问题）
+（我的判断：一句话）
+```
+
+### 五、收尾方式
+
+**推荐收尾格式**（不用「六、总结」标题）：
+
+```
+最后说两句。
+（一个升维观察 or 行业判断）
+（留一个钩子，不说死）
+```
+
+### 标准六段式（单项目介绍）
+
+| 序号 | 章节 | 内容 |
+|------|------|------|
+| 一 | 项目名称 | GitHub 链接 + Stars + 语言 + License |
+| 二 | 项目介绍 | 2-3 段简介，含痛点/解决方案 |
+| 三 | 架构设计 | 核心技术原理 + 工作流程 |
+| 四 | 快速上手 | 安装命令 / CDN 引入方式 |
+| 五 | 实战场景 | 具体应用案例 + 效果描述 |
+| 六 | 总结 | 我的判断 + 适合/不适合场景 + 留钩子 |
+
+每段 `<h2>` 标题格式：`<h2 style="font-size:18px;font-weight:bold;margin:24px 0 12px 0;color:#1f1d18;">一、项目名称</h2>`
+
+六段式允许章节标题，与编号盘点格式并列，agent 根据文章内容类型自行选择。
+
+### 七、格式规范速查
+
+| 元素 | 规范 |
+|------|------|
+| 项目数量 | 3-8 个，太多则流水账，3 个以下撑不起篇幅 |
+| 单项目字数 | 200-400 字，不要展开太多细节 |
+| 元信息表 | 必须有，放在文末或每个项目简介后 |
+| 适合/不适合 | 每项目必写，划清边界才有参考价值 |
+| 配图 | 每个项目至少一张截图 or GIF，mmbiz URL 必须嵌入 HTML |
+| 数据来源 | 结尾注明：`📌 数据来源：GitHub Trending，YYYY-MM-DD` |
+| Star 号召 | 结尾加 `如果你觉得这几个项目有意思，欢迎 Star 支持开源 🧬` |
 
 ## 工作流
 
@@ -39,6 +210,12 @@ khazix-writer 产出**纯文本**，含【一、章节名】标注。zhili-publi
 ### 获取微信文章内容
 
 > ⚠️ **重要更新（2026-05-17）**：9Router 两个实例均已下线，Anspire API (`api.anspire.cn`) DNS 从服务器环境不可达。Bocha Search API (`open.bocha.cn/api/v1/search`) 是当前最有希望的 Web 搜索备选，需用户提供 API Key。详见 `references/wechat-fetch-fallbacks.md`。
+
+## 获取微信文章内容 / FlowUs 内容提取
+
+> 📌 **FlowUs 数据库记录处理（2026-05-20 新增）**：当 FlowUs 页面是数据库记录类型（`parent.type == "database_id"`）时，内容 URL 存储在 `properties['网址链接']['url']`，而不是 `content[]` block 中。详见 `references/flowus-database-record.md`。
+>
+> ⚠️ **微信文章链接失效处理**：从 FlowUs 数据库记录提取的微信文章 URL（如 `mp.weixin.qq.com/s?...`），在无登录 cookie 的环境下访问会返回"未知错误"。**不要尝试用 curl/浏览器抓取**，直接请用户提供文章正文。
 
 **当前可用方案（按可靠性排序）：**
 
@@ -56,20 +233,36 @@ khazix-writer 产出**纯文本**，含【一、章节名】标注。zhili-publi
 
 > ⚠️ **微信滑块验证码是最后一层墙**：微信「混元AI」反爬系统在服务端直接拦截所有自动化请求，无需任何人机交互即可判断并返回验证页。**不要浪费时间尝试新工具**。
 
-**⚠️ WeChat URL 项目识别陷阱（republish 场景）**：
+**⚠️ WeChat URL / Social Media Post 项目识别陷阱（republish 场景）**：
 
-当用户说「zhili publish [WeChat URL]」时，不要假设 URL 标题就是文章主题。**必须先用 `mmx search` 交叉验证实际项目名**：
+当用户提供微信文章链接或社交媒体帖子引用项目时，不要假设帖子/链接中的名字就是真实 GitHub 用户名。**必须先用 GitHub 搜索交叉验证**：
 
 ```
-# 错误假设：URL 路径中的关键词就是项目名
-# 例：https://mp.weixin.qq.com/s/6SkupSxgM9618Y-O7ZJUbA
+# 错误假设：帖子里的名字 = GitHub 用户名
+# 例：用户说「Berry Xia 针对 AI API 中转站...」
+#     → 误以为 GitHub 用户是 berryxia → GET /repos/berryxia/api-relay-audit → 404
+#     → 实际 repo 在 toby-bridges/api-relay-audit（Stars 469，@li9292）
+#
+# 例2：https://mp.weixin.qq.com/s/6SkupSxgM9618Y-O7ZJUbA
 #     → 误以为是 CodeGraph（上一个项目）
 #     → 实际是 academic-research-skills
 
-# 正确做法：用 mmx search 查询文章标题
-mmx search query "文章标题 全文"
-# 从搜索摘要中提取真实项目名和 GitHub 地址
+# 正确做法：用 GitHub Search API 搜索项目关键词
+curl -s "https://api.github.com/search/repositories?q=api-relay-audit+OR+relay+audit" \
+  -H "Accept: application/vnd.github.v3+json"
+# 从结果中取 Stars 最高、描述最相关的匹配项
+
+# ⚠️ 不要直接拼 /repos/{handle}/{repo} —— 这个会 404
+# 必须先搜索，确认真实 owner 和 repo 名
 ```
+
+**陷阱的本质**：社交媒体分享者（@berryxia）和 GitHub 仓库 owner（toby-bridges）经常不是同一个人。帖子作者可能是项目使用者/宣传者而非作者，或转发了真正的 repo 链接。
+
+**处理流程**：
+1. 从帖子提取项目关键词（如「api-relay-audit」）
+2. GitHub Search API 搜索关键词
+3. 取 Stars 最高的匹配项
+4. 以搜索结果的 `full_name` 和 `owner` 为准写入文章（作者署名用 repo 实际 owner）
 
 工作流：
 1. 用 `mmx search` 搜索微信文章标题
@@ -77,11 +270,18 @@ mmx search query "文章标题 全文"
 3. 用 GitHub API 查真实项目的 stars / description / README
 4. 以真实项目信息为准写文章，不要用上一个项目的上下文
 
-**republish 场景的正确处理：** 用户粘贴已有公众号文章内容后，需要用自己的话重写核心观点（避免抄袭），按 format-guide.md 的 Evolver 六段式重组文章结构。
+**republish 场景的正确处理：** 用户粘贴已有公众号文章内容后，需要用自己的话重写核心观点（避免抄袭），按流式叙事格式重组文章结构。
 
 **获取内容后的处理：**
 - 纯文字内容 → 按 format-guide.md 转换为公众号文章
 - 如果用户粘贴的是已发布公众号文章 → 了解核心观点和结构 → 用自己的话重写（避免抄袭）
+
+**复扒发布 Fallback（重要经验）**：
+当用户说「重新发布」「用 zhiliGitHub 重新写作并发布」但原始内容源不可达（FlowUs 搜不到 / API 报错 / 链接 404）时，按 `references/republish-fallback-workflow.md` 的标准流程处理：
+1. 先查 `/root/` 本地缓存文件（标准命名：`article_{slug}.md`、`{slug}-article.txt`）
+2. 本地有 → 读取内容重建 HTML
+3. 本地无 → 尝试原始来源（GitHub API / 用户粘贴 / mmx vision）
+4. 详见 `references/republish-fallback-workflow.md`
 
 ## 标准发布流程（重要经验）
 
@@ -150,6 +350,8 @@ screenshots/ 目录
 - 调用 `/cgi-bin/draft/add` → 获取草稿 `media_id`
 
 > ⚠️ **已踩坑（2026-05-17 验证）**：`media/upload?type=thumb` 返回的 `thumb_media_id` 不兼容 `draft/add`，报 `40007 invalid media_id`。必须用 `material/add_material?type=thumb`，取其返回的 `media_id` 字段作为 `thumb_media_id`。
+>
+> ⚠️ **补充验证（2026-05-19）**：`material/add_material?type=thumb` 确实可用，zhilicomments 测试完全成功，返回的 `media_id` 直接用于 `draft/add` 正常。部分旧版代码示例中混用 `media/upload` 接口（`40007` 错误的来源），请统一使用 `material/add_material` 接口。
 
 ```
 下载项目图 → 上传到微信获取mmbiz → 写HTML（嵌入mmbiz） → 图片Gate检查 → 创建草稿
@@ -213,7 +415,12 @@ cropped = img.crop(((w-900)//2, (h-900)//2, (w-900)//2+900, (h-900)//2+900))
 cropped.save("/tmp/cover_900.jpg", "JPEG", quality=90)
 ```
 
-**Key 来源**：`/root/.openclaw/openclaw.json` 中 `providers.minimax.apiKey`（注意是 `minimax` provider，不是 `MINIMAX_API_KEY` 环境变量）。
+> ⚠️ **MiniMax API Key 实际位置尚待验证**：`/root/.openclaw/openclaw.json` 中的 `minimax` provider 配置段**不含 apiKey 字段**（仅有模型别名和 endpoint 配置）。历史上该 key 可能存储在 `~/.hermes/.env` 的 `MINIMAX_API_KEY` 或 TOOLS.md 中。
+>
+> **当前验证可行的备选方案**：当 MiniMax 直连失败时，用 PIL 纯代码生成封面图（完全离线）。如必须用 MiniMax API，请先通过以下命令确认 key 位置：
+> ```bash
+> grep -r "minimax" /root/.openclaw/ /root/.hermes/ 2>/dev/null | grep -i "key\|api"
+> ```
 
 ### 方式二：Sensenova（备用）
 
@@ -294,8 +501,11 @@ C = {
 ```python
 import urllib.request, json, ssl, os
 
+# APPID 可公开；APPSECRET 必须从本地 secrets 加载，绝不能进 GitHub
 APPID = 'wx38a91c353554588a'
-APPSECRET = '07b4dc2d64ddbe6f53707977dbabdbbe'
+# 真实 APPSECRET 在 `~/.openclaw/secrets/zhili-credentials.md`（不进 GitHub）
+# 脚本 `load_config()` 会自动从该文件回退加载
+APPSECRET = '***REDACTED***  # 见本地 secrets 文件'
 
 # 1. 获取 access_token
 req = urllib.request.urlopen(
@@ -335,10 +545,10 @@ with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
 
 ```bash
 # ① 先生成封面图（保存到 /tmp/cover-thumb.jpg）
-python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
 
 # ② 创建草稿（用 --cover-path 指定预生成封面）
-python3 skills/zhili-publish/scripts/publish_zhili.py \
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
   "摘要" \
@@ -367,23 +577,27 @@ python3 skills/zhili-publish/scripts/publish_zhili.py \
 4. **同时学习那篇文章的写作风格**：语气（亲切/犀利/冷静）、句式长度、段落节奏、收尾方式
 
 **Telegraf 风格是典型 7 段式**（非 format-guide 默认的 6 段）：
-```
-一、痛点切入（3-4个具体场景）
-二、项目介绍 + 数据卡片 + 核心概念列表
-三、架构设计 + 工作流图（代码块箭头流）
-四、快速上手（Step 1/2/3 分层）
-五、实战场景（多个真实案例，含失败→介入→成功弧线）
-六、与竞品对比表
-七、总结 + 收尾金句 + Star号召
-```
+**排版风格：章节标题 + 流式正文（与 zhiliComments 共用同一套渲染规范）**
+> 章节标题用 `<h2>`；引用来源标注等也用 `<h2>`。
 
-**format-guide 是格式清单，不是行文模板**——具体写几段、每段多长，要跟着参考文章的实际结构走，不能套用死板的 6 段式。
+**format-guide 是格式清单，不是行文模板**——具体写几段、每段多长，要跟着参考文章的实际结构走，不能套用死板的六段式。
 
 ### 封面图 Prompt 技巧
 
 **核心原则：浅色背景 + 强对比 + 高辨识度**
 
 微信卡片封面在浅色列表页展示，浅色背景 + 强对比色能让主体更突出、在封面序列中更抓眼。
+
+> 📌 **增强版格式规范（2026-05-20 更新）**：完整增强版 HTML 视觉规范见 `references/format-guide-enhanced.md`。升级内容：
+> - 标题字阶增大：h1=26px / h2=20px / h3=17px
+> - 四种高亮体系：关键词墨蓝、背景淡黄、砖红数字、引用块
+> - Pull Quote：20px 大字独立观点引用
+> - 信息卡片：GitHub 元信息 + 适合/不适合场景标签
+> - 装饰分隔线：`· · ·` 居中 ornament
+> - 辅助色：砖红 `#c9553d`、森绿 `#2d6a4f`、暖灰 `#7c6f64`
+> - Figure Caption：配图下方 13px 斜体图注
+>
+> 写新文章时**优先使用**增强版格式，已发布的旧文章不受影响。
 
 | 文章类型 | Prompt 方向 | 示例 |
 |----------|-------------|------|
@@ -407,28 +621,115 @@ on a clean white/light gray background, high contrast, vibrant accent colors (bl
 <!-- ⚠️ 危险：上下都设时，微信容器级 margin 会叠加，产生非预期大间距 -->
 <p style="margin:16px 0;line-height:1.6;text-align:left;">正文内容</p>
 
-<!-- ✅ h2 标题：bottom 控制下方间距，top 为 0 防止被上方撑开，左对齐 -->
-<h2 style="margin:24px 0 12px 0;font-size:18px;font-weight:bold;color:#111;text-align:left;">二、项目介绍</h2>
+<!-- ✅ h2 标题（流式排版中极少使用，如需引用来源标注）：bottom 控制下方间距，top 为 0，左对齐 -->
+<h2 style="margin:24px 0 12px 0;font-size:18px;font-weight:bold;color:#111;text-align:left;">引用来源</h2>
 
 <!-- ✅ 图片：margin 控制与上下文的间距 -->
 <img src="..." style="width:100%;border-radius:6px;margin:16px 0;" />
 ```
 
-### ⚠️ HTML 格式规范（zhili-publish 强制标准）
+### ⚠️ HTML 格式规范（zhiliGitHub 强制标准）
 
 发布任何文章到「直隶按察使」时，必须严格遵守以下 CSS 规格：
 
+### 🎨 样式规范：样式A（已固化，2026-05-30 确认）
+
+> 样式A是当前唯一标准，所有新文章必须使用此样式。
+
+**样式A特征（4套历史样式中用户选定）**：
+
 | 属性 | 值 | 说明 |
 |------|-----|------|
-| 行高 | `1.6` | 正文 line-height |
-| 两侧间距 | `0 8px` | 容器 padding |
-| 大标题 h2 | `font-size:18px;font-weight:bold` | 章节标题 |
-| 正文字号 | `font-size:16px` | 所有正文段落 |
-| 对齐方式 | `text-align:left` | **全部左对齐**，严禁居中或两端对齐 |
-| 关键词高亮 | `<strong style="color:#e63946;">` | 重点语句红色 |
-| 容器 | `max-width:678px;margin:0 auto;padding:0 8px;font-size:16px;line-height:1.6;color:#333;text-align:left;` | 文章正文外层 div |
+| 背景色 | `#f5f4ed`（暖羊皮纸） | 全部文章统一 |
+| 正文字体 | `Georgia,'Noto Serif SC',serif` | 英文衬线+中文衬线 |
+| H2标题 | `border-left:4px solid #00d4aa;padding-left:12px;font-size:20px;font-weight:bold;color:#1B365D` | **左边框是样式A的标志性特征**，不许省略 |
+| H3标题 | `font-size:17px;font-weight:bold;color:#1f1d18` | 无边框，左对齐 |
+| 正文p | `font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 14px 0` | 行高1.85 |
+| 强调色1 | `#1B365D`（墨蓝） | 关键词/链接/数据卡片背景 |
+| 强调色2 | `#c9553d`（砖红） | 红色高亮/重点/警示 |
+| 辅助色 | `#2d6a4f`（森绿） | 适合场景标签 |
+| 辅助色 | `#7c6f64`（暖灰） | 次要文字/不适合标签 |
+| 代码块 | `background:#1e1e1e;color:#e8e8e8;font-size:14px` | 深色背景+浅色文字 |
+| 分隔线 | `text-align:center;color:#c9553d;letter-spacing:6px;` 内容 `· · ·` | 砖红色装饰 |
+
+**历史样式参考（4套，均已归档）**：
+
+| 样式 | 背景 | H2风格 | 强调色 | 代码块 |
+|------|------|--------|--------|--------|
+| **A（现行标准）** | `#f5f4ed` | `border-left:4px solid #00d4aa` | `#c9553d` 红 | `#1e1e1e` 深色 |
+| B（极简无衬线） | `#f5f4ed` | `font-size:18px bold` | `#e63946` 红 | `#1e1e1e` 深色 |
+| C（温暖米色） | `#f0efe8` | `border-left:4px solid #1B365D` | `#c9553d` 红 | `#1e1e1e` 深色 |
+| D（暗色封面） | `#0d1828` 深蓝 | 渐变/卡片布局 | 彩色标签 | 深色主题 |
+
+**⚠️ CSS 规范权威来源**：
+
+| 文件 | 用途 | 说明 |
+|------|------|------|
+| `references/streambert-reference.html` | **样式A标准参考** | 已实测正确的HTML输出，H2有左边框，是样式A的准确实现 |
+| `references/article-template.html` | 模板起点 | 结构完整但H2无左边框，**需自行添加** `border-left:4px solid #00d4aa` |
+
+**正确流程（每次写 HTML 前必须执行）**：
+1. `skill_view("zhiligithub", "references/streambert-reference.html")` — 读取样式A的H2左边框实现
+2. 从 `article-template.html` 复制结构作为起点，**然后将所有 H2 改为 streambert-reference 的样式**（添加 `border-left:4px solid #00d4aa;padding-left:12px`）
+3. 生成完毕后，对照 streambert-reference.html 的 CSS 值逐项验证
+4. **严禁省略 H2 的左边框**——这是样式A的标志性特征
+
+> ⚠️ **本节 CSS 规范来源**：整合自 `streambert-reference.html`（已实测正确的 HTML 输出）和用户确认的样式A特征（2026-05-30）。核心签名：#f5f4ed 暖羊皮纸 + #00d4aa 青色 h2 左边框 + #c9553d 砖红色强调 + Georgia 衬线体。
+
+| 属性 | 值 | 说明 |
+|------|-----|------|
+| 画布背景 | `#f5f4ed`（暖羊皮纸） | 用户明确要求纯白时改为 `#ffffff`；次级背景 `#efeee5` |
+| 主文字色 | `#1f1d18`（近黑暖灰） | **不用纯黑** `#000` |
+| 次文字色 | `#6b665b` | 用于元信息、引用来源等次要文字 |
+| 唯一强调色 | `#1B365D`（墨蓝） | 所有 accent（链接、tag 描边、重点数字、引用左 rule）**只能用这一个色**，严禁多色 |
+| 正文字号 | `font-size:16px` | — |
+| 大标题 h2 | `font-size:18px;font-weight:bold;color:#1f1d18;` | — |
+| 行高 | 正文 `1.6`；标题 `1.1–1.3` | — |
+> ⚠️ 2026-05-18 用户明确要求：所有文字格式左对齐。这不是可选的样式偏好，是强制要求。
+
+**⚠️⚠️ CSS 规范必须从 `references/streambert-reference.html` 读取，不得凭记忆 ⚠️⚠️**
+
+本 skill 的 CSS 规范**唯一权威来源**是 `references/streambert-reference.html`（已实测正确的 HTML 输出）。**以下值是已知的错误记忆值，不要使用**：
+
+| 元素 | ❌ 错误记忆值 | ✅ 正确值（来自 streambert-reference.html） |
+|------|-------------|-------------------------------------------|
+| h2 | 无边框纯文本 | `border-left:4px solid #00d4aa;padding-left:12px` |
+| p | `margin:0 0 16px 0` | `margin:0 0 14px 0;line-height:1.85` |
+| blockquote | `border-left:3px solid #1B365D` | `border-left:3px solid #c9553d;background:#efeee5;border-radius:0 4px 4px 0` |
+| body 背景 | 未指定 | `#f5f4ed` |
+| body 字体 | Charter/Noto Serif | Georgia,'Times New Roman',serif |
+| p 颜色 | `#1f1d18` | `#2c2c2c` |
+| h2 颜色 | `#1f1d18` | `#1B365D` |
+| footer 颜色 | `#6b665b` | `#7c6f64` |
+
+**正确流程（每次写 HTML 前必须执行）**：
+1. `skill_view("zhiligithub", "references/streambert-reference.html")` — 读取实际 HTML 输出
+2. 提取 CSS 值，写入 HTML
+3. 生成完毕后，对照第 1 步的检查清单逐项验证
+4. **严禁凭记忆生成 CSS**——历史已证明记忆值 100% 错误
+
+> ⚠️ **本节 CSS 规范来源**：整合自 `streambert-reference.html`（已实测正确的 HTML 输出）。核心签名：#f5f4ed 暖羊皮纸 + #00d4aa 青色 h2 左边框 + #c9553d 砖红色强调 + Georgia 衬线体。
+
+**字体（一种语言一种衬线，不混用）：**
+- 中文：`Noto Serif SC`（fallback：`宋体`、`SimSun`）
+- 英文：`Georgia,'Times New Roman',serif`
+
+**代码块（深色背景 + 浅色文字）：**
+- 背景：`#1e1e1e`；文字: `#e8e8e8`；等宽字体
+- 字号：14px；行高 1.5
+
+**tag 样式（项目标签）：**
+- 用实色方块背景：`background:#c9553d;color:#fff;padding:2px 10px;border-radius:3px`
+
+**细节要求：**
+- 分隔符：`text-align:center;color:#c9553d;font-size:18px;letter-spacing:6px;` 内容 `· · ·`
+- 图片：`width:100%;max-width:680px;border-radius:4px;margin:16px 0;`
+- 引言块（重要段落高亮）：`border-left:4px solid #1B365D;padding:14px 18px;background:#f0efe8`
+- 引用块（外部引用）：`border-left:3px solid #c9553d;background:#efeee5;border-radius:0 4px 4px 0`
 
 > ⚠️ 2026-05-18 用户明确要求：所有文字格式左对齐。这不是可选的样式偏好，是强制要求。
+
+**⚠️ 代码块换行必须用 `<br>`，不能用真实换行符**
 
 ### ⚠️ 代码块换行必须用 `<br>`，不能用真实换行符
 
@@ -497,10 +798,10 @@ print(f'JSON payload 换行符数量: {newlines} (应为 0)')
 
 format-guide.md 中的 `**标题**` 和 `### 子标题` 是**内容写作阶段**的格式指引（用 Markdown 语法组织内容）。微信编辑器不会将 Markdown 转换为 HTML，**必须由 agent 在生成 HTML 时主动转换**：
 
-| 内容写法（format-guide） | HTML 转换结果 |
-|--------------------------|---------------|
-| `**粗体文字**` | `<strong style="color:#e63946;">粗体文字</strong>` |
-| `**一、项目名称**`（章节标题） | `<h2 style="font-size:18px;font-weight:bold;margin:24px 0 12px 0;color:#111;">一、项目名称</h2>` |
+| 内容写法（format-guide） | HTML 转换结果 | |
+|--------------------------|---------------|---|
+| `**粗体文字**` | `<strong style="color:#1B365D;">粗体文字</strong>` |
+| `**一、项目名称**`（章节标题） | `<h2 style="font-size:18px;font-weight:bold;margin:24px 0 12px 0;color:#1f1d18;">一、项目名称</h2>` |
 | `**小节标题**`（bold p 标签内） | `<p style="font-weight:bold;">小节标题</p>` — **不要嵌套 `<strong>`** |
 | `### 子标题` | `<p style="font-weight:bold;">子标题</p>` — **去掉 `###` 前缀** |
 | `• **概念名**：描述`（列表项） | `<li style="margin:0 0 4px 0;"><strong>概念名</strong>：描述</li>` — **不要手动加 `•`** |
@@ -540,12 +841,29 @@ mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众
 - 链接：`<a href="...">...</a>`
 - 图片：`width:100%;border-radius:6px`
 
+### ⚠️ 中文乱码问题（\uXXXX 字面量 vs 正常中文）
+
+**现象**：微信草稿箱前端正文显示 `AI Agent \u7ba1\u7406\u5f00\u6e90\u65b0\u683c\u5c38` 而非正常中文。
+
+**根因**：`json.dumps()` 默认 `ensure_ascii=True`，将所有非 ASCII 字符转为 `\uXXXX` 转义序列，WeChat 预览渲染器将其作为字面量直接显示。
+
+**正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，`Content-Type: application/json`（不带 `charset=utf-8`）。
+- `ensure_ascii=False` → 直接输出 UTF-8 原文，WeChat 自己推断编码
+- 禁止在 Content-Type 里加 `charset=utf-8`（会导致 JSON 处理管线无法解码）
+- 脚本位置：`/root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py` 第 443 行、第 564 行
+
+**错误修复**（不要用）：
+- `ensure_ascii=True`（默认）→ 中文变 `\uXXXX` 字面量
+- `ensure_ascii=False` + `charset=utf-8` → WeChat JSON 管线无法解码
+
+**验证**：前端草稿箱标题+正文都正常显示中文 = 修复正确。
+
 ## 脚本使用
 
 ### 标准发布（无封面图）
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
 ```
 
 ⚠️ **字段长度限制（超限会报 45003 错误，必须严格执行）**：
@@ -562,7 +880,7 @@ python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<dig
 ```python
 # ✅ 方式一：Python API（推荐，sandbox 可见 config.md）
 import sys
-sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhili-publish/scripts')
+sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhiligithub/scripts')
 import publish_zhili as pz
 token = pz.get_access_token(appid, appsecret)
 thumb_media_id = pz.upload_thumb_material(token, '/tmp/cover.jpg')
@@ -572,24 +890,33 @@ result = pz.create_draft(token, title, author, digest, content, thumb_media_id)
 
 # ✅ 方式二：CLI + bash 命令替换（实测可用）
 # 原理：$(python3 -c ...) 在 shell 层展开为 HTML 文本，作为第4个位置参数传入
-python3 /path/to/publish_zhili.py \
+python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
   "摘要" \
   "$(python3 -c \"import sys; sys.stdout.write(open('/tmp/article.html', encoding='utf-8').read())\")"
 ```
 
-**更新已有草稿的正确顺序**：
-1. 调用 `draft/delete?access_token=...` 删除旧草稿（必须先删）
-2. 重新上传封面图 `add_material?type=image`（每次新建都要重新上传，不能复用旧 thumb_media_id）
-3. 上传内容图 `media/uploadimg`
-4. 调用 `draft/add` 创建新草稿
+**用户明确指示：不要清空草稿箱。** 草稿箱可以同时存在多篇，直接上传封面 + 创建新草稿即可，不需要先删除旧草稿。
+
+### ⚠️ 标题字节限制（实测值，2026-05-27 更新）
+
+| 类型 | 安全字节 | 典型报错 |
+|------|----------|----------|
+| 长文标题 | **≤22字节**（约7-8个中文字） | `errcode: 45003 title size out of limit` |
+| 短评标题 | **≤20字节**（约6-7个中文字） | 同上 |
+| 作者 | **≤2个中文字** | `author size out of limit` |
+| digest | **≤54字节** | `digest size out of limit` |
+
+**实测换算**：UTF-8 中文 = 3字节/字。标题 `macOS最强终端cmux` = 21字节 ✅，`39K星开源项目` = 22字节 ✅，`开源数字生命浪潮：他把Neuro-sama装进浏览器` = 61字节 → 45003 ❌。
+
+**策略**：先写短标题（18-22字节）测试通过后，再逐步加长。不要一步到位写长标题。
 ```
 
 ### 自动生成封面图发布
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py \
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
   --title "文章标题" \
   --author "作者" \
   --digest "摘要" \
@@ -600,7 +927,7 @@ python3 skills/zhili-publish/scripts/publish_zhili.py \
 ### 仅生成封面图（不上传）
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 ```
 
 脚本自动完成：
@@ -653,19 +980,24 @@ python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-promp
 - 字号 14px，行高 1.5
 - 禁止裸 `<code>` 没有外层 `<pre>` 包裹
 
-### 文章模板文件（强制使用）
+### 文章模板文件（样式A起点）
 
-⚠️ 写新文章时，**必须**从 `references/article-template.html` 复制模板作为起点，不要从零写 HTML。
+⚠️ 写新文章时，**必须**从 `article-template.html` 复制结构作为起点，**但 CSS 样式必须参照 `streambert-reference.html`**。
 
-模板路径：`references/article-template.html`
+| 文件 | 角色 |
+|------|------|
+| `references/article-template.html` | 结构模板（H2 无左边框，需自行添加） |
+| `references/streambert-reference.html` | **CSS 样式权威**（H2 有 #00d4aa 左边框） |
 
-### ⚠️ 写文章前必读：Evolver 六段式格式对照（先读再写，不要写完再查）
+关键步骤：从 article-template.html 复制后，必须将所有 H2 的 `style="font-size:20px;color:#1B365D;..."` 加上 `border-left:4px solid #00d4aa;padding-left:12px`。
+
+### ⚠️ 写文章前必读：流式叙事格式对照（先读再写，不要写完再查）
 
 ⚠️ **本 session 教训**：写完文章后再查格式清单 = 被用户打回重写。正确做法是**写之前**就读一遍，写完立刻对照。
 
 - `references/enforcement-gate.md` — 发布前强制图片检查 Gate 机制（check_article_images 函数 + 拦截逻辑）
 - `references/project-screenshot-workflow.md` — 配图强制工作流：Step1下载→Step2上传→Step3记录位置→Step4写HTML嵌URL→Step5发布。核心原则：先拿mmbiz URL，后写HTML，不要倒过来。
-- `references/format-guide.md`（Evolver 文章格式规范）
+- `references/format-guide-enhanced.md`（增强版流式叙事格式规范）
 
 | 规范元素 | 格式要求 |
 |----------|----------|
@@ -752,6 +1084,87 @@ for m in re.finditer(r'.{20}\*{2}.{20}', html):
 - [ ] 链接：`style="color:#1a73e8;"`
 - [ ] **代码块 `<code>` 必须设置 `color:#e8e8e8` + 等宽字体**，不能用默认颜色（深色背景+默认黑色文字会看不见）
 - [ ] **正文（二、项目介绍）中至少插入一张项目截图**（mmbiz URL 必须嵌入 HTML，脚本 Gate 会强制检查，无图则拒绝发布）
+
+### ✍️ stop-slop 文风诊断（写完必查，适用于所有 AI 写作场景）
+
+> stop-slop 是一套 AI 文风去除术，源于 CrewAI 社区的 `hardikpandya/stop-slop` 项目（7k+ Stars）。核心思路：AI 写东西有套路，套路让人读起来像机器，这套检查表专门治这个。
+>
+> **对中文写作来说框架通用，词条需要本地化重建。**
+
+#### 中文 stop-slop 废话填充词自检表
+
+**出现3个以上，这篇文章就已经有 AI 味了。**
+
+| # | 中文废话 | 替换建议 |
+|---|---------|---------|
+| 1 | 值得注意的是 | 直接删，后面直接说观点 |
+| 2 | 实际上、其实 | 直接删，事实不需要铺垫 |
+| 3 | 那么、那么就 | 很多是噪音，可删 |
+| 4 | 大家/我们都知道 | 谁？直接说 |
+| 5 | 从某种意义上来说 | 要说就说清楚 |
+| 6 | 归根结底 | 直接说结论 |
+| 7 | 不得不承认 | 直接删 |
+| 8 | 想必、应该（猜测语气） | 不确定就别用 |
+| 9 | 毫无疑问 | 直接删，显得心虚 |
+| 10 | 必须承认 | 直接删 |
+| 11 | 我想说的是 | 删，直接开口就说 |
+| 12 | 相信大家都知道 | 谁？不点名就说 |
+
+#### 句式结构检查（5条）
+
+- [ ] 没有「首先、其次、最后、总之」套路（三板斧）
+- [ ] 没有「一方面、另一方面」平衡结构（假辩证）
+- [ ] 没有「随着…的发展」宏大叙事开头
+- [ ] 没有无主语句（「已被广泛认可」「这一观点受到关注」）
+- [ ] 没有因果废话（「因为 X，所以 X，这说明」）
+
+#### 中文 AI 黑话池（用一次扣一分）
+
+```
+突破瓶颈 → 解决
+赋能 → 帮助
+持续迭代 → 更新
+深度赋能 → 提高
+构建生态 → 攒人
+引领变革 → 搅局
+核心价值 → 好处
+解决方案 → 方法
+颠覆性创新 → 新的做法
+助力 → 帮助
+落地 → 实施
+闭环 → 做完
+矩阵 → 组合
+```
+
+#### 快速 12 问（综合判断）
+
+综合判断：超过4个「有问题」→ 打回修改。
+
+| # | 问题 |
+|---|------|
+| 1 | 有废话填充词吗？ |
+| 2 | 有破折号吗？（中文破折号可保留，忽略这条） |
+| 3 | 有「它是…」「这是…」开头吗？ |
+| 4 | 有模糊词吗？（想必、应该、可能） |
+| 5 | 能用一个字说清楚用了两个字吗？ |
+| 6 | 有AI黑话吗？（颠覆、创新、引领、赋能） |
+| 7 | 句长有变化吗？（连续10句一样长=呆板） |
+| 8 | 读出来顺口吗？（不顺口就要改） |
+| 9 | 案例具体吗？（张三李四王五，要具体到人） |
+| 10 | 读起来像机器吗？ |
+| 11 | 你真的想表达这个吗？ |
+| 12 | 有没有「只有卡兹克才会写出来的角度」？ |
+
+#### stop-slop 评分（可选，不强制）
+
+| 维度 | 满分 | 说明 |
+|------|------|------|
+| 直接性 | 10/10 | 没有废话填充词，直接进入 |
+| 节奏感 | 10/10 | 句长有变化，一句话独立成段 |
+| 信任感 | 10/10 | 不吹不黑，承认局限 |
+| 真实感 | 10/10 | 体感记忆，不是知识描述 |
+| 密度 | 10/10 | 信息量大，没有废话段落 |
+| **总分** | **50/50** | **35分以下必须重写** |
 
 ### ⚠️ HTML 拼接技术规范（防止多余空行的根本方法）
 
@@ -928,7 +1341,7 @@ html = f'<img src="{img_url}" style="width:100%;border-radius:6px;" />'
 | 封面图（缩略图） | `material/add_material?type=image` | **media_id**（注意不是 thumb_media_id 字段） | 草稿封面，传给 draft/add 的 `thumb_media_id` 字段 |
 | 文章内容图 | `media/uploadimg` | url（公网） | 草稿正文 img src |
 
-> ⚠️ **封面图必须用 `type=image`（不是 `type=thumb`）**：`media/upload?type=thumb` 返回的 `thumb_media_id` 格式不兼容 `draft/add`，会报 `invalid media_id`。正确做法是用 `material/add_material?type=image` 上传 JPEG/PNG，将返回的 `media_id` 字段作为 `thumb_media_id` 传入草稿。
+> ⚠️ **封面图上传方式**：必须用 `material/add_material?type=thumb`（不是 `media/upload`），将返回的 `media_id` 字段作为 `thumb_media_id` 传给 `draft/add`。2026-05-19 实测确认此路径有效。
 
 ## 已知限制
 
@@ -938,12 +1351,15 @@ html = f'<img src="{img_url}" style="width:100%;border-radius:6px;" />'
 | 直接群发 | ❌ 个人号无权限 | 草稿箱手动发布 |
 | 格式丢失 | ⚠️ HTML 无内联样式时平台渲染异常 | 发布前按格式规范检查文章 HTML 结构 |
 | 草稿图片不显示 | ⚠️ API 返回的 media_id 直接用无法渲染 | 必须用 `media/uploadimg` 返回的公网 URL |
-| 中文乱码 | ⚠️ 读取 HTML 文件时必须指定 `encoding="utf-8"`，否则中文变 Unicode 转义序列 | 用 `json.dumps(ensure_ascii=False)` + `encode("utf-8")` |
+| 中文乱码（`\uXXXX` 字面量） | `json.dumps()` 默认 `ensure_ascii=True` 将中文转为 `\uXXXX` 转义序列 | **正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，Content-Type: `application/json`（不带 `charset=utf-8`）。`ensure_ascii=True`（默认）会显示字面量，`ensure_ascii=False` + `charset=utf-8` 会导致 WeChat JSON 管线无法解码 |
 | raw.githubusercontent.com 超时 | ⚠️ GitHub raw 文件无法直接下载 | 用 `api.github.com/repos/{owner}/{repo}/contents/{path}` + base64 解码 |
 | mmx vision describe 替代 vision_analyze | `vision_analyze` 工具返回 401 时，`mmx vision describe` CLI 仍可用 | `mmx vision describe "/path/to/screenshot.jpg" --prompt "..."` |
+| 微信草稿视觉分析失败时的处理 | 当用户发来草稿截图要求修改特定内容（如「去掉与标题重复的部分」「改背景色」）时：若 `mmx vision describe` 返回认证错误或无法分析，**不要尝试部分修补**，而是根据文章标题和主题**重新生成完整版本**，并在消息中告知用户「无法分析截图，已按主题重新生成」。不要等待或反复重试视觉分析。 | **fallback**：重新生成内容 |
+| WeChat `access_token` 缺失时的发布备选方案 | 若 `access_token` 不可用（未配置或已过期）导致 `draft/add` API 调用失败：不要阻塞，**直接提供完整 HTML 内容**给用户复制粘贴到微信公众平台草稿编辑器。同时告知用户：「token 不可用，已生成 HTML 文件，请手动粘贴到草稿编辑器，封面图需单独上传。」 | **fallback**：HTML 复制粘贴 |
 | 微信草稿有序列表（`<ol>`）渲染异常 | 有序列表第 1、3 项在预览中显示为空，但 HTML 源码所有 `<li>` 完整；去掉 `<strong>` 后仍无法解决 | **根因**：WeChat 编辑器对 `<ol><li>...</li></ol>` 结构有渲染 bug，原因不明。**已验证的 definitive 解决方案**：将整个 `<ol>` 替换为 `①②③④⑤` 前缀的 `<p>` 段落。示例：`<ol><li>文本正则化（TN）...</li><li>Grapheme-to-Phoneme（G2P）...</li>...</ol>` → `<p style="margin:0 0 6px 0;font-size:15px;line-height:1.6;">① 文本正则化（TN）...</p><p style="margin:0 0 6px 0;font-size:15px;line-height:1.6;">② Grapheme-to-Phoneme（G2P）...</p>`。每项 `margin:0 0 6px 0`，行高 `line-height:1.6`。**不要再用 `<ol>` 或 `<ul>`**，一律用带圈数字前缀的 `<p>` 段落代替有序列表。 |
 | WeChat `uploadimg` 返回 40137 格式错误 | PNG 图片上传失败 | WeChat `uploadimg` 只接受 JPEG，PNG 一律转 JPEG 再上传。若 PIL 报 `image file is truncated`，说明源文件损坏，需找其他图片 |
 | `urllib.request` multipart 上传报 41005 | Python urllib.request 上传图片返回 `media data missing` | 改用 subprocess + curl：`curl -s -F 'media=@img.jpg' 'https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=TOKEN&type=image'` |
 | execute_code 的 Python sandbox 看不到 `~/.hermes/.env` 中的 API Key | `os.environ.get('MINIMAX_API_KEY')` 返回空（sandbox 环境隔离） | 用 `bash -c 'source ~/.hermes/.env && python3 -c "import os; print(os.environ[...])"'` 或直接用 `terminal` 执行含凭证的脚本 |
 | WeChat `access_token` 缓存路径 | sandbox 内写 `~/.hermes/mp_token_cache.json` 后，sandbox 下次运行看不到（路径重置） | WeChat API 调用必须在 `terminal` 执行，或通过 `scripts/publish_zhili.py`（它从 `load_config()` 读取 APPSECRET 后内联进脚本）调用 |
+| WeChat草稿正文中文显示为 `\uXXXX` 转义序列 | `json.dumps()` 默认 `ensure_ascii=True` 将中文转为 `\uXXXX`。**正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，Content-Type: `application/json`（不带 `charset=utf-8`）。WeChat 自己推断 UTF-8，不要声明编码。`fix_double_encoded_content()` 函数无法阻止这个问题 |
 | mmx CLI 读取 `~/.hermes/.env` | mmx CLI 用 Node.js 读取环境变量，直接 `mmx auth login` 会报 key 无效 | 用 `bash -c 'source ~/.hermes/.env && mmx auth login --api-key "$MINIMAX_API_KEY"'` 确保环境变量展开 |

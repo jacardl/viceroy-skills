@@ -30,48 +30,98 @@ except ImportError:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
 CONFIG_PATH = os.path.join(SKILL_DIR, "references/config.md")
+# 本地专属 secrets（不进 GitHub），优先级高于云端 config.md
+LOCAL_SECRETS_PATH = os.path.expanduser("~/.openclaw/secrets/zhili-credentials.md")
 TOOLS_PATH = os.path.join(os.path.dirname(SKILL_DIR), "../workspace/TOOLS.md")
 DEFAULT_COVER_PATH = "/tmp/cover-thumb.jpg"
 
 
 # ============ 凭证加载 ============
 
-def load_config():
-    """从 config.md 中解析微信凭证"""
-    if not os.path.exists(CONFIG_PATH):
-        print(f"ERROR: 配置文件不存在: {CONFIG_PATH}")
-        sys.exit(1)
-    with open(CONFIG_PATH, encoding='utf-8') as f:
-        content = f.read()
+def _parse_credentials_file(path):
+    """解析一个凭证 markdown 文件，返回 dict。空值/占位符会被识别为缺失。"""
     config = {}
+    with open(path, encoding='utf-8') as f:
+        content = f.read()
     for line in content.splitlines():
-        if ":" in line and not line.startswith("#"):
-            key, val = line.split(":", 1)
-            config[key.strip()] = val.strip()
+        line_stripped = line.strip()
+        if not line_stripped or line_stripped.startswith("#"):
+            continue
+        if ":" not in line_stripped:
+            continue
+        key, val = line_stripped.split(":", 1)
+        key = key.strip()
+        val = val.strip()
+        # 去除行内注释
+        if "#" in val:
+            val = val.split("#", 1)[0].strip()
+        # 标记脱敏占位符为空值，让回退机制接管
+        if val in ("***REDACTED***", "***", "REDACTED", ""):
+            val = ""
+        if key and val:
+            config[key] = val
+    return config
+
+
+def load_config():
+    """
+    加载微信凭证。优先级：
+    1. 云端 config.md（含真实值时可直用）
+    2. 本地 secrets 文件 `~/.openclaw/secrets/zhili-credentials.md`
+    若两边都没有，退出报错。
+    """
+    config = {}
+    if os.path.exists(CONFIG_PATH):
+        try:
+            config = _parse_credentials_file(CONFIG_PATH)
+        except Exception as e:
+            print(f"[WARN] 解析 {CONFIG_PATH} 失败: {e}")
+
+    # 若云端 config.md 中 APPSECRET 是占位符或缺失，回退到本地 secrets
+    if not config.get("APPSECRET") or "REDACTED" in config.get("APPSECRET", ""):
+        if os.path.exists(LOCAL_SECRETS_PATH):
+            try:
+                local_config = _parse_credentials_file(LOCAL_SECRETS_PATH)
+                for k, v in local_config.items():
+                    if k not in config or not config[k]:
+                        config[k] = v
+                if config.get("APPSECRET"):
+                    print(f"[INFO] APPSECRET 从本地 secrets 加载（{LOCAL_SECRETS_PATH}）")
+            except Exception as e:
+                print(f"[WARN] 解析本地 secrets 失败: {e}")
+        else:
+            print(f"[WARN] 本地 secrets 文件不存在: {LOCAL_SECRETS_PATH}")
+
     required = ["APPID", "APPSECRET"]
     for k in required:
-        if k not in config:
-            print(f"ERROR: 配置文件缺少字段: {k}")
+        if k not in config or not config[k]:
+            print(f"ERROR: 凭证缺失: {k}")
+            print(f"       请在以下任一位置配置真实凭证：")
+            print(f"       1. {CONFIG_PATH}")
+            print(f"       2. {LOCAL_SECRETS_PATH}")
             sys.exit(1)
     return config
 
 
 def load_sensenova_key():
-    """从 TOOLS.md 读取 Sensenova API Key"""
-    path = os.path.expanduser(TOOLS_PATH)
-    if not os.path.exists(path):
-        return ""
-    try:
-        with open(path, encoding='utf-8') as f:
-            content = f.read()
-        # 找 Sensenova API Key
-        for line in content.splitlines():
-            if "sk-uRDC" in line:
-                key = line.split("sk-uRDC")[1].split('"')[0].split("'")[0].split()[0]
-                return "sk-uRDC" + key
-        return ""
-    except:
-        return ""
+    """从 secrets 读取 Sensenova API Key（优先本地 secrets，回退到 TOOLS.md 占位符）"""
+    # 优先读本地 secrets（不进 GitHub）
+    secrets_path = os.path.expanduser("~/.openclaw/secrets/api-keys.md")
+    if os.path.exists(secrets_path):
+        try:
+            with open(secrets_path, encoding='utf-8') as f:
+                content = f.read()
+            for line in content.splitlines():
+                line = line.strip()
+                if line.startswith("SENSENOVA_API_KEY:"):
+                    val = line.split(":", 1)[1].strip()
+                    if val and val != "***REDACTED***":
+                        return val
+        except Exception:
+            pass
+
+    # 占位符 / 无 secrets 文件时直接返回空，不再回退到 TOOLS.md
+    return ""
 
 
 def load_minimax_key():
@@ -337,12 +387,17 @@ def upload_article_image(token, image_path):
 
 
 def upload_thumb_material(token, thumb_path):
-    """上传封面图到永久素材（缩略图），返回 media_id"""
+    """
+    上传封面图到永久素材，返回 media_id 用于 draft/add thumb_media_id。
+    ⚠️ 必须用 type=image，不能用 type=thumb。
+    type=thumb 返回的 media_id 在 draft/add 中会报 40007 invalid media_id。
+    """
     if not os.path.exists(thumb_path):
         print(f"[ERROR] 封面图不存在: {thumb_path}")
         return None
 
-    url = f"https://api.weixin.qq.com/cgi-bin/material/add_material?access_token={token}&type=thumb"
+    # ⚠️ type=image 而非 type=thumb，否则 draft/add thumb_media_id 会报 40007
+    url = f"https://api.weixin.qq.com/cgi-bin/material/add_material?access_token={token}&type=image"
     boundary = "----PythonFormBoundary7MA4YWxkTrZu0gW"
     with open(thumb_path, "rb") as f:
         img_data = f.read()
@@ -388,8 +443,40 @@ def check_article_images(content):
     print(f"[INFO] 检测到 {count} 张正文图片（mmbiz URL）")
 
 
+def fix_double_encoded_content(content):
+    """
+    修复 WeChat 草稿内容中的 Unicode 转义序列（如 \\u4eb2\\u6d4b）
+    变成中文乱码的问题。
+
+    根因：HTML 内容中的中文（如「亲测」）在某些 workflow 中被转成
+    字符字面量 \\u4eb2 \\u6d4b，json.dumps(ensure_ascii=False)
+    会原样保留这些字面量，导致 WeChat 收到的是 \\u4eb2 而不是「亲」。
+
+    修复：如果检测到 content 中存在 \\uXXXX 模式，先用 unicode_escape
+    解码为真实字符，再正常序列化发给 WeChat。
+    """
+    import re
+    # 检测是否存在字面 \\uXXXX 模式（如 \u4eb2 而非真正的 Unicode 字符）
+    if re.search(r'\\u[0-9a-fA-F]{4}', content):
+        # 检查是否真的包含中文（decode 后应该有大量非ASCII字符）
+        # 尝试 decode
+        try:
+            fixed = content.encode('utf-8').decode('unicode_escape').encode('utf-8').decode('utf-8')
+            # 简单验证：如果 decode 后有大量中文，认为修复成功
+            chinese_chars = re.findall(r'[\u4e00-\u9fff]', fixed)
+            if len(chinese_chars) > 5:
+                print(f"[FIX] 检测到 {len(chinese_chars)} 个中文字符已从 \\\\uXXXX 序列还原")
+                return fixed
+        except Exception as e:
+            print(f"[WARN] unicode_escape 解码失败: {e}")
+    return content
+
+
 def create_draft(token, title, author, digest, content, thumb_media_id, original=1):
     """创建草稿"""
+    # 修复 content 中的 \\uXXXX 字面序列（防止 WeChat 收到乱码）
+    content = fix_double_encoded_content(content)
+
     payload = {
         "articles": [{
             "title": title,
@@ -438,9 +525,9 @@ def main():
     author = args.author or ""
     digest = args.digest or ""
     content = args.content or ""
-
-    # ⚠️ 强制 UTF-8 读取，防止中文乱码
-    # HTML 内容如从文件读取，必须 open(..., encoding='utf-8')
+    if content and os.path.exists(content):
+        with open(content, 'r', encoding='utf-8') as f:
+            content = f.read()
 
     cover_path = DEFAULT_COVER_PATH
 
@@ -502,6 +589,9 @@ def main():
         if not thumb_media_id:
             print("[ERROR] 封面图上传失败，无法创建草稿")
             sys.exit(1)
+
+    # 修复 content 中的 \\uXXXX 字面序列（防止 WeChat 收到乱码）
+    content = fix_double_encoded_content(content)
 
     if thumb_media_id:
         check_article_images(content)  # 🚫 硬性拦截：无图片不发布

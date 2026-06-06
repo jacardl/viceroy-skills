@@ -48,9 +48,10 @@ img.save("/tmp/cover.jpg")
 封面必须用 `type=thumb` 上传得到 `thumb_media_id`，用于 `draft/add` 的 `thumb_media_id` 字段：
 
 ```bash
+# AppSecret 从 `references/config.md` 读（真实值保存在 `~/.openclaw/secrets/zhili-credentials.md`，**绝不能**进 GitHub）
 ACCESS_TOKEN=$(curl -s -X POST "https://api.weixin.qq.com/cgi-bin/stable_token" \
   -H "Content-Type: application/json" \
-  -d '{"appid":"wx38a91c353554588a","secret":"07b4dc2d64ddbe6f53707977dbabdbbe"}' \
+  -d '{"appid":"wx38a91c353554588a","secret":"'$APP_SECRET'"}' \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
 
 curl -s -X POST \

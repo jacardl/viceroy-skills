@@ -4,7 +4,6 @@ description: >
   微信公众号长文发布技能，专为「直隶按察使」公众号的 GitHub 黑马项目方向定制。
   适用：GitHub Trending 黑马开源项目介绍文章（1500-2000字，流式叙事）。
   触发条件：用户说「写文章」「发长文」「GitHub」「黑马」。
-  **技能边界（2026-06-04 确认，已踩坑修复 12 处）**：本技能只管 GitHub 黑马长文（1500-2000字 / 六段式 / 流式叙事），**不替兄弟技能定规范**。要发短评/观点/Reaction → 独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`）。要发日常复盘/公众号通告 → 独立技能 `openclaw-imports/zhili-publish/`。完整边界模式见 `references/skill-boundary.md`。
   **执行前必读**：每次写 HTML 前必须按顺序执行以下三步，再开始写作：
   1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
   2. 按规范生成 HTML，内联所有 CSS
@@ -14,19 +13,15 @@ description: >
 
 # 直隶按察使 · 公众号发布技能
 
-## ⚠️ 路由规则（zhiliGitHub 自己的事，不替其他技能定规范）
+## ⚠️ 短评 vs 长文的路由规则（先判断再发布）
 
-zhiliGitHub 是**独立技能**，只管 GitHub 黑马长文（1500-2000字）。
-- **要发短评 / 观点 / Reaction** → 看独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`），不要在本技能里改短评的字段
-- **要发日常复盘 / 公众号通告** → 看 `openclaw-imports/zhili-publish/`
-
-| 字段 | zhiliGitHub 规范（**只管自己**） |
-|------|---------------------------------|
-| 字数 | **1500-2000字**（纯中文，不含 HTML/CSS） |
-| 结构 | 六段式（默认）/ 7 段式（Telegraf 风格）/ 编号盘点（多项目合集） |
-| 配图 | 项目截图 + 封面（正文必须有 mmbiz 图） |
-| 用途 | 项目介绍 / 教程 / 深度分析 / 行业观察 |
-| 内容来源 | khazix-writer 长文输出（**zhilicomments 走 khazix-writer 短评输出，本技能不接管**） |
+| | zhili-publish（长文） | zhilicomments-publish（短评） |
+|--|----------------------|-------------------------------|
+| 字数 | **4000-8000字** | 500-800字 |
+| 结构 | 流式叙事，无显性章节标题 | 轻量三段式（事件+观点+一句话收尾） |
+| 配图 | 项目截图+封面（正文必须有 mmbiz 图） | 1-2张评论配图（可选） |
+| 用途 | 项目介绍/教程/深度分析/行业观察 | 热评/观点/Reaction |
+| 内容来源 | khazix-writer 长文输出 | khazix-writer 短评输出 |
 
 **khazix-writer → zhili-publish 交接规范**：
 
@@ -38,7 +33,7 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 
 ## zhiliGitHub 写作格式：编号盘点 + 底层路线框架
 
-> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
+> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，与 zhiliComments 共用同一套 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。
 
 ## ✅ CSS 渲染规范：样式A（标准模板，2026-05-30 固化）
 
@@ -356,7 +351,7 @@ screenshots/ 目录
 
 > ⚠️ **已踩坑（2026-05-17 验证）**：`media/upload?type=thumb` 返回的 `thumb_media_id` 不兼容 `draft/add`，报 `40007 invalid media_id`。必须用 `material/add_material?type=thumb`，取其返回的 `media_id` 字段作为 `thumb_media_id`。
 >
-> ⚠️ **补充验证（2026-05-19）**：`material/add_material?type=thumb` 确实可用，多篇长文测试均成功，返回的 `media_id` 直接用于 `draft/add` 正常（短文测试结论详见独立技能 zhilicomments）。部分旧版代码示例中混用 `media/upload` 接口（`40007` 错误的来源），请统一使用 `material/add_material` 接口。
+> ⚠️ **补充验证（2026-05-19）**：`material/add_material?type=thumb` 确实可用，zhilicomments 测试完全成功，返回的 `media_id` 直接用于 `draft/add` 正常。部分旧版代码示例中混用 `media/upload` 接口（`40007` 错误的来源），请统一使用 `material/add_material` 接口。
 
 ```
 下载项目图 → 上传到微信获取mmbiz → 写HTML（嵌入mmbiz） → 图片Gate检查 → 创建草稿
@@ -506,8 +501,11 @@ C = {
 ```python
 import urllib.request, json, ssl, os
 
+# APPID 可公开；APPSECRET 必须从本地 secrets 加载，绝不能进 GitHub
 APPID = 'wx38a91c353554588a'
-APPSECRET = '07b4dc2d64ddbe6f53707977dbabdbbe'
+# 真实 APPSECRET 在 `~/.openclaw/secrets/zhili-credentials.md`（不进 GitHub）
+# 脚本 `load_config()` 会自动从该文件回退加载
+APPSECRET = '***REDACTED***  # 见本地 secrets 文件'
 
 # 1. 获取 access_token
 req = urllib.request.urlopen(
@@ -547,10 +545,10 @@ with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
 
 ```bash
 # ① 先生成封面图（保存到 /tmp/cover-thumb.jpg）
-python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
 
 # ② 创建草稿（用 --cover-path 指定预生成封面）
-python3 skills/zhili-publish/scripts/publish_zhili.py \
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
   "摘要" \
@@ -579,7 +577,7 @@ python3 skills/zhili-publish/scripts/publish_zhili.py \
 4. **同时学习那篇文章的写作风格**：语气（亲切/犀利/冷静）、句式长度、段落节奏、收尾方式
 
 **Telegraf 风格是典型 7 段式**（非 format-guide 默认的 6 段）：
-**排版风格：章节标题 + 流式正文（zhiliGitHub 技能内统一，短评的渲染由独立技能 zhilicomments 规定）**
+**排版风格：章节标题 + 流式正文（与 zhiliComments 共用同一套渲染规范）**
 > 章节标题用 `<h2>`；引用来源标注等也用 `<h2>`。
 
 **format-guide 是格式清单，不是行文模板**——具体写几段、每段多长，要跟着参考文章的实际结构走，不能套用死板的六段式。
@@ -865,7 +863,7 @@ mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众
 ### 标准发布（无封面图）
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
 ```
 
 ⚠️ **字段长度限制（超限会报 45003 错误，必须严格执行）**：
@@ -906,7 +904,7 @@ python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.
 | 类型 | 安全字节 | 典型报错 |
 |------|----------|----------|
 | 长文标题 | **≤22字节**（约7-8个中文字） | `errcode: 45003 title size out of limit` |
-| 短评标题 | *（由独立技能 zhilicomments 规定，本表不收录）* | — |
+| 短评标题 | **≤20字节**（约6-7个中文字） | 同上 |
 | 作者 | **≤2个中文字** | `author size out of limit` |
 | digest | **≤54字节** | `digest size out of limit` |
 
@@ -918,7 +916,7 @@ python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.
 ### 自动生成封面图发布
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py \
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
   --title "文章标题" \
   --author "作者" \
   --digest "摘要" \
@@ -929,7 +927,7 @@ python3 skills/zhili-publish/scripts/publish_zhili.py \
 ### 仅生成封面图（不上传）
 
 ```bash
-python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
+python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 ```
 
 脚本自动完成：
