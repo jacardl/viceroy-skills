@@ -62,12 +62,41 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
    - **只有 README.md 无 SKILL.md** —— 同上
    - **目录前缀误建**（如 `skills/developer/` 是 skill，但 5-27 误建时把 `skill-maintenance` 嵌进去形成空顶层）→ 整目录审计
 
-3. **识别重复 / 旧版**：
+3. **🔒 安全合规检查（强制，新增于 2026-06-06）**：
+   任何 skill 修改/新增/同步前，必须跑「脱敏四查」扫描全部云端文件，确保**零明文凭证**：
+
+   ```bash
+   # 云端 skill 目录：明文凭证检查（必须全部返回空）
+   grep -rln "07b4dc" ~/.openclaw/skills/        # WeChat AppSecret
+   grep -rln "tvly-dev-" ~/.openclaw/skills/ ~/.openclaw/workspace/  # Tavily
+   grep -rln "sk-uRDC" ~/.openclaw/skills/ ~/.openclaw/workspace/    # Sensenova
+   grep -rln "9xcxxvZqSjJPEd5l" ~/.openclaw/skills/ ~/.openclaw/workspace/  # FlowUs
+   ```
+
+   **任一项返回非空 → 中止维护，先脱敏再继续**。
+
+   **脱敏标准**：
+   - 真实凭证一律存到 `~/.openclaw/secrets/` 下对应文件（权限 600，不进 Git）
+     - WeChat：`~/.openclaw/secrets/zhili-credentials.md`
+     - 通用 API Key：`~/.openclaw/secrets/api-keys.md`
+   - 云端文件使用占位符 `***REDACTED***`，脚本必须实现回退逻辑
+   - 脚本改用 `load_config()` / `load_<key>_key()` 函数从 secrets 加载
+   - 详见每个 skill 自己的 `references/config.md` 注释
+
+   **历史教训**（2026-06-06 zhili* skills 脱敏复盘）：
+   - 同一套凭证可能散落在多个 skill（如 zhiligithub / zhili-publish / zhilicomments 共用「直隶按察使」公众号 AppSecret），**只脱敏一个会漏**
+   - **反面教材**也算泄露：文档里写「AppSecret 别用旧的 `07b4dc****`」= 泄露真值
+   - **死代码**也算泄露：Python 脚本里的 `if "sk-uRDC" in line` 模式匹配代码（**即使是搜索模式，不应放在公开代码里**）
+   - **__pycache__/** 字节码里也可能有真值残留，commit 前 `rm -rf __pycache__`
+   - 推送前必须「**脱敏四查 + 远程验证**」双重确认（`api.github.com/search/code?q=KEYWORD+repo:OWNER/REPO` count 必须为 0）
+   - 任何含凭证的 commit 都是**永久泄露**（git 历史可追溯），必须 amend 或新 commit 覆盖
+
+4. **识别重复 / 旧版**：
    - **同分类下目录名相同**（如 `~/.openclaw/skills/developer/skill-maintenance/` 和 `~/.openclaw/skills/skill-maintenance/`）→ 留新删旧，对比 mtime 或仓库引用
    - **描述相似度 >70%** 的两个 skill → 标记合并或删除
    - **指向旧仓库的 SKILL.md**（如 `jacardl/skillshub` → `jacardl/viceroy-skills`）→ 必删
 
-4. **归类新 skill**：对照 6 分类表，关键词匹配：
+5. **归类新 skill**：对照 6 分类表，关键词匹配：
    - 含「github」「trending」「seo」「data collection」→ `operations/`
    - 含「chat」「情感」「陪伴」「笔记」「flowus」「菜谱」→ `assistant/`
    - 含「标签」「kano」「调研」「竞品」→ `product/`
@@ -75,7 +104,7 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
    - 含「skill」「debug」「code」「github-pr」→ `developer/`
    - 含「llm」「model」「claude-api」「vllm」→ `ai/`
 
-5. **检查空目录 stub**：
+6. **检查空目录 stub**：
    ```bash
    find ~/.openclaw/skills -maxdepth 2 -name "DESCRIPTION.md" | while read f; do
      dir=$(dirname "$f")
@@ -83,7 +112,7 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
    done
    ```
 
-6. **验证关键引用**：例如 `zhiligithub` 引用 `zhili-publish/scripts/publish_zhili.py`，分类嵌套后路径变成 `skills/creative/zhili-publish/scripts/` —— 跑一次 `publish_zhili.py --help` 验证
+7. **验证关键引用**：例如 `zhiligithub` 引用 `zhili-publish/scripts/publish_zhili.py`，分类嵌套后路径变成 `skills/creative/zhili-publish/scripts/` —— 跑一次 `publish_zhili.py --help` 验证
 
 ### 2. 删除/清理标准
 
@@ -243,6 +272,7 @@ EOF
 
 ## 历史优化记录
 
+- **2026-06-06**：加入「🔒 安全合规检查」步骤，**强制**在所有维护动作前跑「脱敏四查」（07b4dc / tvly-dev- / sk-uRDC / 9xcxxvZqSjJPEd5l），沉淀 5 条 2026-06-06 zhili* skills 脱敏复盘教训（多 skill 共凭证 / 反面教材算泄露 / 死代码算泄露 / __pycache__ 字节码残留 / 远程二次验证）
 - **2026-06-04**：从 7 分类改成 6 分类（去掉「研究」「运营」等冗余，对齐 viceroy-skills 实际仓库结构）
 - **2026-06-04**：加入「OpenClaw 加载优先级」章节（解释系统级 vs 工作区差异）
 - **2026-06-04**：加入「项目源码 vs skill」识别规则（应对 obscura 误入场景）
