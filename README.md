@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-59-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-60-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -132,6 +132,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**brand-product-audience-relevance**](skills/product/brand-product-audience-relevance/SKILL.md) | 分析这个品牌和 CID 人群数据的相关性 |
 | [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | 从这段 AI 回复里识别竞品 |
 | [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | 研究这个公司 / 产品 |
+| [**research-synth**](skills/product/research-synth/SKILL.md) | 综合用户访谈 / Survey 开放题 / Synthetic User Q&A，生成产品洞察、机会 backlog、研究计划和知识图谱 |
 | [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 生成一份专利披露文档 |
 | [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | 生成软件著作权申请材料 |
 
