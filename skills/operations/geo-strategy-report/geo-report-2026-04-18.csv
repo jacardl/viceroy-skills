@@ -1,0 +1,254 @@
+
+========== SHEET: Report Summary ==========
+
+Product,凯迪拉克XT5
+Export Date,2026-04-18
+Total Roles,9
+Total Keywords,5
+Total Models,4
+Date Range,2026-03-28 - 2026-04-03
+
+========== SHEET: Brand Visibility ==========
+
+Brand,Visibility %,Mentions,Answers
+凯迪拉克XT5,23%,65,280
+BMW,70%,194,196
+Lexus,61%,171,171
+Mercedes-Benz,61%,169,171
+Audi,54%,152,151
+Lincoln,18%,50,50
+
+========== SHEET: Product Buzzwords ==========
+
+Product,Total Mentions
+凯迪拉克 XT5,65
+
+Buzzword,Count
+Excellent Service,8
+Premium Materials,8
+Advanced Technology,8
+Value Pricing,8
+Strong Performance,7
+Quiet Cabin,5
+Superior Audio,4
+Safety Features,3
+Fuel Efficiency,3
+Practical Design,2
+
+========== SHEET: Trend Data ==========
+
+Date,Visibility %
+2026-03-13,55%
+2026-03-14,63%
+2026-03-15,64%
+2026-03-16,59%
+2026-03-17,81%
+2026-03-18,65%
+2026-03-19,65%
+2026-03-20,57%
+2026-03-21,59%
+2026-03-22,61%
+2026-03-23,55%
+2026-03-24,49%
+2026-03-25,53%
+2026-03-26,67%
+2026-03-27,59%
+2026-03-28,62%
+2026-03-29,57%
+2026-03-30,51%
+2026-03-31,49%
+2026-04-01,58%
+2026-04-02,63%
+2026-04-03,61%
+2026-04-04,67%
+2026-04-05,66%
+2026-04-06,61%
+2026-04-07,59%
+2026-04-08,60%
+
+========== SHEET: Brand Leaderboard ==========
+
+Rank,Brand,Sub,Domain,Mentions,Visibility %,Is Competitor,Buzzwords
+1,"BMW","X1","bmw.com.cn",194,70%,Yes,"Strong Performance(9); Advanced Technology(7); Premium Materials(6); Practical Design(4); Sporty Handling(12); Brand Prestige(10); Resale Value(8); Driver Focused(7); Youthful Appeal(5); Dynamic Styling(4); Agile Steering(3); Engine Sound(3)"
+2,"Volvo","XC40","volvocars.com.cn",174,62%,No,"Safety Features(10); Premium Materials(7); Quiet Cabin(5); Eco-Friendly(14); Minimalist Design(11); Family Friendly(9); Reliability(8); Air Quality(6); Comfortable Seats(5); Winter Performance(4)"
+3,"Lexus","NX","lexus.com.cn",171,61%,Yes,"Excellent Service(9); Quiet Cabin(8); Fuel Efficiency(7); Premium Materials(5); High Reliability(15); Hybrid Tech(13); Smooth Ride(11); Low Maintenance(9); Craftsmanship(7); Resale Value(6); Luxury Feel(5)"
+4,"Mercedes-Benz","GLC","mercedes-benz.com.cn",169,61%,Yes,"Premium Materials(10); Advanced Technology(8); Superior Audio(6); Status Symbol(16); Plush Interior(12); Ambient Lighting(10); Smooth Ride(9); Brand Prestige(8); Classic Design(6); Resale Value(5)"
+5,"Audi","Q5L","audi.cn",152,54%,Yes,"Advanced Technology(9); Strong Performance(7); Value Pricing(6); Spacious Interior(14); Quattro AWD(11); Virtual Cockpit(9); Sleek Design(8); Highway Cruising(6); Build Quality(5); Reliability(4)"
+6,"Cadillac","XT5","cadillac.com",65,23%,N/A,"Excellent Service(8); Premium Materials(8); Advanced Technology(8); Value Pricing(8); Strong Performance(7); Quiet Cabin(5); Superior Audio(4); Safety Features(3); Fuel Efficiency(3); Practical Design(2)"
+7,"Lincoln","Nautilus","lincoln.com.cn",50,18%,Yes,"Quiet Cabin(5); Premium Materials(4); Value Pricing(4); Excellent Service(3); American Luxury(2)"
+8,"Porsche","Macan","porsche.cn",39,14%,No,"Sporty Handling(8); Brand Prestige(7); Premium Materials(6); Dynamic Styling(5); Strong Performance(4); Engine Sound(3); Driver Focused(3)"
+9,"Land Rover","Discovery Sport","landrover.com.cn",35,13%,No,"Off-Road Capability(9); Adventure Ready(7); Family Friendly(6); Premium Materials(5); Spacious Interior(4); Four-Wheel Drive(3); Status Symbol(2)"
+10,"Li Auto","L6","lixiang.com",29,10%,No,"Smart Cockpit(8); Extended Range(7); Family Friendly(6); Value Pricing(5); Large Screen(4); Comfortable Ride(3); Tech Features(3)"
+11,"NIO","ES6","nio.cn",21,8%,No,"Battery Swap(6); Premium Service(5); Smart Cockpit(5); Advanced Technology(4); Strong Performance(3); Eco-Friendly(3)"
+12,"Tesla","Model Y","tesla.cn",19,7%,No,"Advanced Technology(6); Strong Performance(5); Brand Prestige(4); Eco-Friendly(4); Smart Cockpit(3); Highway Cruising(3); Charging Network(2)"
+13,"Zeekr","7X","zeekrlife.com",15,5%,No,"Extended Range(5); Strong Performance(4); Advanced Technology(4); Premium Materials(3); Fast Charging(3); Value Pricing(2)"
+14,"AITO","M5","aito.auto",14,5%,No,"Smart Cockpit(5); Extended Range(4); Advanced Technology(4); Value Pricing(3); Huawei Ecosystem(3); Comfortable Ride(2)"
+
+========== SHEET: Visibility - Role x Competitor ==========
+
+Role,Cadillac,Volvo,Lexus NX,Mercedes-Benz GLC,Audi Q5L,Lincoln Nautilus
+科技潮流引领者,35%,44%,83%,62%,99%,52%
+家庭品质生活家,91%,26%,87%,90%,39%,32%
+都市时尚精英,87%,70%,91%,18%,75%,52%
+理性务实派,89%,80%,81%,18%,45%,58%
+环保先锋探索者,63%,26%,25%,80%,99%,16%
+性能驾驶爱好者,86%,73%,94%,57%,76%,65%
+文化情怀追随者,88%,81%,96%,41%,74%,49%
+智能互联重度用户,28%,13%,90%,67%,16%,99%
+户外探险爱好者,70%,47%,18%,27%,92%,57%
+
+========== SHEET: Visibility - Role x Keyword ==========
+
+Role,30-40万中型豪华SUV推荐,美系豪华SUV推荐,大空间中型SUV推荐,性价比高的豪华SUV推荐,35万左右豪华SUV推荐
+科技潮流引领者,87%,81%,35%,NA,NA
+家庭品质生活家,NA,NA,97%,28%,74%
+都市时尚精英,45%,71%,NA,NA,12%
+理性务实派,NA,NA,63%,48%,56%
+环保先锋探索者,37%,NA,NA,26%,76%
+性能驾驶爱好者,64%,70%,NA,83%,NA
+文化情怀追随者,NA,50%,NA,83%,19%
+智能互联重度用户,88%,NA,36%,73%,NA
+户外探险爱好者,NA,98%,26%,NA,17%
+
+========== SHEET: Visibility - Role x Model ==========
+
+Role,deepseek,Gemini,ChatGPT,Perplexity
+科技潮流引领者,36%,65%,33%,80%
+家庭品质生活家,66%,75%,61%,52%
+都市时尚精英,48%,97%,73%,20%
+理性务实派,72%,47%,29%,18%
+环保先锋探索者,38%,79%,31%,58%
+性能驾驶爱好者,49%,38%,56%,29%
+文化情怀追随者,47%,78%,22%,31%
+智能互联重度用户,43%,58%,24%,81%
+户外探险爱好者,65%,88%,40%,25%
+
+========== SHEET: Visibility - Competitor x Keyword ==========
+
+Competitor,30-40万中型豪华SUV推荐,美系豪华SUV推荐,大空间中型SUV推荐,性价比高的豪华SUV推荐,35万左右豪华SUV推荐
+Cadillac,24%,66%,74%,85%,77%
+Volvo,47%,93%,85%,70%,62%
+Lexus NX,10%,50%,92%,91%,83%
+Mercedes-Benz GLC,67%,35%,13%,64%,40%
+Audi Q5L,72%,56%,54%,13%,21%
+Lincoln Nautilus,33%,13%,85%,68%,36%
+
+========== SHEET: Visibility - Competitor x Model ==========
+
+Competitor,deepseek,Gemini,ChatGPT,Perplexity
+Cadillac,79%,28%,32%,29%
+Volvo,18%,91%,89%,40%
+Lexus NX,47%,48%,26%,47%
+Mercedes-Benz GLC,82%,57%,95%,58%
+Audi Q5L,53%,26%,26%,99%
+Lincoln Nautilus,82%,99%,45%,56%
+
+========== SHEET: Visibility - Keyword x Model ==========
+
+Keyword,deepseek,Gemini,ChatGPT,Perplexity
+30-40万中型豪华SUV推荐,87%,70%,38%,95%
+美系豪华SUV推荐,75%,10%,28%,23%
+大空间中型SUV推荐,39%,80%,34%,43%
+性价比高的豪华SUV推荐,22%,25%,41%,24%
+35万左右豪华SUV推荐,12%,49%,41%,86%
+
+========== SHEET: Accuracy - Role x Keyword ==========
+
+Role,30-40万中型豪华SUV推荐,美系豪华SUV推荐,大空间中型SUV推荐,性价比高的豪华SUV推荐,35万左右豪华SUV推荐
+科技潮流引领者,43,30,33,NA,NA
+家庭品质生活家,NA,NA,60,0,48
+都市时尚精英,73,21,NA,NA,34
+理性务实派,NA,NA,82,24,97
+环保先锋探索者,93,NA,NA,14,34
+性能驾驶爱好者,54,24,NA,56,NA
+文化情怀追随者,NA,37,NA,65,84
+智能互联重度用户,60,NA,70,38,NA
+户外探险爱好者,NA,9,46,NA,72
+
+========== SHEET: Accuracy - Role x Model ==========
+
+Role,deepseek,Gemini,ChatGPT,Perplexity
+科技潮流引领者,7,96,1,95
+家庭品质生活家,94,93,32,21
+都市时尚精英,46,60,91,47
+理性务实派,8,84,12,43
+环保先锋探索者,98,12,2,85
+性能驾驶爱好者,67,15,17,47
+文化情怀追随者,74,20,78,17
+智能互联重度用户,87,92,76,8
+户外探险爱好者,67,34,4,61
+
+========== SHEET: Accuracy - Keyword x Model ==========
+
+Keyword,deepseek,Gemini,ChatGPT,Perplexity
+30-40万中型豪华SUV推荐,72,74,40,2
+美系豪华SUV推荐,35,32,66,49
+大空间中型SUV推荐,37,79,9,94
+性价比高的豪华SUV推荐,26,19,30,55
+35万左右豪华SUV推荐,14,33,20,48
+
+========== SHEET: Sources - Top Domains ==========
+
+Domain,Mentions
+chejiahao.autohome.com.cn,73
+autohome.com.cn,57
+youtube.com,37
+db.m.auto.sohu.com,35
+aikahao.xcar.com.cn,33
+youjia.baidu.com,29
+mercedes-benz.com.cn,25
+sina.cn,24
+bitauto.com,24
+lexus.com.cn,23
+
+========== SHEET: Sources - By Category ==========
+
+Category,Mentions
+News/Media Sites,331
+E-commerce Sites,294
+Business/Service Sites,260
+Content/Creator Sites,147
+Social/Community Networks,64
+Government/Institutional,19
+Educational Sites,8
+Unsure/Other,8
+Entertainment Sites,3
+Utility/Tool Sites,0
+
+========== SHEET: Filter - Roles ==========
+
+Role,Keywords
+科技潮流引领者,"30-40万中型豪华SUV推荐, 美系豪华SUV推荐, 大空间中型SUV推荐"
+家庭品质生活家,"大空间中型SUV推荐, 性价比高的豪华SUV推荐, 35万左右豪华SUV推荐"
+都市时尚精英,"30-40万中型豪华SUV推荐, 美系豪华SUV推荐, 35万左右豪华SUV推荐"
+理性务实派,"大空间中型SUV推荐, 性价比高的豪华SUV推荐, 35万左右豪华SUV推荐"
+环保先锋探索者,"30-40万中型豪华SUV推荐, 性价比高的豪华SUV推荐, 35万左右豪华SUV推荐"
+性能驾驶爱好者,"30-40万中型豪华SUV推荐, 美系豪华SUV推荐, 性价比高的豪华SUV推荐"
+文化情怀追随者,"美系豪华SUV推荐, 性价比高的豪华SUV推荐, 35万左右豪华SUV推荐"
+智能互联重度用户,"30-40万中型豪华SUV推荐, 大空间中型SUV推荐, 性价比高的豪华SUV推荐"
+户外探险爱好者,"美系豪华SUV推荐, 大空间中型SUV推荐, 35万左右豪华SUV推荐"
+
+========== SHEET: Filter - Keywords ==========
+
+Keyword,Questions
+"30-40万中型豪华SUV推荐","30-40万预算，中型豪华SUV哪几款值得买？; 30到40万区间，热门中型豪华SUV性价比对比; 30-40万买中型豪华SUV，不同需求该怎么选？; 2026年30-40万中型豪华SUV最新推荐榜单; 30-40万价位，家用中型豪华SUV有哪些好选择？"
+"美系豪华SUV推荐","目前市面上热门的美系豪华SUV都有哪些？; 美系豪华SUV哪几款口碑和可靠性比较好？; 不同预算区间，美系豪华SUV怎么选？; 美系豪华SUV和德系日系比，有什么优势？; 中大型美系豪华SUV推荐，空间大的有哪些？"
+"大空间中型SUV推荐","大空间中型SUV，后排宽敞后备箱大的有哪些？; 家用大空间中型SUV，哪个品牌性价比高？; 七座大空间中型SUV推荐，30万以内有哪些选择？; 大空间中型SUV，满载五人也不挤的车型推荐; 2026年最新大空间中型SUV选购指南"
+"性价比高的豪华SUV推荐","性价比高的豪华SUV，预算有限怎么选？; 二线豪华品牌里，哪款SUV性价比最高？; 性价比高的豪华SUV，不看品牌只看产品力推荐; 30万以内性价比高的豪华SUV有哪些？; 高性价比豪华SUV，买二手性价比会不会更高？"
+"35万左右豪华SUV推荐","35万左右落地，能买到哪些豪华中型SUV？; 35万预算，买豪华SUV选燃油还是混动？; 35万左右，家用豪华SUV哪款最适合？; 2026年35万左右豪华SUV最新优惠行情; 35万左右，豪华SUV和普通品牌中大型SUV怎么选？"
+
+========== SHEET: Filter - Models ==========
+
+Model
+deepseek
+Gemini
+ChatGPT
+Perplexity
+
+========== SHEET: Alerts ==========
+
+ID,Type,Score,Model,Keyword,Question,Date,Status
+alert-1,accuracy,45,ChatGPT,"30-40万中型豪华SUV推荐","30-40万预算，中型豪华SUV哪几款值得买？",2026-04-05,Unread
+alert-2,negative,35,Perplexity,"美系豪华SUV推荐","目前市面上热门的美系豪华SUV都有哪些？",2026-04-04,Unread
+alert-3,accuracy,52,Gemini,"大空间中型SUV推荐","大空间中型SUV，后排宽敞后备箱大的有哪些？",2026-04-03,Read
+alert-4,visibility,41,deepseek,"性价比高的豪华SUV推荐","性价比高的豪华SUV，预算有限怎么选？",2026-04-02,Read

@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""On-success callback for geo_strategy_report tasks.
+
+Called by the nanobot framework after a geo_strategy_report task
+completes successfully. Reads config to discover role_server address,
+then POSTs /api/v1/geo/report/strategy/callback to sync the generated report.
+
+Exit 0 = success (task marked successful).
+Exit 1 = failure (task marked failed).
+"""
+
+import argparse
+import hashlib
+import hmac
+import json
+import sys
+import time
+import urllib.request
+import urllib.error
+from base64 import urlsafe_b64encode
+from pathlib import Path
+
+
+# ── JWT helpers ──
+
+def _b64(data: bytes) -> str:
+    return urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _make_jwt(uid: str, secret: str, expire_hours: int = 24) -> str:
+    """Generate a minimal HS256 JWT token (no external deps)."""
+    _sep = (",", ":")
+    header = _b64(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=_sep).encode())
+    now = int(time.time())
+    payload = _b64(json.dumps({
+        "uid": uid,
+        "iat": now,
+        "exp": now + expire_hours * 3600,
+    }, separators=_sep).encode())
+    signing_input = f"{header}.{payload}".encode()
+    signature = _b64(hmac.new(secret.encode(), signing_input, hashlib.sha256).digest())
+    return f"{header}.{payload}.{signature}"
+
+
+def _read_llm_config(workspace: Path) -> dict:
+    """Read LLM provider config from nanobot config.json."""
+    candidates = [
+        workspace.parent.parent / "config.json",
+        workspace.parent.parent.parent / "config.json",
+        Path.home() / ".nanobot" / "config.json",
+    ]
+    for cfg_path in candidates:
+        resolved = cfg_path.resolve()
+        if resolved.exists():
+            try:
+                cfg = json.loads(resolved.read_text(encoding="utf-8"))
+                provider = cfg.get("providers", {}).get("openai", {})
+                if provider.get("apiKey"):
+                    return {
+                        "api_key": provider["apiKey"],
+                        "api_base": provider.get("apiBase", "https://api.minimaxi.com/v1"),
+                        "model": provider.get("defaultModel", "MiniMax-M2.7-highspeed"),
+                    }
+            except Exception:
+                pass
+    # Fallback — will likely fail but gives a clear error
+    return {"api_key": "", "api_base": "", "model": ""}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="on_success callback for geo_strategy_report")
+    parser.add_argument("--task-id", required=True, help="Task ID")
+    parser.add_argument("--workspace", required=True, help="User workspace path")
+    parser.add_argument("--config-file", required=True, help="Path to task.json")
+    args = parser.parse_args()
+
+    task_id = args.task_id
+    workspace = Path(args.workspace)
+    config_file = Path(args.config_file)
+
+    # 1. Read servers config from task.json
+    if not config_file.exists():
+        print(f"[on_success] Config file not found: {config_file}, skipping callback")
+        return 0
+
+    try:
+        config = json.loads(config_file.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[on_success] Failed to parse config: {e}")
+        return 1
+
+    servers = config.get("servers", {})
+    role_server = servers.get("role_server", "")
+    if not role_server:
+        print("[on_success] No role_server configured, skipping callback")
+        return 0
+
+    # 2. Extract uid from workspace path (workspace/users/{uid})
+    uid = ""
+    parts = workspace.parts
+    for i, part in enumerate(parts):
+        if part == "users" and i + 1 < len(parts):
+            uid = parts[i + 1]
+            break
+
+    # 3. Read JWT secret from nanobot config.json
+    jwt_secret = ""
+    nanobot_config_candidates = [
+        workspace.parent.parent / "config.json",
+        workspace.parent.parent.parent / "config.json",
+        Path.home() / ".nanobot" / "config.json",
+    ]
+    for cfg_path in nanobot_config_candidates:
+        resolved = cfg_path.resolve()
+        if resolved.exists():
+            try:
+                nanobot_cfg = json.loads(resolved.read_text(encoding="utf-8"))
+                jwt_secret = (
+                    nanobot_cfg.get("agents", {}).get("jwtSecret", "")
+                    or nanobot_cfg.get("jwtSecret", "")
+                )
+                if jwt_secret:
+                    break
+            except Exception:
+                pass
+
+    auth_header = {}
+    if uid and jwt_secret:
+        token = _make_jwt(uid, jwt_secret)
+        auth_header = {"Authorization": f"Bearer {token}"}
+    elif uid:
+        print("[on_success] Warning: no jwtSecret found, sending without auth")
+
+    # 4. Find the generated markdown report
+    session_dir = workspace / ".tasks" / "sessions" / task_id
+    search_dirs = [session_dir, workspace]
+    
+    report_content = ""
+    report_path = ""
+    for search_dir in search_dirs:
+        if search_dir.exists():
+            # Find the markdown report generated by the skill
+            for md_file in search_dir.glob("*-GEO策略分析报告-*.md"):
+                try:
+                    report_content = md_file.read_text(encoding="utf-8")
+                    report_path = str(md_file)
+                    break
+                except Exception:
+                    continue
+        if report_content:
+            break
+            
+    if not report_content:
+        print(f"[on_success] Cannot find GEO strategy report markdown file in {session_dir} or {workspace}")
+
+    # 4.5 Convert MD to HTML via LLM
+    report_html = ""
+    html_error = ""
+    html_render_ok = True
+    if report_content:
+        try:
+            import sys as _sys
+            # Add scripts dir to path so we can import report_renderer
+            _scripts_dir = str(Path(__file__).parent)
+            if _scripts_dir not in _sys.path:
+                _sys.path.insert(0, _scripts_dir)
+            from report_renderer import convert_md_to_html
+
+            llm_config = _read_llm_config(workspace)
+            report_html = convert_md_to_html(report_content, llm_config)
+            print(f"[on_success] HTML rendered and validated: {len(report_html)} chars")
+        except Exception as e:
+            print(f"[on_success] HTML render/validation failed: {e}")
+            html_render_ok = False
+            html_error = str(e)
+
+    # 5. POST to role_server
+    url = f"http://{role_server}/roleserver/api/v1/geo/report/strategy/callback"
+    callback_status = 2 if html_render_ok else 3
+    callback_error = "" if html_render_ok else f"HTML render failed: {html_error}"
+    body = {
+        "llm_task_id": task_id,
+        "status": callback_status,
+        "report_content": report_content,
+        "report_html": report_html,
+        "report_path": report_path,
+        "error_message": callback_error,
+    }
+
+    payload = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    headers.update(auth_header)
+    req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp_body = resp.read().decode("utf-8", errors="replace")
+            resp_data = json.loads(resp_body)
+            if resp_data.get("code") == 0:
+                print(f"[on_success] Callback OK.")
+                return 0
+            else:
+                print(f"[on_success] Callback failed: {resp_body[:500]}")
+                return 1
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")[:500]
+        print(f"[on_success] HTTP {e.code}: {err_body}")
+        return 1
+    except Exception as e:
+        print(f"[on_success] Request failed: {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
