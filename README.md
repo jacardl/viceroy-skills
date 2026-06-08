@@ -112,18 +112,12 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**scrapling**](skills/operations/scrapling/SKILL.md) | 爬这个网站 |
 | **GEO 系列（3个）** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
 | **SEO 系列（25个）** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
-
----
-
-### 📊 Operations — 其他
-
-| Name | How to trigger |
-|------|----------------|
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 今天 GitHub 有什么趋势 |
 | [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | 给我一份 Radar 日报 |
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | 舆情数据采集标准规范 |
 
 ---
+
 
 ### 📦 Product
 
