@@ -602,8 +602,8 @@ C = {
 ```python
 import urllib.request, json, ssl, os
 
-APPID = 'wx38a91c353554588a'
-APPSECRET = '07b4dc2d64ddbe6f53707977dbabdbbe'
+APPID = 'wx38a91c353554588a'  # 公众号 ID，非密
+APPSECRET = os.environ.get('WX_APP_SECRET', '__REDACTED__')   # 真实值见 ~/.openclaw/secrets/zhili-credentials.md（不进 Git）
 
 # 1. 获取 access_token
 req = urllib.request.urlopen(
