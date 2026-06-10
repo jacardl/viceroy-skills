@@ -4,6 +4,7 @@ description: >
   微信公众号长文发布技能，专为「直隶按察使」公众号的 GitHub 黑马项目方向定制。
   适用：GitHub Trending 黑马开源项目介绍文章（1500-2000字，流式叙事）。
   触发条件：用户说「写文章」「发长文」「GitHub」「黑马」。
+  **技能边界（2026-06-04 确认，已踩坑修复 12 处）**：本技能只管 GitHub 黑马长文（1500-2000字 / 六段式 / 流式叙事），**不替兄弟技能定规范**。要发短评/观点/Reaction → 独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`）。要发日常复盘/公众号通告 → 独立技能 `openclaw-imports/zhili-publish/`。完整边界模式见 `references/skill-boundary.md`。
   **执行前必读**：每次写 HTML 前必须按顺序执行以下三步，再开始写作：
   1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
   2. 按规范生成 HTML，内联所有 CSS
@@ -13,15 +14,19 @@ description: >
 
 # 直隶按察使 · 公众号发布技能
 
-## ⚠️ 短评 vs 长文的路由规则（先判断再发布）
+## ⚠️ 路由规则（zhiliGitHub 自己的事，不替其他技能定规范）
 
-| | zhili-publish（长文） | zhilicomments-publish（短评） |
-|--|----------------------|-------------------------------|
-| 字数 | **4000-8000字** | 500-800字 |
-| 结构 | 流式叙事，无显性章节标题 | 轻量三段式（事件+观点+一句话收尾） |
-| 配图 | 项目截图+封面（正文必须有 mmbiz 图） | 1-2张评论配图（可选） |
-| 用途 | 项目介绍/教程/深度分析/行业观察 | 热评/观点/Reaction |
-| 内容来源 | khazix-writer 长文输出 | khazix-writer 短评输出 |
+zhiliGitHub 是**独立技能**，只管 GitHub 黑马长文（1500-2000字）。
+- **要发短评 / 观点 / Reaction** → 看独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`），不要在本技能里改短评的字段
+- **要发日常复盘 / 公众号通告** → 看 `openclaw-imports/zhili-publish/`
+
+| 字段 | zhiliGitHub 规范（**只管自己**） |
+|------|---------------------------------|
+| 字数 | **1500-2000字**（纯中文，不含 HTML/CSS） |
+| 结构 | 六段式（默认）/ 7 段式（Telegraf 风格）/ 编号盘点（多项目合集） |
+| 配图 | 项目截图 + 封面（正文必须有 mmbiz 图） |
+| 用途 | 项目介绍 / 教程 / 深度分析 / 行业观察 |
+| 内容来源 | khazix-writer 长文输出（**zhilicomments 走 khazix-writer 短评输出，本技能不接管**） |
 
 **khazix-writer → zhili-publish 交接规范**：
 
@@ -33,7 +38,7 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 
 ## zhiliGitHub 写作格式：编号盘点 + 底层路线框架
 
-> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，与 zhiliComments 共用同一套 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。
+> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
 
 ## ✅ CSS 渲染规范：样式A（标准模板，2026-05-30 固化）
 
@@ -73,6 +78,8 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 
 ### Pull Quote（独立高亮块）
 
+> ⚠️ **2026-06-10 用户优化反馈**：Pull Quote 块（左边框 + 斜体 + 淡灰底）用户已砍掉，原文是普通 `<p>` 段落。下面的样式保留为可用工具，但**默认不要用**——除非用户明确要求。
+
 ```html
 <div style="border-left:4px solid #1B365D;padding:14px 18px;background:#f0efe8;margin-bottom:28px;font-size:16px;line-height:1.8;color:#333;font-style:italic">
   <p style="margin:0">「核心观点一句话。」</p>
@@ -80,6 +87,8 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 ```
 
 ### 适合/不适合标签
+
+> ⚠️ **2026-06-10 用户优化反馈**：六段式尾部的 ✅/❌ 适合/不适合 双标签盒已被用户砍掉。**默认不要写**。如果一定要写边界条件，融进最后一段散文里（"如果你在 X 场景下用……"），不要单独起视觉块。
 
 ```html
 <!-- 适合 -->
@@ -176,6 +185,13 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 
 ### 标准六段式（单项目介绍）
 
+> ⚠️ **2026-06-10 用户优化反馈**：
+> 1. **body 不放 H1 / 副标题 / 分类标签**——WeChat 草稿 `title` 字段就是标题，作者行在文末
+> 2. **每个 H2 之前不要过渡句**——"先说一个反常识的事" / "说几句不太礼貌的判断"这种铺垫直接砍
+> 3. **「六、总结」H2 砍掉**——总结内容直接跟在最后一个实战场景之后，用 `· · ·` 分隔
+> 4. **不需要"作者：刘生 / 来源：直隶按察使"页脚**——平台会自己显示
+> 5. **不需要 ✅/❌ 适合/不适合 标签盒**——边界条件融进散文
+
 | 序号 | 章节 | 内容 |
 |------|------|------|
 | 一 | 项目名称 | GitHub 链接 + Stars + 语言 + License |
@@ -183,11 +199,96 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 | 三 | 架构设计 | 核心技术原理 + 工作流程 |
 | 四 | 快速上手 | 安装命令 / CDN 引入方式 |
 | 五 | 实战场景 | 具体应用案例 + 效果描述 |
-| 六 | 总结 | 我的判断 + 适合/不适合场景 + 留钩子 |
+| 总结 | （无 H2） | 一句核心判断 + 留钩子（融入上一节的 `· · ·` 之后） |
 
-每段 `<h2>` 标题格式：`<h2 style="font-size:18px;font-weight:bold;margin:24px 0 12px 0;color:#1f1d18;">一、项目名称</h2>`
+每段 `<h2>` 标题格式（**样式A 规范**，必须保留 `border-left:4px solid #00d4aa`）：
+
+```html
+<h2 style="font-size:20px;font-weight:bold;color:#1B365D;border-left:4px solid #00d4aa;padding-left:12px;margin:28px 0 12px 0;">一、项目名称</h2>
+```
 
 六段式允许章节标题，与编号盘点格式并列，agent 根据文章内容类型自行选择。
+
+**六段式字数分配参考**（总 1500-2000 字）：
+
+| 章节 | 字数目标 | 警示信号 |
+|------|----------|----------|
+| 一、项目名称 | 50-80 | 数据卡片一行即可，不展开 |
+| 二、项目介绍 | 200-300 | 3 段：痛点场景 → 引入项目 → 一句话定位 + 数据 |
+| 三、架构设计 | 350-450 | **核心段，最容易写薄**；3-4 个技术细节分点 |
+| 四、快速上手 | 200-300 | 安装 + 关键 API + 部署方案 |
+| 五、实战场景 | 400-500 | 3-4 次尝试弧线（失败→介入→成功→创新） |
+| 总结（无 H2） | 200-300 | 一句核心判断 + 留钩子，不写适合/不适合盒 |
+
+**预警**：如果初稿低于 1500 字，最常见原因是"三、架构设计"或"五、实战场景"被写薄了（每项只列了 1-2 条，没展开）。优先补这两个段。
+
+### 精简规则（2026-06-10 用户实操反馈）
+
+> ⚠️ **这一节是真实的写作纪律，不是建议**。佳哥亲自下场改了 last30days-skill 初稿，把"能减的全减了"。下面每一条都是从他的改稿里提炼的硬规则。
+
+#### 1. Body 不放装饰元素（重要删减）
+
+**初稿有**但 **用户终稿没有**：
+- ❌ 顶部分类标签行（`<span>GitHub</span> + <span>黑马项目</span>`）
+- ❌ Body 内的 H1 标题（WeChat 草稿 `title` 字段就是标题）
+- ❌ 「刘生 · 2026年6月」副标题行
+- ❌ 文末「作者：刘生 / 来源：直隶按察使」页脚
+
+**终稿结构**：开篇直接进场景 → 中间 5 个 H2 章节（一/二/三/四/五）→ `· · ·` → 总结内容直接流入 → 📌 数据来源收尾。
+
+#### 2. H2 之间的「过渡句」一律砍
+
+```
+❌ 初稿："先说一个反常识的事，这个 skill 不是给你装一个新的 AI 工具..."
+✅ 终稿："这个 skill 不是给你装一个新的 AI 工具..."
+```
+
+```
+❌ 初稿："说几句不太礼貌的判断。"
+✅ 终稿：（直接进总结段，不铺垫）
+```
+
+H2 本身就是最强的转场信号，再加一句"说完了 X"是冗余。
+
+#### 3. 「六、总结」H2 不要了
+
+| 初稿结构 | 终稿结构 |
+|---|---|
+| 五、实战场景 → `· · ·` → **六、总结** → 内容 | 五、实战场景 → `· · ·` → 总结内容直接进 |
+
+**为什么**：六段式里第六节本来就是收尾，再加一个 H2 显得"为了结构而结构"。直接用 `· · ·` 收尾，文字流过 5 个 H2 后自然落点。
+
+#### 4. Pull Quote 转普通段落
+
+```
+❌ 初稿（视觉块）：<div style="border-left:4px solid #1B365D;...font-style:italic">「你不可能在 Google 上搜到这个搜索结果...」</div>
+✅ 终稿（普通段）：<p>「你不可能在 Google 上搜到这个搜索结果...」</p>
+```
+
+**为什么**：金句本来就该独立成段，**斜体 + 淡灰底 + 左边框** 三重强调是冗余。读者看到短句+引号就懂是金句。
+
+#### 5. ✅/❌ 适合/不适合 标签盒不要
+
+| ❌ 初稿 | ✅ 终稿 |
+|---|---|
+| `<div style="border-left:3px solid #2d6a4f;">✅ 适合：销售会前调研...</div>` | 没有这一行——边界条件融进结尾散文 |
+| `<div style="border-left:3px solid #7c6f64;">❌ 不适合：实时数据...</div>` | 同上 |
+
+**为什么**：双标签盒太"产品说明书味"。卡兹克短评体里**判断就是判断**，融进最后一段散文里更有立场感。
+
+#### 6. Pre-submit 自检清单（精简版）
+
+写完 HTML 后，**必须**额外检查这 7 件事（zhilicomments 5 件 + 长文 2 件）：
+
+- [ ] **标题 ≤ 22 个中文字**（WeChat 字段另说，body 标题如果放了就要短）
+- [ ] **body 没有 H1 标题行**（WeChat 草稿 title 字段已经有了）
+- [ ] **body 没有「刘生 · 2026年X月」副标题**
+- [ ] **body 没有顶部分类标签 span**
+- [ ] **body 没有「作者：刘生 / 来源：直隶按察使」页脚**
+- [ ] **没有「六、总结」H2**——总结内容跟在五、实战场景后的 `· · ·` 之后
+- [ ] **没有 ✅/❌ 适合/不适合 标签盒**——融进散文
+
+这 7 条全是踩过的坑。一条没过就重写再发。
 
 ### 七、格式规范速查
 
@@ -196,7 +297,7 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 | 项目数量 | 3-8 个，太多则流水账，3 个以下撑不起篇幅 |
 | 单项目字数 | 200-400 字，不要展开太多细节 |
 | 元信息表 | 必须有，放在文末或每个项目简介后 |
-| 适合/不适合 | 每项目必写，划清边界才有参考价值 |
+| 适合/不适合 | ⚠️ **2026-06-10 起不写**（详见上文"精简规则"） |
 | 配图 | 每个项目至少一张截图 or GIF，mmbiz URL 必须嵌入 HTML |
 | 数据来源 | 结尾注明：`📌 数据来源：GitHub Trending，YYYY-MM-DD` |
 | Star 号召 | 结尾加 `如果你觉得这几个项目有意思，欢迎 Star 支持开源 🧬` |
@@ -351,7 +452,7 @@ screenshots/ 目录
 
 > ⚠️ **已踩坑（2026-05-17 验证）**：`media/upload?type=thumb` 返回的 `thumb_media_id` 不兼容 `draft/add`，报 `40007 invalid media_id`。必须用 `material/add_material?type=thumb`，取其返回的 `media_id` 字段作为 `thumb_media_id`。
 >
-> ⚠️ **补充验证（2026-05-19）**：`material/add_material?type=thumb` 确实可用，zhilicomments 测试完全成功，返回的 `media_id` 直接用于 `draft/add` 正常。部分旧版代码示例中混用 `media/upload` 接口（`40007` 错误的来源），请统一使用 `material/add_material` 接口。
+> ⚠️ **补充验证（2026-05-19）**：`material/add_material?type=thumb` 确实可用，多篇长文测试均成功，返回的 `media_id` 直接用于 `draft/add` 正常（短文测试结论详见独立技能 zhilicomments）。部分旧版代码示例中混用 `media/upload` 接口（`40007` 错误的来源），请统一使用 `material/add_material` 接口。
 
 ```
 下载项目图 → 上传到微信获取mmbiz → 写HTML（嵌入mmbiz） → 图片Gate检查 → 创建草稿
@@ -501,11 +602,8 @@ C = {
 ```python
 import urllib.request, json, ssl, os
 
-# APPID 可公开；APPSECRET 必须从本地 secrets 加载，绝不能进 GitHub
 APPID = 'wx38a91c353554588a'
-# 真实 APPSECRET 在 `~/.openclaw/secrets/zhili-credentials.md`（不进 GitHub）
-# 脚本 `load_config()` 会自动从该文件回退加载
-APPSECRET = '***REDACTED***  # 见本地 secrets 文件'
+APPSECRET = '07b4dc2d64ddbe6f53707977dbabdbbe'
 
 # 1. 获取 access_token
 req = urllib.request.urlopen(
@@ -545,10 +643,10 @@ with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
 
 ```bash
 # ① 先生成封面图（保存到 /tmp/cover-thumb.jpg）
-python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
+python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "AI封面描述"
 
 # ② 创建草稿（用 --cover-path 指定预生成封面）
-python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
+python3 skills/zhili-publish/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
   "摘要" \
@@ -577,7 +675,7 @@ python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
 4. **同时学习那篇文章的写作风格**：语气（亲切/犀利/冷静）、句式长度、段落节奏、收尾方式
 
 **Telegraf 风格是典型 7 段式**（非 format-guide 默认的 6 段）：
-**排版风格：章节标题 + 流式正文（与 zhiliComments 共用同一套渲染规范）**
+**排版风格：章节标题 + 流式正文（zhiliGitHub 技能内统一，短评的渲染由独立技能 zhilicomments 规定）**
 > 章节标题用 `<h2>`；引用来源标注等也用 `<h2>`。
 
 **format-guide 是格式清单，不是行文模板**——具体写几段、每段多长，要跟着参考文章的实际结构走，不能套用死板的六段式。
@@ -863,7 +961,7 @@ mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众
 ### 标准发布（无封面图）
 
 ```bash
-python3 skills/creative/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
+python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<digest>" "<html_content>"
 ```
 
 ⚠️ **字段长度限制（超限会报 45003 错误，必须严格执行）**：
@@ -904,7 +1002,7 @@ python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.
 | 类型 | 安全字节 | 典型报错 |
 |------|----------|----------|
 | 长文标题 | **≤22字节**（约7-8个中文字） | `errcode: 45003 title size out of limit` |
-| 短评标题 | **≤20字节**（约6-7个中文字） | 同上 |
+| 短评标题 | *（由独立技能 zhilicomments 规定，本表不收录）* | — |
 | 作者 | **≤2个中文字** | `author size out of limit` |
 | digest | **≤54字节** | `digest size out of limit` |
 
@@ -916,7 +1014,7 @@ python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.
 ### 自动生成封面图发布
 
 ```bash
-python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
+python3 skills/zhili-publish/scripts/publish_zhili.py \
   --title "文章标题" \
   --author "作者" \
   --digest "摘要" \
@@ -927,7 +1025,7 @@ python3 skills/creative/zhili-publish/scripts/publish_zhili.py \
 ### 仅生成封面图（不上传）
 
 ```bash
-python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
+python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 ```
 
 脚本自动完成：
@@ -1017,6 +1115,12 @@ python3 skills/creative/zhili-publish/scripts/publish_zhili.py --cover-only --co
 
 **形态一（块级，容易发现）**：`**一、章节标题**` 写成 `<strong>**一、章节标题**</strong>` → grep 能查到
 **形态二（行内，难发现）**：`这是段落内容**加粗**也是正文` 写成 `<p>这是段落内容**加粗**也是正文</p>` → grep 查不到，因为 `**` 不在行首
+**形态三（构建脚本陷阱，最隐蔽）**：用 Python `''.join(blocks)` 生成 HTML 时，源字符串里写 `'<p>...**加粗**...</p>'`，最终输出就是字面 `**...**`。你"记得"要用 `<strong>`，但写构建脚本时手抖写了 `**`，最终 HTML 还是会带上字面残留。**预防**：写 Python 源时直接用 `<strong style="color:#1B365D;font-weight:bold;">文字</strong>`，永远不要在 HTML 字符串里写 `**`。**安全网**：在 build 脚本末尾加一行 regex 兜底——
+
+```python
+import re
+html = re.sub(r'\*\*([^*\n]+?)\*\*', r'<strong style="color:#1B365D;font-weight:bold;">\1</strong>', html)
+```
 
 写完 HTML 后必查两步：
 ```bash
