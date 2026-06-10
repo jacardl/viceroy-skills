@@ -58,4 +58,4 @@ T+34  发布
 
 ## session 记录的错误模式
 
-**2026-05-24（本次session）**：用户上次发布 zhilicomments 时 AppSecret 被重置，换了新凭证（appid: wxa7f7f3e03c3d1f1a）。本次写作时用了旧 AppID（wx38a91c353554588a）+ 新 AppSecret，导致 errcode 40013。教训：**新凭证是一组完整的 (appid + appsecret)，不能混用新旧 AppID**。
+**2026-05-24（本次session）**：用户上次发布 zhilicomments 时 AppSecret 被重置，换了新凭证（appid: `wx[new-redacted]`）。本次写作时用了旧 AppID（`wx[old-redacted]`）+ 新 AppSecret，导致 errcode 40013。教训：**新凭证是一组完整的 (appid + appsecret)，不能混用新旧 AppID**。

@@ -67,10 +67,13 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
 
    ```bash
    # 云端 skill 目录：明文凭证检查（必须全部返回空）
-   grep -rln "07b4dc" ~/.openclaw/skills/        # WeChat AppSecret
-   grep -rln "tvly-dev-" ~/.openclaw/skills/ ~/.openclaw/workspace/  # Tavily
-   grep -rln "sk-uRDC" ~/.openclaw/skills/ ~/.openclaw/workspace/    # Sensenova
-   grep -rln "9xcxxvZqSjJPEd5l" ~/.openclaw/skills/ ~/.openclaw/workspace/  # FlowUs
+   # 真实扫描模式见本地文件：~/.hermes/keys/secret-scan-patterns.txt
+   # （每个 skill 维护时按当前实际凭证前缀更新；本文件不公开）
+   source ~/.hermes/keys/secret-scan-patterns.txt   # 导出 $PATTERN_WX / $PATTERN_TAVILY / $PATTERN_SENSENOVA / $PATTERN_FLOWUS
+   grep -rln "$PATTERN_WX"        ~/.openclaw/skills/                                 # WeChat AppSecret
+   grep -rln "$PATTERN_TAVILY"    ~/.openclaw/skills/ ~/.openclaw/workspace/           # Tavily
+   grep -rln "$PATTERN_SENSENOVA" ~/.openclaw/skills/ ~/.openclaw/workspace/           # Sensenova
+   grep -rln "$PATTERN_FLOWUS"    ~/.openclaw/skills/ ~/.openclaw/workspace/           # FlowUs
    ```
 
    **任一项返回非空 → 中止维护，先脱敏再继续**。
@@ -85,8 +88,8 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
 
    **历史教训**（2026-06-06 zhili* skills 脱敏复盘）：
    - 同一套凭证可能散落在多个 skill（如 zhiligithub / zhili-publish / zhilicomments 共用「直隶按察使」公众号 AppSecret），**只脱敏一个会漏**
-   - **反面教材**也算泄露：文档里写「AppSecret 别用旧的 `07b4dc****`」= 泄露真值
-   - **死代码**也算泄露：Python 脚本里的 `if "sk-uRDC" in line` 模式匹配代码（**即使是搜索模式，不应放在公开代码里**）
+   - **反面教材**也算泄露：文档里写「AppSecret 别用旧的 `<真实前6位>****`」= 泄露真值
+   - **死代码**也算泄露：Python 脚本里的 `if "<真实前缀>" in line` 模式匹配代码（**即使是搜索模式，不应放在公开代码里**）
    - **__pycache__/** 字节码里也可能有真值残留，commit 前 `rm -rf __pycache__`
    - 推送前必须「**脱敏四查 + 远程验证**」双重确认（`api.github.com/search/code?q=KEYWORD+repo:OWNER/REPO` count 必须为 0）
    - 任何含凭证的 commit 都是**永久泄露**（git 历史可追溯），必须 amend 或新 commit 覆盖
@@ -272,7 +275,7 @@ EOF
 
 ## 历史优化记录
 
-- **2026-06-06**：加入「🔒 安全合规检查」步骤，**强制**在所有维护动作前跑「脱敏四查」（07b4dc / tvly-dev- / sk-uRDC / 9xcxxvZqSjJPEd5l），沉淀 5 条 2026-06-06 zhili* skills 脱敏复盘教训（多 skill 共凭证 / 反面教材算泄露 / 死代码算泄露 / __pycache__ 字节码残留 / 远程二次验证）
+- **2026-06-06**：加入「🔒 安全合规检查」步骤，**强制**在所有维护动作前跑「脱敏四查」（4 个真实前缀存 `~/.hermes/keys/secret-scan-patterns.txt`，本仓库不公开），沉淀 5 条 2026-06-06 zhili* skills 脱敏复盘教训（多 skill 共凭证 / 反面教材算泄露 / 死代码算泄露 / __pycache__ 字节码残留 / 远程二次验证）
 - **2026-06-04**：从 7 分类改成 6 分类（去掉「研究」「运营」等冗余，对齐 viceroy-skills 实际仓库结构）
 - **2026-06-04**：加入「OpenClaw 加载优先级」章节（解释系统级 vs 工作区差异）
 - **2026-06-04**：加入「项目源码 vs skill」识别规则（应对 obscura 误入场景）
