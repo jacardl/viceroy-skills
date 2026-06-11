@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local Model Orchestrator"
+  short_description: "Scan and call local AI models."
+  default_prompt: "Scan my local AI models, explain what they are for, and use the best local model for my request."

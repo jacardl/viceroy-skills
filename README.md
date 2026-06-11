@@ -58,6 +58,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | Name | One-liner |
 |------|-----------|
 | [**9router**](skills/ai/9router/SKILL.md) | 本地/远程 AI 网关 — 一个 Key 调用多个 Provider，OpenAI 兼容 API |
+| [**local-model-orchestrator**](skills/ai/local-model-orchestrator/SKILL.md) | 扫描、解释、选择并调用本地 AI 模型，优先推荐 Mac 芯片优化方案 |
 | [**mmx-cli**](skills/ai/mmx-cli/SKILL.md) | 用 MiniMax 生成文本、图片、视频、音乐 — 含搜索功能 |
 
 ---

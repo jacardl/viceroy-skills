@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-59-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-64-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -58,6 +58,7 @@ Examples:
 | Name | One-liner |
 |------|-----------|
 | [**9router**](skills/ai/9router/SKILL.md) | Local/remote AI gateway — one key, multiple providers, OpenAI-compatible API |
+| [**local-model-orchestrator**](skills/ai/local-model-orchestrator/SKILL.md) | Scan, explain, select, and call local AI models, with Mac-optimized recommendations |
 | [**mmx-cli**](skills/ai/mmx-cli/SKILL.md) | Generate text, images, video, music with MiniMax — includes web search |
 
 ---
