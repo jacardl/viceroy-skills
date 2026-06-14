@@ -129,7 +129,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | 从这段 AI 回复里识别竞品 |
 | [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | 研究这个公司 / 产品 |
 | [**research-synth**](skills/product/research-synth/SKILL.md) | 综合用户访谈 / Survey 开放题 / Synthetic User Q&A，生成产品洞察、机会 backlog、研究计划和知识图谱 |
-| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 生成一份专利披露文档 |
+| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 专利挖掘 / 技术交底书 / 查新 / 交底书迭代修订 |
 | [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | 生成软件著作权申请材料 |
 
 ---
