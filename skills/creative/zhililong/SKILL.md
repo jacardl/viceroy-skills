@@ -70,16 +70,27 @@ description: |
 - 反转段必须**真的反转**（不是"以上就是...，希望对你有帮助"那种伪反转）
 - 行动段必须**今天就能做**（"今天回家观察一下你爸"而不是"用心观察身边的人"）
 
-### Step 3：renwei 风格改稿
+### Step 3：renwei 风格改稿（人味儿写作核心，**2026-06 强化**）
 
-**前置动作（必走）**：Step 3 开始前**先 `skill_view('renwei-writing')` 加载 renwei 技能**。zhililong 产出"5000 字长文"是从零写到 100% AI 内容，AI 套话风险比改稿高一个量级。renwei 提供"位置+代价+手迹"原理层（决定动不动）+ 11 项事后清单（验收动过的地方）。
+> 🎯 **铁律**：renwei 是 zhililong 写出"佳哥体"的**唯一通道**。**没有加载 renwei 就下笔，5000 字长文一定掉进 AI 套话陷阱**。AI 套话风险比改稿高一个量级（从零写 vs 改稿）——改稿清单只扫动过的地方，**从零写每段都算"动过"，清单必须扫全文**。
 
-**三原则**（来自 renwei 原理层）：
+**前置动作（必走，3 步启动检查）**：
+
+```
+[ ] 1. skill_view('renwei-writing') 已执行（不是只看名字）
+[ ] 2. 三件套（位置+代价+手迹）已内化为写作时的"内功"
+[ ] 3. 11 项事后清单已读懂（不是只背名字）
+```
+
+**三原则**（来自 renwei 原理层，**每一项在落笔前都要问自己**）：
 1. **位置**：作者是谁？"睡前听完书想跟读者说点真话的人"——明确自己的位置
+   - **自检**：开头 3 句话能不能让读者一眼看出"作者在什么场景下说话"？
 2. **代价**：用具体案例代替套话，不写"非常"/"极其"等模糊副词
+   - **自检**：每段至少 1 个具体数字 / 1 个具体场景 / 1 个身体感觉（三选一）
 3. **手迹**：保留"咱们""你想想""心里要打个巨大的问号"等口语化痕迹
+   - **自检**：句尾"呢""吧""了"是否都保留了？删了没有？
 
-**renwei 套话清单（必查）**：
+**renwei 套话清单（必查，11 项）**：
 - 0 处"不是 X 而是 Y"句式
 - 0 处排比三连（"勤奋、勇敢、善良"）
 - 0 处`——`破折号
@@ -90,11 +101,23 @@ description: |
 - 0 处谄媚（"你真棒"/"作为 X 怎能不..."）
 - 0 处 emoji
 - 0 处填充对冲（"当然也不排除"/"可能因人而异"）
+- 0 处 zhililong **专属**反 AI 词（"非常""极其""令人""值得""强大""优雅""惊艳"）
 
 **renwei 保手迹**：
-- 不写金句（让具体的事替你说）
+- 不写金句（让具体的事替你说——"今天回家观察一下你爸"比"用心观察身边的人"强 10 倍）
 - 毛边先当手迹（"其实""说白了""你想想"等口语别删）
+- 删之前的灵魂拷问："删掉以后，说话的人还在吗？"
 - 改完跑事后清单（见 references/post-edit-checklist.md）
+
+**renwei 失败兜底**：
+- 清单命中 ≥ 3 项 → **整段打回重写**，不要尝试一边改一边扫
+- 命中 1-2 项 → 针对性替换 AI 套话为具体场景
+- 命中 0 项 → 通过，可以走 Step 4
+
+**zhililong vs 改稿场景的清单范围差异**（renwei gotcha 沉淀）：
+- 改稿（用户提供原文让 AI 改）→ 清单**只扫动过的句子**
+- zhililong（从零写 5000 字）→ 清单**扫全文**（每段都算"动过"）
+- 实测：未内化时清单命中 5-10 处，内化后 0-2 处
 
 ### Step 4：视频素材最大化利用
 
@@ -195,15 +218,21 @@ open(body_md, "w", encoding="utf-8").write(body)
 
 ```bash
 # 调用 zhililong/scripts/publish_lanlong.py 一键发布
-# 入参：标题、作者、封面图路径、HTML 内容图路径、正文 HTML 路径
+# 入参：标题、作者、摘要、HTML 路径、封面图路径、（可选）配图占位符
 python3 /Users/apple/.hermes/skills/zhililong/scripts/publish_lanlong.py \
   --title "20 亿美元买了一个寂寞" \
   --author "刘生" \
-  --cover /tmp/manus_cover.jpg \
-  --content-html /tmp/manus_article.html \
-  --category "行业观察" \
-  --original
+  --digest "Meta 与 Manus 的 20 亿美元收购被强制拆开，5 节深度拆解。" \
+  --html /tmp/article.html \
+  --cover /tmp/lanlong_cover.jpg \
+  --image-locks /tmp/concept_1.jpg \
+  --image-pathway /tmp/concept_2.jpg
+# → 输出草稿 media_id + 写入同目录 upload_results.json
 ```
+
+**最小 5 入参**（必填）：`--title` / `--author` / `--digest` / `--html` / `--cover`。
+**配图占位符**（可选）：`--image-locks` 对应 HTML 里的 `LOCKS_PLACEHOLDER`，`--image-pathway` 对应 `PATHWAY_PLACEHOLDER`。
+**完整快速上手 + 失败速查**：见 `references/lanlong-quickstart.md`。
 
 **背后实际调用的 zhili-publish 链路**：
 
@@ -264,6 +293,7 @@ python3 /Users/apple/.hermes/skills/zhililong/scripts/publish_lanlong.py \
 - `post-edit-checklist.md` — 完整事后清单（11 项硬约束）
 - `zhililong-examples.md` — 实战案例（冰鉴长文拆解）
 - `html-gotchas.md` — HTML 拼接常见坑（`&lt;` 误转义、空行残留、margin 叠加）
+- `lanlong-quickstart.md` — Step 7+8 一键发布 3 命令快速上手（配图占位符、upload_results.json 格式、失败速查）
 
 ## 已知限制
 
