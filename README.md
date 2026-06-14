@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-66-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-68-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -87,6 +87,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**zhili-publish**](skills/creative/zhili-publish/SKILL.md) | 把这个 HTML 草稿发布到微信公众号 |
 | [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | 发一条短评论到公众号 |
 | [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | 把这个 GitHub 项目写成一篇公众号文章 |
+| [**zhililong**](skills/creative/zhililong/SKILL.md) | 写 4000-5500 字公众号长文，自动对接 zhili-publish 推送到草稿箱 |
 | [**guizang-ppt-skill**](skills/creative/guizang-ppt-skill/SKILL.md) | 生成横向翻页网页 PPT；触发：杂志风 PPT / 瑞士风 PPT / Swiss Style / horizontal swipe deck |
 
 ---
