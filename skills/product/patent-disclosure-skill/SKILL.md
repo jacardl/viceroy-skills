@@ -1,7 +1,7 @@
 ---
 name: patent-disclosure-skill
 description: "通用中国专利挖掘发现与交底书生成全流程：扫描项目文档挖掘专利点、讨论融合、基于脱敏模版生成技术交底书、联网查新、生成后自检含逻辑闭环与公式参数一致性。| Patent mining, disclosure drafting, prior-art search, and consistency self-check."
-version: "1.8.9"
+version: "1.9.0"
 user-invocable: true
 argument-hint: "[可选：项目路径或技术主题关键词]"
 allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, Bash
@@ -14,7 +14,9 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, Bash
 ## 环境与约定
 
 - **语言**：默认与用户语种一致；专利与法律术语采用行业常用表述。
-- **图示定稿（Step 7）**：**3.2**/**3.4** 用 fenced **mermaid**；执行方式、**`mmdc`** 安装与降级规则见下表「交底书定稿交付」行及 **`tools/README.md`**。
+- **图示定稿（Step 7）**：**3.2**/**3.4** 用 fenced **mermaid**；定稿 Word 必须嵌入由原始 mermaid 渲染/截图得到的 PNG，不得手工重画导致与源码不一致；执行方式、**`mmdc`** 安装、浏览器截图降级与规则见下表「交底书定稿交付」行及 **`tools/README.md`**。
+- **示例与 schema 准确性**：若项目材料中已有结构代码、JSON/YAML schema、profile 示例、流程示例，交底书中的代码块必须优先直接取自源材料并保持字段名一致；不得为“看起来完整”临时编造不同口径的示例。
+- **Word 公式可读性**：交底书面向代理人/业务方时，核心公式优先使用“自然语言 + 普通算式文本 + 参数表”的可读表达；只有用户明确需要或公式复杂到必须排版时才使用 LaTeX，并须确认 docx 中不会残留 `\[...\]`、`	ag{}` 等源码。
 
 ---
 
@@ -44,7 +46,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, Bash
 | PowerPoint（.pptx）→ Markdown + 抽取图片（扫描前） | `Bash` → `python3 ${CLAUDE_SKILL_DIR}/tools/pptx_to_md.py --input {path}.pptx --output {dir}/{name}.md`；默认 `{name}_media/`；需 `pip install -r requirements.txt`（含 python-pptx）；**旧版 .ppt 不支持**，请先另存为 `.pptx`；图表/SmartArt 等若未以图片形状嵌入则可能仅能从备注或另行导出补全 |
 | 罗列目录、按名找文件 | 目录列举 / 按文件名搜索 |
 | 联网查新（Step 5） | 执行前 **`Read`** `prompts/prior_art_search.md`。**中国专利公布公告**：优先 **`Bash`** 运行 `cnipa_epub_search.py`；**须在生成命令前**归纳 **2～8 个相关度高的语义块**；**执行时须分多次调用**，**每次仅传一个**词块，**自行按 `pub_number` 合并**多轮 `EPUB_HITS_JSON`（勿单次工具调用堆多个 argv，见该 prompt）。一步拉取+解析、**不写 HTML 落盘**；须 **`pip install -r tools/requirements-cnipa.txt`** 且 **`python -m playwright install chromium`**。**`abstract` 规定必用**同该 prompt。需整句一次 AND 或保存 HTML 时用 `cnipa_epub_crawler.py`；异常或无果再 **WebSearch** |
-| 交底书定稿交付（**须同时** .md + .docx） | **3.2** 系统框图与 **3.4** 流程图均用 fenced ``mermaid``，**不要** ASCII 文字流程图/框图。定稿执行 **`tools/mermaid_render.py`**：mermaid 转 PNG（失败块保留围栏）后默认生成同名 **.docx**；若 Word 失败，按 stderr 提示手动运行 **`md_to_docx.py`**。详见 **`tools/README.md`** |
+| 交底书定稿交付（**须同时** .md + .docx） | **3.2** 系统框图与 **3.4** 流程图均用 fenced ``mermaid``，**不要** ASCII 文字流程图/框图。定稿必须将**原始 mermaid 渲染结果**转为 PNG 嵌入 Word；若 `mmdc` 失败，可用浏览器渲染原始 mermaid 后截图，**禁止手工重画替代**。执行 **`tools/mermaid_render.py`**：mermaid 转 PNG（失败块保留围栏）后默认生成同名 **.docx**；若 Word 失败，按 stderr 提示手动运行 **`md_to_docx.py`**。详见 **`tools/README.md`** |
 | 保存交底书路径 | 写入用户指定路径；未指定时可建议 `./outputs/{案件标识}/`；**凡交付的** `.md` / `.docx` 须为 **`{案件名}_{YYYYMMDDHHmmss}`**（§7.3 第 5 点，**含首次定稿与迭代**），勿默认覆盖旧稿；`outputs/` 整目录默认由 `.gitignore` 忽略 |
 | 迭代对话留档 | 每轮 **merger / correction** 交付后，在案件目录追加 **`交底书修订对话记录.md`**（**`tools/iteration_dialog_log.py`** 或等价手工），见 **`prompts/iteration_context.md`** |
 
@@ -100,7 +102,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, Bash
 □ 执行 merger / correction_handler 后，已在对话中输出该文件要求的留档摘要（合并摘要 / 纠正摘要）；案件目录已追加 **`交底书修订对话记录.md`**（或等价日志）
 □ 查新完成且写入 1.1 与区别论述（符合 `prior_art_search.md`：**优先** `tools/cnipa_epub_search.py`，**国知局侧已分多次调用、每轮一词，并已自行合并** `EPUB_HITS_JSON`；**`abstract` 必用且已充分理解后再概括**；异常或无果再 **WebSearch**）
 □ 除用户明确跳过外，完成摘要预览
-□ 脱敏、mermaid（定稿均已渲染为 PNG）、章节引用符合 template_reference；含公式时 **3.4.1 符号表、§7.7 体例**（维度下标、无字母多义、LaTeX 分隔符统一）及 **3.5 符号列同形** 已满足；**已交付 .md 与 .docx**，且**文件名符合 §7.3 第 5 点**（**凡交付均含**时间戳后缀）；**正文无**技能/示例仓库类文末脚注
+□ 脱敏、mermaid（定稿均已由原始 mermaid 渲染/截图为 PNG，未手工重画）、章节引用符合 template_reference；项目源材料已有 schema/代码示例时，交底书示例已直接取自源材料并保持字段名一致；含公式时 **3.4.1 符号表、§7.7 体例**或“自然语言 + 普通算式”可读表达已满足，docx 无裸 LaTeX 源码；**已交付 .md 与 .docx**，且**文件名符合 §7.3 第 5 点**（**凡交付均含**时间戳后缀）；**正文无**技能/示例仓库类文末脚注
 □ 定稿类对话已含 **`disclosure_builder.md` §7.6**「权利要求偏向点」建议交互（**不入正文**、**不捏造**未在稿内出现的保护取向）；迭代再走 merger 时见 **`iteration_context.md`** 表格补充行
 □ 自检在后台完成，正文无自检清单章节；含公式时已按 **`disclosure_self_check.md` §8.2** 复核**公式正确性与公式逻辑**（有误已在 Step 8 直接改稿）
 ```
