@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-67-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-68-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -84,6 +84,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | Name | How to trigger |
 |------|----------------|
 | [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | 用卡兹克的风格写一篇公众号文章 |
+| [**renwei-writing**](skills/creative/renwei-writing/SKILL.md) | 打磨、润色、改写文案时保住人的存在感——位置+代价+手迹三件套，去 AI 味儿 |
 | [**zhili-publish**](skills/creative/zhili-publish/SKILL.md) | 把这个 HTML 草稿发布到微信公众号 |
 | [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | 发一条短评论到公众号 |
 | [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | 把这个 GitHub 项目写成一篇公众号文章 |
