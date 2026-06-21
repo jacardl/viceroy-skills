@@ -100,7 +100,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**setup-matt-pocock-skills**](skills/developer/setup-matt-pocock-skills/SKILL.md) | 在 AGENTS.md 里配置 Matt Pocock 的 Skill 规范 |
 | [**skill-creator**](skills/developer/skill-creator/SKILL.md) | 从零创建一个新 Skill |
 | [**skill-github-sync**](skills/developer/skill-github-sync/SKILL.md) | 把本地 Skills 同步到 GitHub |
-| [**skill-maintenance**](skills/developer/skill-maintenance/SKILL.md) | 整理 Skill 库 / 查重 |
+| [**skill-maintenance**](skills/developer/skill-maintenance/SKILL.md) | 整理 Skill 库 / 查重 / **安装前安全审计**（v2.1+ skillspector） |
 
 ---
 
