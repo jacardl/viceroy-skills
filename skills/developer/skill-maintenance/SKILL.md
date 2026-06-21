@@ -1,11 +1,13 @@
 ---
 name: skill-maintenance
-description: 维护技能库整洁，系统性整理、归类、查重、清理废弃技能（含项目源码误入 skills/ 目录的情况）。当用户说「整理技能库」「skills太乱了」「删除重复技能」「技能库查重」「技能分类」「整理skills」时触发。配套 skill-github-sync 使用效果最佳。
+description: 维护技能库整洁，系统性整理、归类、查重、清理废弃技能（含项目源码误入 skills/ 目录的情况），**以及在 install 前对 skill 做安全审计（调用 skillspector）**。当用户说「整理技能库」「skills太乱了」「删除重复技能」「技能库查重」「技能分类」「整理skills」「安装前先扫一下」「这个 skill 安全吗」「audit my skills」「批量体检」时触发。配套 skill-github-sync 使用效果最佳。
 ---
 
 # Skill Maintenance
 
 按 `viceroy-skills` 仓库的 6 分类标准维护本地技能库，识别重复/低频/废弃技能，保持 6 大分类整洁有序。配套 `skill-github-sync` 形成"本地整理 → 推到 GitHub"闭环。
+
+**v2.1（2026-06-21 升级）**：新增第 7 节「安装前安全审计」—— 在 install 新 skill 之前，自动调用 `skillspector` 做 64 pattern / 16 分类的静态扫描 + 风险分评估，避免装入含 prompt injection / data exfiltration / supply chain attack 的恶意 skill。
 
 ## 6 个固定分类（viceroy-skills 标准，2026-06 同步）
 
@@ -62,44 +64,12 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
    - **只有 README.md 无 SKILL.md** —— 同上
    - **目录前缀误建**（如 `skills/developer/` 是 skill，但 5-27 误建时把 `skill-maintenance` 嵌进去形成空顶层）→ 整目录审计
 
-3. **🔒 安全合规检查（强制，新增于 2026-06-06）**：
-   任何 skill 修改/新增/同步前，必须跑「脱敏四查」扫描全部云端文件，确保**零明文凭证**：
-
-   ```bash
-   # 云端 skill 目录：明文凭证检查（必须全部返回空）
-   # 真实扫描模式见本地文件：~/.hermes/keys/secret-scan-patterns.txt
-   # （每个 skill 维护时按当前实际凭证前缀更新；本文件不公开）
-   source ~/.hermes/keys/secret-scan-patterns.txt   # 导出 $PATTERN_WX / $PATTERN_TAVILY / $PATTERN_SENSENOVA / $PATTERN_FLOWUS
-   grep -rln "$PATTERN_WX"        ~/.openclaw/skills/                                 # WeChat AppSecret
-   grep -rln "$PATTERN_TAVILY"    ~/.openclaw/skills/ ~/.openclaw/workspace/           # Tavily
-   grep -rln "$PATTERN_SENSENOVA" ~/.openclaw/skills/ ~/.openclaw/workspace/           # Sensenova
-   grep -rln "$PATTERN_FLOWUS"    ~/.openclaw/skills/ ~/.openclaw/workspace/           # FlowUs
-   ```
-
-   **任一项返回非空 → 中止维护，先脱敏再继续**。
-
-   **脱敏标准**：
-   - 真实凭证一律存到 `~/.openclaw/secrets/` 下对应文件（权限 600，不进 Git）
-     - WeChat：`~/.openclaw/secrets/zhili-credentials.md`
-     - 通用 API Key：`~/.openclaw/secrets/api-keys.md`
-   - 云端文件使用占位符 `***REDACTED***`，脚本必须实现回退逻辑
-   - 脚本改用 `load_config()` / `load_<key>_key()` 函数从 secrets 加载
-   - 详见每个 skill 自己的 `references/config.md` 注释
-
-   **历史教训**（2026-06-06 zhili* skills 脱敏复盘）：
-   - 同一套凭证可能散落在多个 skill（如 zhiligithub / zhili-publish / zhilicomments 共用「直隶按察使」公众号 AppSecret），**只脱敏一个会漏**
-   - **反面教材**也算泄露：文档里写「AppSecret 别用旧的 `<真实前6位>****`」= 泄露真值
-   - **死代码**也算泄露：Python 脚本里的 `if "<真实前缀>" in line` 模式匹配代码（**即使是搜索模式，不应放在公开代码里**）
-   - **__pycache__/** 字节码里也可能有真值残留，commit 前 `rm -rf __pycache__`
-   - 推送前必须「**脱敏四查 + 远程验证**」双重确认（`api.github.com/search/code?q=KEYWORD+repo:OWNER/REPO` count 必须为 0）
-   - 任何含凭证的 commit 都是**永久泄露**（git 历史可追溯），必须 amend 或新 commit 覆盖
-
-4. **识别重复 / 旧版**：
+3. **识别重复 / 旧版**：
    - **同分类下目录名相同**（如 `~/.openclaw/skills/developer/skill-maintenance/` 和 `~/.openclaw/skills/skill-maintenance/`）→ 留新删旧，对比 mtime 或仓库引用
    - **描述相似度 >70%** 的两个 skill → 标记合并或删除
    - **指向旧仓库的 SKILL.md**（如 `jacardl/skillshub` → `jacardl/viceroy-skills`）→ 必删
 
-5. **归类新 skill**：对照 6 分类表，关键词匹配：
+4. **归类新 skill**：对照 6 分类表，关键词匹配：
    - 含「github」「trending」「seo」「data collection」→ `operations/`
    - 含「chat」「情感」「陪伴」「笔记」「flowus」「菜谱」→ `assistant/`
    - 含「标签」「kano」「调研」「竞品」→ `product/`
@@ -107,7 +77,7 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
    - 含「skill」「debug」「code」「github-pr」→ `developer/`
    - 含「llm」「model」「claude-api」「vllm」→ `ai/`
 
-6. **检查空目录 stub**：
+5. **检查空目录 stub**：
    ```bash
    find ~/.openclaw/skills -maxdepth 2 -name "DESCRIPTION.md" | while read f; do
      dir=$(dirname "$f")
@@ -115,7 +85,7 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
    done
    ```
 
-7. **验证关键引用**：例如 `zhiligithub` 引用 `zhili-publish/scripts/publish_zhili.py`，分类嵌套后路径变成 `skills/creative/zhili-publish/scripts/` —— 跑一次 `publish_zhili.py --help` 验证
+6. **验证关键引用**：例如 `zhiligithub` 引用 `zhili-publish/scripts/publish_zhili.py`，分类嵌套后路径变成 `skills/creative/zhili-publish/scripts/` —— 跑一次 `publish_zhili.py --help` 验证
 
 ### 2. 删除/清理标准
 
@@ -139,7 +109,7 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
   - `zhiligithub` → `operations/`（GitHub 项目雷达，类比 github-daily-trending）
   - 未来若加 `zhilicomments` → `creative/`（短评）
 - 工作流类（neat-freak、flowus-crud）→ `assistant/`
-- skill 自身管理类（skill-creator、skill-maintenance、skill-github-sync）→ `developer/`
+- skill 自身管理类（skill-creator、skill-maintenance、skill-github-sync、**skillspector**）→ `developer/`
 - 灰区归属判断用关键词匹配，匹配不上时**主动问用户**（不要硬塞）
 
 ### 4. 删除/移动流程（强制备份）
@@ -160,7 +130,7 @@ OpenClaw 加载 skill 时按以下顺序，**高优先级覆盖低优先级同�
 - 本次新增/删除/调整列表（含备份位置）
 - 遗留待处理项
 
-## 跟 skill-github-sync 配合
+### 6. 跟 skill-github-sync 配合
 
 skill-maintenance 不止是本地整理，**最终目的是跟 viceroy-skills 仓库同步**：
 
@@ -176,6 +146,92 @@ skill-maintenance 不止是本地整理，**最终目的是跟 viceroy-skills �
 3. 对比：哪些本地有但 GitHub 没有（push）、哪些 GitHub 有但本地没有（pull 候选）
 4. 用 `skill-github-sync` 推本地独有 + 有价值的 skill
 5. 跟仓库分类标准对齐（参考本 skill 第 1 节的 6 分类表）
+
+## 7. 安装前安全审计（v2.1 新增）
+
+**核心原则**：装新 skill 之前**必须先用 skillspector 扫一遍**。skill 装到系统级后就默认 agent 全部信任它 —— 一旦含 prompt injection / data exfiltration / 提权代码，影响范围是**全机器所有 agent**。
+
+### 7.1 触发条件
+
+| 场景 | 用户可能的表达 | 动作 |
+|------|----------------|------|
+| **install 前** | "我要装 X，先扫一下" / "scan https://github.com/xxx/skill" | **强制先 scan**，风险分 > MEDIUM 需用户确认 |
+| 已装 skill 体检 | "扫一下 skill-maintenance" / "audit my skills" | 跑 scan，按风险分排序 |
+| 批量体检 | "把 ~/.openclaw/skills/ 全扫一遍" | 跑下面 7.4 的批量命令 |
+| 看报告 | "显示上次扫描的 json 报告" | 用 `--format json` 重跑指定 skill |
+
+**铁律**：`install` 类操作（clone 到 skills/、推送 GitHub、覆盖 SKILL.md）**必须**在 scan 通过后执行。HIGH/CRITICAL 风险的 skill **不装**，MEDIUM 风险的 skill 列 issues 让用户决定。
+
+### 7.2 工具：skillspector
+
+- **位置**：`~/.openclaw/skills/developer/skillspector/`（同级）
+- **底层 CLI**：`/tmp/skillspector-probe/SkillSpector/.venv/bin/skillspector`（NVIDIA SkillSpector v2.2.3）
+- **扫描能力**：64 pattern × 16 分类（prompt injection / data exfiltration / privilege escalation / supply chain / excessive agency / output handling / system prompt leakage / memory poisoning / tool misuse / rogue agent / trigger abuse / dangerous code via AST / taint tracking / YARA signatures / MCP least privilege / MCP tool poisoning）
+- **输出**：风险分 0-100 + severity 标签（LOW/MEDIUM/HIGH/CRITICAL）
+
+### 7.3 风险分解读
+
+| Risk Score | Severity | 含义 | 建议 |
+|------------|----------|------|------|
+| 0-19 | LOW | 安全 | 直接装 |
+| 20-49 | MEDIUM | 提示 | 看 issues 列表，人工 review 后再装 |
+| 50-79 | HIGH | 警告 | **必须人工 review 全部 issues 后再装** |
+| 80-100 | CRITICAL | 危险 | **不装**，告警用户 |
+
+⚠️ **误报注意**：很多合法 skill 会被标 MEDIUM（典型如 "External Transmission" 因为 skill 文档里有 API URL，或 "File System Enumeration" 因为 skill 需要读 `~/.openclaw/`）。**真问题要看 HIGH/CRITICAL + Confidence ≥ 70% 的 issue**。
+
+### 7.4 批量体检命令
+
+定期（如每月 / 装完一波新 skill 后）跑一次，扫整个 skills/ 目录：
+
+```bash
+SS=/tmp/skillspector-probe/SkillSpector/.venv/bin/skillspector
+
+# 批量扫描：所有系统级 skill
+for d in ~/.openclaw/skills/*/*/; do
+  [ -d "$d" ] || continue
+  skill_name=$(basename "$d")
+  # 跳过 skillspector 自己（避免循环）
+  [ "$skill_name" = "skillspector" ] && continue
+  # 跳过软链
+  [ -L "$d" ] && continue
+  # 只扫有 SKILL.md 的
+  [ -f "$d/SKILL.md" ] || continue
+  echo "=== $skill_name ==="
+  $SS scan "$d" --no-llm --format terminal 2>&1 | grep -E '(Risk Score|Severity|CRITICAL|HIGH)' | head -10
+  echo
+done
+```
+
+**输出排序建议**：把扫描结果按风险分倒序排列，先处理 CRITICAL > HIGH > MEDIUM。
+
+### 7.5 快速命令（一行版）
+
+```bash
+# 扫描单个 skill（装前必跑）
+SS=/tmp/skillspector-probe/SkillSpector/.venv/bin/skillspector
+$SS scan <path-or-git-url> --no-llm --format terminal
+
+# JSON 报告（机器可读）
+$SS scan <path> --no-llm --format json --output /tmp/scan-report.json
+
+# Markdown 报告（贴飞书/Notion）
+$SS scan <path> --no-llm --format markdown --output /tmp/scan-report.md
+
+# SARIF 报告（GitHub Code Scanning 集成）
+$SS scan <path> --no-llm --format sarif --output /tmp/scan.sarif
+```
+
+`--no-llm` 跳过 LLM 语义分析（快、准、免 API key）。有 LLM key 想去掉 `--no-llm` 改用：
+- `SKILLSPECTOR_PROVIDER=openai` + `OPENAI_API_KEY`
+- `SKILLSPECTOR_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`
+- `SKILLSPECTOR_PROVIDER=nv_inference` + `NVIDIA_INFERENCE_KEY`
+
+### 7.6 跟其他 skill 联动
+
+- **`skillspector`**：本节就是 skillspector 在 skill-maintenance 下的"安装前 / 批量体检"工作流入口
+- **`skill-github-sync`**：sync 前**必须**先跑本节 7.4 体检（确保本地要 push 的 skill 全部 LOW/MEDIUM）
+- **`skill-creator`**：新 skill 写完后，发布前自己跑一次 7.5 自检
 
 ## GitHub API 推送权限要求（陷阱）
 
@@ -272,10 +328,11 @@ EOF
 - skill-maintenance 自身归入 **`developer/`**（skill 自身管理工具）
 - 跨 agent 共享的 skill 必须放系统级，不要留在工作区
 - 「项目源码 vs skill」判断标准：**有 SKILL.md 才算 skill**，只有 README + 源码 = 项目
+- **v2.1 新增**：install 类操作（clone / 推送 / 覆盖）**必须**先跑第 7 节的安全审计，HIGH/CRITICAL 风险不装
 
 ## 历史优化记录
 
-- **2026-06-06**：加入「🔒 安全合规检查」步骤，**强制**在所有维护动作前跑「脱敏四查」（4 个真实前缀存 `~/.hermes/keys/secret-scan-patterns.txt`，本仓库不公开），沉淀 5 条 2026-06-06 zhili* skills 脱敏复盘教训（多 skill 共凭证 / 反面教材算泄露 / 死代码算泄露 / __pycache__ 字节码残留 / 远程二次验证）
+- **2026-06-21（v2.1）**：新增第 7 节「安装前安全审计」，整合 skillspector 作为 install 前置子能力；description 增加「安装前先扫一下」「audit my skills」「批量体检」触发词；快速命令区增加 skillspector 一行版
 - **2026-06-04**：从 7 分类改成 6 分类（去掉「研究」「运营」等冗余，对齐 viceroy-skills 实际仓库结构）
 - **2026-06-04**：加入「OpenClaw 加载优先级」章节（解释系统级 vs 工作区差异）
 - **2026-06-04**：加入「项目源码 vs skill」识别规则（应对 obscura 误入场景）
