@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小互宇宙 · IP 库</title>
+<style>
+  :root{
+    --paper:#FAF5EE; --ink:#2B2622; --muted:#8A7F73;
+    --accent:#E8655A; --card:#FFFFFF; --line:#ECE3D6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);
+    font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:56px 28px 80px}
+  header .kicker{color:var(--accent);font-weight:700;letter-spacing:.18em;
+    font-size:13px;text-transform:uppercase}
+  header h1{font-size:46px;font-weight:800;letter-spacing:-.5px;margin:8px 0 10px}
+  header p{color:var(--muted);font-size:17px;max-width:660px}
+  .pill{display:inline-block;background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:4px 13px;font-size:13px;color:var(--muted);margin-top:18px}
+
+  section{margin-top:48px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:22px}
+  .sec-head h2{font-size:14px;font-weight:800;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink)}
+  .sec-head span{color:var(--muted);font-size:14px}
+  .rule{height:1px;background:var(--line);flex:1}
+
+  .roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:22px}
+  .char{background:var(--card);border:1px solid var(--line);border-radius:18px;
+    overflow:hidden;transition:transform .15s ease,box-shadow .15s ease}
+  .char:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(180,120,90,.14)}
+  .char .pic{aspect-ratio:1/1;background:#FFFFFF center/cover no-repeat;
+    display:flex;align-items:center;justify-content:center}
+  .char .pic img{width:100%;height:100%;object-fit:contain}
+  .char.lead .pic{background:#FFFFFF}
+  .char .meta{padding:16px 17px 19px}
+  .char .meta h3{font-size:19px;font-weight:800}
+  .char .meta .en{color:var(--muted);font-size:13px;font-weight:600;margin-left:6px}
+  .char .meta .desc{color:var(--muted);font-size:13.5px;margin-top:6px}
+  .tags{margin-top:11px;display:flex;flex-wrap:wrap;gap:6px}
+  .tags i{font-style:normal;font-size:11.5px;background:#FBEFEA;color:var(--accent);
+    border-radius:6px;padding:3px 8px}
+  .char.ghost{border-style:dashed;background:transparent;display:flex;
+    align-items:center;justify-content:center;min-height:300px;color:var(--muted);
+    text-align:center;font-size:14px;padding:24px;line-height:1.8}
+  .char.ghost b{color:var(--ink)}
+
+  footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:13.5px}
+  footer code{background:#F1E9DC;border-radius:5px;padding:1px 6px;
+    font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--ink)}
+  footer b{color:var(--ink)}
+
+  /* 复制整句指令按钮(JS 自动给每张角色卡注入,不用手改卡片) */
+  .char{position:relative}
+  .copybtn{position:absolute;top:10px;right:10px;z-index:3;border:1px solid var(--line);
+    background:rgba(255,255,255,.93);color:var(--ink);border-radius:9px;padding:5px 9px;
+    font-size:12px;font-weight:600;cursor:pointer;opacity:0;
+    transition:opacity .15s ease,color .15s ease,border-color .15s ease;
+    box-shadow:0 2px 8px rgba(180,120,90,.16)}
+  .char:hover .copybtn{opacity:1}
+  .copybtn:hover{border-color:var(--accent);color:var(--accent)}
+  .copybtn.done{opacity:1;color:#2E9E5B;border-color:#2E9E5B}
+  @media (hover:none){.copybtn{opacity:.9}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">XIAOHU UNIVERSE</div>
+    <h1>小互宇宙 · IP 库</h1>
+    <p>配图用的固定 IP 角色库,每个角色一种鲜明个性 —— 配图时按文章调性挑一个来演。方法论恒定,角色可换、可加。<b>两套画风:手绘线稿(职场态 / 当代情绪态)+ 谐音梗 meme(食物拟人 + 符号成精),分属两组、各用各的。</b></p>
+    <div class="pill">31 位角色 · 手绘线稿 ×15(职场态8 + 情绪态7)+ 谐音梗 meme ×16(食物11 + 符号5)</div>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>职场态</h2><span>12 个职场人格 · 挑一个来配图</span><div class="rule"></div></div>
+    <div class="roster">
+
+      <div class="char lead">
+        <div class="pic"><img src="characters/xiaohu/refs/xiaohu-线稿.png" alt="小互"></div>
+        <div class="meta">
+          <h3>小互<span class="en">Xiaohu</span></h3>
+          <div class="desc">本宇宙主角。摸鱼系打工人小孩,机灵会演、表面糊弄内心门清。每张图承担核心动作 + 演出情绪。</div>
+          <div class="tags"><i>红框眼镜</i><i>齐刘海</i><i>橙红背带裤</i><i>狐狸搭档</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/tuantuan/refs/tuantuan-锚点.png" alt="团团"></div>
+        <div class="meta">
+          <h3>团团<span class="en">Tuántuan</span></h3>
+          <div class="desc">佛系躺平,慢半拍,与世无争,吃饱睡好。急不起来但也不掉链子。</div>
+          <div class="tags"><i>米白团子</i><i>眯眼笑</i><i>躺平</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/fangfang/refs/fangfang-锚点.png" alt="方方"></div>
+        <div class="meta">
+          <h3>方方<span class="en">Fāngfang</span></h3>
+          <div class="desc">死守流程的原则派,一板一眼,认死理。流程不对一律打回的 KPI 守门人。</div>
+          <div class="tags"><i>藏青方块</i><i>平直嘴</i><i>老古板</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/paopao/refs/paopao-锚点.png" alt="泡泡"></div>
+        <div class="meta">
+          <h3>泡泡<span class="en">Pàopao</span></h3>
+          <div class="desc">天天画饼的梦想家,想法一堆不落地,眼睛老望着天。愿景拉满、执行靠别人。</div>
+          <div class="tags"><i>浅蓝气泡</i><i>望天眼</i><i>点子王</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/dianliang/refs/dianliang-锚点.png" alt="电量"></div>
+        <div class="meta">
+          <h3>电量<span class="en">Diànliàng</span></h3>
+          <div class="desc">社畜能量条,满电↔1% 红格,情绪就是电量高低。配"精力/续航"类话题神用。</div>
+          <div class="tags"><i>电池</i><i>电量格</i><i>能量条</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/xuming/refs/xuming-锚点.png" alt="续命"></div>
+        <div class="meta">
+          <h3>续命<span class="en">Xùmìng</span></h3>
+          <div class="desc">靠咖啡吊命,满杯精神/空杯瘫,液面就是状态条。打工人共鸣最强。</div>
+          <div class="tags"><i>咖啡杯</i><i>液面状态</i><i>续命</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/dingling/refs/dingling-锚点.png" alt="丁零"></div>
+        <div class="meta">
+          <h3>丁零<span class="en">Dīnglíng</span></h3>
+          <div class="desc">DDL 催命急性子,永远在响、催进度,把自己也催得满头汗。</div>
+          <div class="tags"><i>闹钟</i><i>双铃狂抖</i><i>催命</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/tietie/refs/tietie-锚点.png" alt="贴贴"></div>
+        <div class="meta">
+          <h3>贴贴<span class="en">Tiētie</span></h3>
+          <div class="desc">健忘派全靠记录,身上贴满小条,一动掉一地还找不着重点。</div>
+          <div class="tags"><i>便利贴</i><i>满身便签</i><i>健忘</i></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>当代情绪态</h2><span>结合当下热点 / 网络情绪 · 时效性强,过气好替换</span><div class="rule"></div></div>
+    <div class="roster">
+
+      <div class="char">
+        <div class="pic"><img src="characters/dandan/refs/dandan-锚点.png" alt="淡淡"></div>
+        <div class="meta">
+          <h3>淡淡<span class="en">Dàndàn</span></h3>
+          <div class="desc">淡人本人,对啥都"哦""还行""随便",情绪零起伏。天塌了也面无波澜。</div>
+          <div class="tags"><i>淡灰水母</i><i>平眉眼</i><i>淡人</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/pofang/refs/pofang-锚点.png" alt="破防君"></div>
+        <div class="meta">
+          <h3>破防君<span class="en">Pòfáng</span></h3>
+          <div class="desc">玻璃心,一戳多道裂,眼泪在眶里打转死撑着不掉。一句话就破防。</div>
+          <div class="tags"><i>玻璃心</i><i>裂纹</i><i>脆皮</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/fengzai/refs/fengzai-锚点.png" alt="疯崽"></div>
+        <div class="meta">
+          <h3>疯崽<span class="en">Fēngzǎi</span></h3>
+          <div class="desc">精神状态很美丽,自己癫自己乐,该发疯就发疯,癫得理直气壮。</div>
+          <div class="tags"><i>炸毛冒火星</i><i>疯笑</i><i>发疯文学</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/niuma/refs/niuma-锚点.png" alt="牛马"></div>
+        <div class="meta">
+          <h3>牛马<span class="en">Niúmǎ</span></h3>
+          <div class="desc">打工人自称的牛马本畜,背电脑包、挂工牌、顶黑眼圈,认命拉磨。共鸣最强。</div>
+          <div class="tags"><i>小牛马</i><i>黑眼圈</i><i>班味</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/suosuo/refs/suosuo-锚点.png" alt="缩缩"></div>
+        <div class="meta">
+          <h3>缩缩<span class="en">Suōsuo</span></h3>
+          <div class="desc">社恐 i 人,缩进连帽卫衣只露半张脸,被 cue 当场石化,"已读先不回"。</div>
+          <div class="tags"><i>连帽缩</i><i>露半眼</i><i>i人</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/muyu/refs/muyu-锚点.png" alt="木鱼"></div>
+        <div class="meta">
+          <h3>木鱼<span class="en">Mùyú</span></h3>
+          <div class="desc">赛博自救本救,一焦虑就敲自己攒功德,假装平静实则内耗,电子上香求心安。</div>
+          <div class="tags"><i>敲木鱼</i><i>功德+1</i><i>赛博功德</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="characters/titi/refs/titi-锚点.png" alt="替替"></div>
+        <div class="meta">
+          <h3>替替<span class="en">Tìti</span></h3>
+          <div class="desc">数字打工人的 AI 焦虑化身,"AI 是不是要取代我了"。写 AI 取代类话题的专属嘴替。</div>
+          <div class="tags"><i>像素幽灵</i><i>glitch</i><i>AI焦虑</i></div>
+        </div>
+      </div>
+
+      <div class="char ghost">
+        <div><b>+ 新角色</b><br>在 characters/&lt;名&gt;/<br>建个目录、放好<br>character.md + 锚点图<br>就进这排陈列</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>谐音梗 meme</h2><span>食物拟人 + 符号成精 ×16 · meme 风,一梗一情绪 · 画风独立于手绘线稿</span><div class="rule"></div></div>
+    <div class="roster">
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/jiaolv/refs/jiaolv-锚点.png" alt="蕉绿"></div>
+        <div class="meta">
+          <h3>蕉绿<span class="en">Jiāolǜ</span></h3>
+          <div class="desc">香蕉绿了=焦虑。冒汗抖手、慌到不行,焦虑本焦。配焦虑/赶due/内耗。</div>
+          <div class="tags"><i>香蕉</i><i>焦虑绿斑</i><i>冒汗</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/lajiao/refs/lajiao-锚点.png" alt="暴躁辣椒"></div>
+        <div class="meta">
+          <h3>暴躁辣椒<span class="en">Chili</span></h3>
+          <div class="desc">辣=火气大。头顶冒火、龇牙握拳,一点就炸。配暴躁/破防/退退退。</div>
+          <div class="tags"><i>红辣椒</i><i>头顶冒火</i><i>暴躁</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/kugua/refs/kugua-锚点.png" alt="苦瓜脸"></div>
+        <div class="meta">
+          <h3>苦瓜脸<span class="en">Bitter Melon</span></h3>
+          <div class="desc">苦大仇深。耷拉脸、生无可恋,丧到家。配丧/苦逼/班味。</div>
+          <div class="tags"><i>苦瓜</i><i>耷拉脸</i><i>生无可恋</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/ningmeng/refs/ningmeng-锚点.png" alt="柠檬精"></div>
+        <div class="meta">
+          <h3>柠檬精<span class="en">Lemon</span></h3>
+          <div class="desc">柠檬精=酸。眯眼喷酸水,看谁好都酸两句。配羡慕嫉妒/酸了。</div>
+          <div class="tags"><i>柠檬</i><i>眯眼喷酸</i><i>嫉妒</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/xianyu/refs/xianyu-锚点.png" alt="咸鱼"></div>
+        <div class="meta">
+          <h3>咸鱼<span class="en">Salted Fish</span></h3>
+          <div class="desc">摆烂之神。XX死鱼眼平躺、毫无生气,翻身?不存在的。配躺平/摆烂/周一。</div>
+          <div class="tags"><i>咸鱼</i><i>死鱼眼</i><i>躺平</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/yangcong/refs/yangcong-锚点.png" alt="洋葱"></div>
+        <div class="meta">
+          <h3>洋葱<span class="en">Onion</span></h3>
+          <div class="desc">催泪=emo哭包。嚎啕大哭、泪流成河,一点就哭。配emo/委屈/破防。</div>
+          <div class="tags"><i>紫洋葱</i><i>泪流成河</i><i>emo</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/suanle/refs/suanle-锚点.png" alt="蒜鸟"></div>
+        <div class="meta">
+          <h3>蒜鸟<span class="en">Garlic-Bird</span></h3>
+          <div class="desc">大蒜+鸟结合体,蒜鸟=算鸟=算了。半眯眼摊翅、佛系认命。配算了/摆烂/不争了。</div>
+          <div class="tags"><i>蒜+鸟</i><i>蒜芽呆毛</i><i>算了</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/jiucai/refs/jiucai-锚点.png" alt="韭菜"></div>
+        <div class="meta">
+          <h3>韭菜<span class="en">The Leek</span></h3>
+          <div class="desc">被割了一茬又一茬的打工人/散户。认命麻木的死人脸。配被割/打工人/智商税。</div>
+          <div class="tags"><i>韭菜</i><i>认命脸</i><i>被割</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/kafei/refs/kafei-锚点.png" alt="续命咖啡"></div>
+        <div class="meta">
+          <h3>续命咖啡<span class="en">Coffee</span></h3>
+          <div class="desc">打工人续命燃料。黑眼圈+充血瞪眼+发抖,咖啡因硬撑。配续命/熬夜/加班。</div>
+          <div class="tags"><i>咖啡杯</i><i>充血瞪眼</i><i>续命</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/mogu/refs/mogu-锚点.png" alt="蘑菇"></div>
+        <div class="meta">
+          <h3>蘑菇<span class="en">Mushroom</span></h3>
+          <div class="desc">菌盖当帽兜的社恐i人。压低只露俩眼躲着,不想社交。配社恐/i人/已读不回。</div>
+          <div class="tags"><i>蘑菇</i><i>菌盖帽兜</i><i>社恐</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/qiezi/refs/qiezi-锚点.png" alt="茄子"></div>
+        <div class="meta">
+          <h3>茄子<span class="en">Eggplant</span></h3>
+          <div class="desc">霜打的茄子=蔫了。蔫头耷脑、毫无生气,精气神全没了。配蔫了/泄气/被现实暴击。</div>
+          <div class="tags"><i>紫茄子</i><i>蔫成一摊</i><i>泄气</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/wenhao/refs/wenhao-锚点.png" alt="问号人"></div>
+        <div class="meta">
+          <h3>问号人<span class="en">Question</span></h3>
+          <div class="desc">问号成精,一脸懵。托腮疑惑、歪头满头问号。配懵/疑惑/啊?/这啥。</div>
+          <div class="tags"><i>问号</i><i>托腮疑惑</i><i>一脸懵</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/tanhao/refs/tanhao-锚点.png" alt="叹号人"></div>
+        <div class="meta">
+          <h3>叹号人<span class="en">Exclaim</span></h3>
+          <div class="desc">叹号成精,大为震惊。瞪圆眼张嘴举手。配震惊/我靠/啊?!/没想到,反应组。</div>
+          <div class="tags"><i>叹号</i><i>瞪眼震惊</i><i>反应组</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/shandian/refs/shandian-锚点.png" alt="闪电"></div>
+        <div class="meta">
+          <h3>闪电<span class="en">Bolt</span></h3>
+          <div class="desc">闪电成精,停不下的卷王。怒目冲刺、把自己跑冒汗。配内卷/打鸡血/冲冲冲。</div>
+          <div class="tags"><i>闪电</i><i>怒目冲刺</i><i>内卷</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/wujiaoxing/refs/wujiaoxing-锚点.png" alt="五角星"></div>
+        <div class="meta">
+          <h3>五角星<span class="en">Star</span></h3>
+          <div class="desc">五角星成精,得意邀功。眯眼坏笑、show-off 抢 C 位。配邀功/抢功/显眼包。</div>
+          <div class="tags"><i>五角星</i><i>得意坏笑</i><i>邀功</i></div>
+        </div>
+      </div>
+
+      <div class="char">
+        <div class="pic"><img src="food-mascots/sanjiao/refs/sanjiao-锚点.png" alt="三角"></div>
+        <div class="meta">
+          <h3>三角<span class="en">Triangle</span></h3>
+          <div class="desc">三角成精,逮谁杠谁。怒眉指人、"我就问一句"。配抬杠/杠精/不对吧。</div>
+          <div class="tags"><i>三角</i><i>怒眉指人</i><i>杠精</i></div>
+        </div>
+      </div>
+
+      <div class="char ghost">
+        <div><b>+ 新角色</b><br>在 food-mascots/&lt;名&gt;/<br>建个目录、放好<br>character.md + 锚点图<br>就进这排陈列</div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    IP 库总览 · 31 位角色 = 手绘线稿 15(职场态 8 + 当代情绪态 7,数据在 <code>characters/</code>)+ 谐音梗 meme 16(食物拟人 11 + 符号成精 5,数据在 <code>food-mascots/</code>)。两套画风分属两组。原库的问号/叹号(双子)、闪电(阿冲)、五角星(小星)、三角(棱角)纯符号潦草版,已被 meme「符号成精」版取代、移出职场态。
+    加角色 = 在对应目录 <code>&lt;名&gt;/</code> 放好 <code>character.md</code> + 锚点图,这页就多一张卡。
+    小狐狸是小互的搭档配角(已含在小互形象里),暂不单列。
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  function flash(btn){
+    var old = btn.textContent;
+    btn.classList.add('done'); btn.textContent = '✓ 已复制';
+    setTimeout(function(){ btn.textContent = old; btn.classList.remove('done'); }, 1400);
+  }
+  function fallback(t, btn){
+    var ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta); flash(btn);
+  }
+  function copyText(t, btn){
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function(){ flash(btn); }).catch(function(){ fallback(t, btn); });
+    } else { fallback(t, btn); }
+  }
+  document.querySelectorAll('.char:not(.ghost)').forEach(function(card){
+    var img = card.querySelector('.pic img');
+    var h3 = card.querySelector('h3');
+    if (!img || !h3) return;
+    var m = (img.getAttribute('src') || '').match(/(?:characters|food-mascots)\/([^\/]+)\//);
+    var slug = m ? m[1] : '';
+    var name = (h3.firstChild && h3.firstChild.textContent || '').trim();
+    if (!slug || !name) return;
+    var cmd = '用 ' + name + '(' + slug + ') 给这篇配图';
+    var btn = document.createElement('button');
+    btn.className = 'copybtn'; btn.type = 'button';
+    btn.textContent = '📋 复制指令';
+    btn.title = cmd;
+    btn.addEventListener('click', function(e){ e.preventDefault(); copyText(cmd, btn); });
+    card.appendChild(btn);
+  });
+})();
+</script>
+</body>
+</html>
