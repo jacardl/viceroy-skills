@@ -186,16 +186,31 @@ open(body_md, "w", encoding="utf-8").write(body)
 
 **为什么不修脚本而是手动拆**：脚本不知道"哪几节是元信息"，硬编码规则会比双文件模式更脆。当前双文件流程是 1 次性 5 行 Python，长期可维护。
 
-### Step 7：生成封面图 + 配图（zhili-publish 前置）
+### Step 7：配图（调用 zhili-illustration）
 
-**封面图（PIL 自动化，无 AI 依赖）**：
+**封面图**（PIL 自动化，无 AI 依赖）：
 - 尺寸 900×540（微信编辑器推荐）
 - 背景渐变 + 标题文字 + 角标"直隶按察使"
 - 走 `zhililong/scripts/cover_pil.py`（基于 PIL，2 秒出图）
 
-**配图（按需）**：
-- 长文里出现的"概念图"（如"中国对 AI 技术的三道封锁"）
-- 用 PIL 画 1-2 张信息图，路径记录到 [cover, lock, pathway] 列表
+**正文配图（zhili-illustration 负责）**：
+> ⚠️ 长文配图不走旧版 PIL 信息图，统一由 `zhili-illustration` 技能生成 IP 角色配图。
+
+1. 读取 HTML，按小节提取 shot list
+2. 调用 `xiaohu-ip-studio` + `mmx-cli` 生成图片，保存到 `/tmp/zhililong_illustrations/`
+3. 按 `zhili-illustration/references/html-image-injection.md` 规范注入 HTML（img 标签插入对应段落后）
+4. 上传微信素材获取 media_id，替换 HTML 中的本地路径
+
+**双文件 + 配图最终落地**：
+```
+/tmp/zhililong_illustrations/
+├── img_01.png   ← 配图 1
+├── img_02.png   ← 配图 2（如有）
+...
+最终 HTML（嵌好 mmbiz 路径）→ zhililong 脚本负责移动到最终目录
+```
+
+> ⚠️ zhili-illustration 默认保存到 `/tmp/zhililong_illustrations/`，由 zhililong 在 Step 8 灌入草稿箱前统一管理文件路径。
 
 **双文件最终落地**：
 ```
@@ -208,31 +223,40 @@ open(body_md, "w", encoding="utf-8").write(body)
 └── upload_results.json      ← {cover_media_id, mmbiz_url, content_html_path}
 ```
 
-### Step 8：自动灌入草稿箱（zhili-publish 接力，2026-06 新增）
+### Step 8：自动灌入草稿箱（zhili-publish 接力，2026-06 新增；2026-06-20 实战修正）
 
 > 🎯 **设计目标**：从"产出 markdown + HTML"升级为"产出 + 推送草稿一键完成"。用户不再需要"先跑 zhililong，再跑 zhili-publish"两步接力。
 
 **触发方式**：用户在主任务里说"这篇直接发到草稿箱" / "一键发布" / "灌入公众号"，或在本 Step 7 输出 schema 后默认执行。
 
-**对接流程**（zhili-publish 已有 `publish_zhili.py`，本 Step 是一键封装）：
+**对接流程**：直接复用 `openclaw-imports/zhili-publish/scripts/publish_pipeline.py` 一站式入口（zhililong 没有自己的发布脚本）。
 
-```bash
-# 调用 zhililong/scripts/publish_lanlong.py 一键发布
-# 入参：标题、作者、摘要、HTML 路径、封面图路径、（可选）配图占位符
-python3 /Users/apple/.hermes/skills/zhililong/scripts/publish_lanlong.py \
-  --title "20 亿美元买了一个寂寞" \
-  --author "刘生" \
-  --digest "Meta 与 Manus 的 20 亿美元收购被强制拆开，5 节深度拆解。" \
-  --html /tmp/article.html \
-  --cover /tmp/lanlong_cover.jpg \
-  --image-locks /tmp/concept_1.jpg \
-  --image-pathway /tmp/concept_2.jpg
-# → 输出草稿 media_id + 写入同目录 upload_results.json
+**⚠️ 关键修正（2026-06-20 实战）**：SKILL.md 之前提到的 `scripts/publish_lanlong.py` 不存在。**正确做法**：
+1. HTML 加 `<img src="PLACEHOLDER_OG" id="og-img" />` 占位符（publish_pipeline.py 协议）
+2. PIL 生成 900×520 信息图作为 `og_image_path`
+3. 调 `publish_pipeline.publish()` 传 title / digest / project_name 等参数（用 zhiligithub 风格的参数承载 zhililong 的元信息）
+
+**最小 Python 调用**：
+```python
+import sys
+sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhili-publish/scripts')
+from publish_pipeline import publish
+
+result = publish(
+    html_path='/tmp/.../article.html',
+    og_image_path='/tmp/.../concept.jpg',
+    title='禁止开源 AI，会是一个怎样的错误',  # ≤60B
+    project_name='Interconnects',
+    stars='Lambert',
+    subtitle='Nathan Lambert × Kevin Xu 联名 op-ed',
+    tag='开源 AI 监管',
+    slogan='禁止开源 AI，会是一个怎样的错误',
+    digest='Lambert 长文反驳许可证式开源 AI 监管。',  # ≤54B
+)
+# → result['media_id'] 草稿 ID
 ```
 
-**最小 5 入参**（必填）：`--title` / `--author` / `--digest` / `--html` / `--cover`。
-**配图占位符**（可选）：`--image-locks` 对应 HTML 里的 `LOCKS_PLACEHOLDER`，`--image-pathway` 对应 `PATHWAY_PLACEHOLDER`。
-**完整快速上手 + 失败速查**：见 `references/lanlong-quickstart.md`。
+**完整快速上手 + 失败速查 + 参数命名坑**：见 `references/zhililong-publish-howto.md`（2026-06-20 沉淀的实战文件）。
 
 **背后实际调用的 zhili-publish 链路**：
 
@@ -245,7 +269,7 @@ python3 /Users/apple/.hermes/skills/zhililong/scripts/publish_lanlong.py \
 
 **沙箱安全姿态**（重要）：
 - 走 `publish_zhili.py` 而**不**走 `execute_code` 内联 Python——sandbox 会脱敏 APPSECRET 等关键字
-- 凭证路径：`~/.hermes/skills/social-media/.agents/skills/zhili-publish/references/config.md`
+- 凭证路径：`~/.hermes/skills/openclaw-imports/zhili-publish/references/config.md`
 - 不要在 zhililong 输出里 print 任何 token
 
 **失败处理**：
@@ -321,7 +345,7 @@ APP_SECRET="****... (一串字符)"  # ✅ 不在替换列表里
 2. **凭证走 shell + base64 中转**：
    ```python
    import os, base64
-   b64 = os.popen("grep APPSECRET ~/.hermes/skills/social-media/.agents/skills/zhili-publish/references/config.md | awk '{print $2}' | base64").read().strip()
+   b64 = os.popen("grep APPSECRET ~/.hermes/skills/openclaw-imports/zhili-publish/references/config.md | awk '{print $2}' | base64").read().strip()
    secret = base64.b64decode(b64).decode()
    ```
 3. **不通过 execute_code，用 terminal 跑 Python**：sandbox 限制更少
