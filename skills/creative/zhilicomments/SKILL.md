@@ -38,7 +38,7 @@ description: >
 |------|-----|
 | 背景色 | `#f5f4ed`（羊皮纸） |
 | 正文字体 | `Georgia, 'Noto Serif SC', serif` |
-| H2 标题 | `border-left: 4px solid #00d4aa`，青色左边框高亮（**样式A 标志性特征，与 zhiliGitHub 完全一致**） |
+| H2 标题 | `font-size:20px;color:#1B365D;font-weight:700;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0`（**注意：`font-size` 和 `color` 必须在同一 `style=` 字符串内连续出现**，preflight 检查精确字符串 `font-size:20px;color:#1B365D`） |
 | 强调色（数据/核心） | `#c9553d`（红棕色） |
 | 强调色（关键词/重点） | `#1B365D`（墨蓝） |
 | 警示/核心洞察背景 | `#fff3b0`（淡黄底） |
@@ -244,18 +244,43 @@ description: >
 
 详细内容见 `references/wechat-pitfalls.md` 的「内容源可访问性」章节。
 
-### 第二步：配图（可选）
+### 第二步：配图（调用 zhili-illustration）
 
-短评论可以无图，但如果配图：
+**写作技能统一配图流程**：HTML 完成后自动引入 `zhili-illustration` 技能生成正文配图。
 
-1. 用 PIL 生成信息图（900×383 或 900×900）：`/tmp/cover.jpg`
-2. 上传获取 `media_id`（必须用 urllib.request 构造 multipart）
+**本技能适用规格**（2026-06-27 确认）：
+- 配图数量：1-2 张（正文 1 张，封面图独立走封面流程）
+- 比例：4:3（900×675px）为主
+- IP 角色：问号人（极简线条符号人），单张内嵌 ~15%
+- 画风：手绘线稿·淡彩
+
+**封面图**（独立流程，不走 zhili-illustration）：
+- 尺寸：900×383px（2.35:1）
+- 格式：PNG/JPG，保存到 `/tmp/zhili_cover.png`
+- 上传 type：**`type=image`**（不是 `thumb`）
+
+**正文配图流程**（zhili-illustration 负责）：
+1. 读取 HTML，提取 shot list（每节一张）
+2. 生成图片（调用 `xiaohu-ip-studio` + `mmx-cli`）
+3. 按 `zhili-illustration/references/html-image-injection.md` 规范注入 HTML
+4. 上传微信素材获取 media_id，替换 HTML 中的路径
 
 关键踩坑见 `references/wechat-pitfalls.md`。
 
-> ⚠️ **封面图必须用 `type=image`**（2026-05-30 实测）。旧版记录 `type=thumb` 可用为错误信息。`type=thumb` 返回的 media_id 在 `draft/add` 时报 `40007 invalid media_id`，**必须用 `type=image`**。
+### 第三步：写 HTML（先读 preflight 再写，少走弯路）
 
-### 第三步：写 HTML
+> ⚠️ **写 HTML 前必须先读** `scripts/preflight.py` 第 95-114 行的 CSS 检查逻辑（exact string match），否则 preflight 会反复失败 3-4 次才能通过。
+>
+> **CSS precision 铁律（preflight 用子串匹配检查，下述必须完全一致）**：
+> - `background:#f5f4ed`（不是 `background-color:`）
+> - `font-family:'Noto Serif SC', Georgia, serif`（逗号后有空格，Noto 在前）
+> - H2 style 必须含 `font-size:20px;color:#1B365D`（两个属性在同一个 style 值里相邻）
+> - H2 margin: `margin:0 0 16px`，P margin: `margin:0 0 28px`
+> - 作者行颜色：`#7c6f64`（不是 `#6b665b`），font-family 要单独写
+> - 来源行：`font-family:monospace`
+> - H2 font-weight: `700`（不是 `bold`）
+> - 禁止 `background-color:`，一律用 `background:`
+> - 禁止中文冒号 `：` 和中文破折号 `——`
 
 > ⚠️ **写 HTML 时优先复制** `references/format.md` 中的增强版 HTML 模板（含 Pull Quote、装饰线、标签卡片等完整样式）。
 
