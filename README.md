@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-110-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-111-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -24,11 +24,11 @@
 | Category | Description |
 |----------|-------------|
 | [AI Models](#-ai-models) | 本地/远程 AI 网关，图片生成，终端交互 |
-| [Assistant](#-assistant) | 文件处理、知识管理、Obsidian、存储分析 |
+| [Assistant](#-assistant) | 文件处理、知识管理、笔记、存储分析、**法律全链路技能（25个）** |
 | [Creative](#-creative) | 微信公众号写作、封面图、短评、GitHub 精选 |
 | [Developer](#-developer) | Skill 创建与维护、代码质量 |
 | [Operations](#-operations) | SEO / GEO 策略、舆情、爬虫、自动化 |
-| [Product](#-product) | 竞品分析、人群研究、专利、软著 |
+| [Product](#-product) | 竞品分析、人群研究、HV |
 
 ---
 
@@ -70,10 +70,12 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 ---
 ### 🧑‍💼 Assistant
 
+> 法律全链路技能（25个）：要素提取、证据分析、论证组织、文书处理、类案检索、法规检索、效力验证、风险评估、案件规划、价值判断、裁决预测
+
 | Name | How to trigger |
 |------|----------------|
 | [**diary-write**](skills/assistant/diary-write/SKILL.md) | 写日记 / 向 Obsidian 写日记 / 我发给你位置 |
-| [**find-skills**](skills/assistant/find-skills/SKILL.md) | 在 ClawHub 上找 SEO 相关 Skill |
+| [**find-skills**](skills/assistant/find-skills/SKILL.md) | 在 ClawHub 上找 Skill |
 | [**markitdown**](skills/assistant/markitdown/SKILL.md) | 把这个 PDF 转成 markdown |
 | [**markdown-to-report**](skills/assistant/markdown-to-report/SKILL.md) | 把这个 markdown 转成带样式的 HTML 报告 |
 | [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | /neat — 整理本次会话的文档和记忆 |
@@ -93,8 +95,22 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**argument-strength-evaluation**](skills/assistant/argument-strength-evaluation/SKILL.md) | 论证强度/置信度评级 + 薄弱环节标注 |
 | [**legal-document-formatting**](skills/assistant/legal-document-formatting/SKILL.md) | 裁判文书格式规范 |
 | [**legal-document-summarization**](skills/assistant/legal-document-summarization/SKILL.md) | 判决/裁定结构化摘要 |
-| [**multi-document-summarization**](skills/assistant/multi-document-summarization/SKILL.md) | 跨文档综合分析 |
 | [**judgment-document-generation**](skills/assistant/judgment-document-generation/SKILL.md) | 复合能力：8步流水线生成完整判决书 |
+| [**case-retrieval**](skills/assistant/case-retrieval/SKILL.md) | 类案检索，查找相似判决与裁判规则 |
+| [**legal-article-retrieval**](skills/assistant/legal-article-retrieval/SKILL.md) | 法条检索，生成标准化检索报告 |
+| [**legal-norm-validity-check**](skills/assistant/legal-norm-validity-check/SKILL.md) | 法条效力验证：现行有效、层级正确、无冲突 |
+| [**other-legal-retrieval**](skills/assistant/other-legal-retrieval/SKILL.md) | 立法背景、监管案例、行业标准、学术通说检索 |
+| [**legal-risk-assessment**](skills/assistant/legal-risk-assessment/SKILL.md) | 综合法律风险评估 |
+| [**dispute-and-performance-risk**](skills/assistant/dispute-and-performance-risk/SKILL.md) | 合同争议与履约风险评估 |
+| [**internal-compliance-risk-identification**](skills/assistant/internal-compliance-risk-identification/SKILL.md) | 内部合规风险识别 |
+| [**case-lifecycle-planning**](skills/assistant/case-lifecycle-planning/SKILL.md) | 案件时间线与路线图 |
+| [**billing-and-litigation-budget**](skills/assistant/billing-and-litigation-budget/SKILL.md) | 工时/费用/预算管理 |
+| [**trial-scheduling-and-deadline-monitoring**](skills/assistant/trial-scheduling-and-deadline-monitoring/SKILL.md) | 开庭/举证/上诉期限跟踪 |
+| [**strategic-risk-prioritization**](skills/assistant/strategic-risk-prioritization/SKILL.md) | 风险排序 + 资源战略性取舍 |
+| [**administrative-value-judgment**](skills/assistant/administrative-value-judgment/SKILL.md) | 行政价值判断 |
+| [**judicial-value-judgment**](skills/assistant/judicial-value-judgment/SKILL.md) | 司法价值判断 |
+| [**legal-judgment-prediction**](skills/assistant/legal-judgment-prediction/SKILL.md) | 复合能力：调度多原子能力做裁决预测 |
+| [**patent-disclosure-skill**](skills/assistant/patent-disclosure-skill/SKILL.md) | 通用中国专利挖掘、查新、技术交底书生成与自检 |
 
 ---
 ### 🎨 Creative
@@ -143,10 +159,6 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 今天 GitHub 有什么趋势 |
 | [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | 给我一份 Radar 日报 |
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | 舆情数据采集标准规范 |
-| [**case-retrieval**](skills/operations/case-retrieval/SKILL.md) | 类案检索，查找相似判决与裁判规则 |
-| [**legal-article-retrieval**](skills/operations/legal-article-retrieval/SKILL.md) | 法条检索，生成标准化检索报告 |
-| [**other-legal-retrieval**](skills/operations/other-legal-retrieval/SKILL.md) | 立法背景、监管案例、行业标准、学术通说检索 |
-| [**legal-norm-validity-check**](skills/operations/legal-norm-validity-check/SKILL.md) | 法条效力验证：现行有效、层级正确、无冲突 |
 
 ---
 
@@ -160,18 +172,8 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | 从这段 AI 回复里识别竞品 |
 | [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | 研究这个公司 / 产品 |
 | [**research-synth**](skills/product/research-synth/SKILL.md) | 综合用户访谈 / Survey 开放题 / Synthetic User Q&A，生成产品洞察、机会 backlog、研究计划和知识图谱 |
-| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 通用中国专利挖掘、查新、技术交底书生成与自检；触发：专利挖掘 / 技术交底书 / patent-disclosure。 |
 | [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | 生成软件著作权申请材料 |
-| [**legal-risk-assessment**](skills/product/legal-risk-assessment/SKILL.md) | 综合法律风险评估 |
-| [**dispute-and-performance-risk**](skills/product/dispute-and-performance-risk/SKILL.md) | 合同争议与履约风险评估 |
-| [**internal-compliance-risk-identification**](skills/product/internal-compliance-risk-identification/SKILL.md) | 内部合规风险识别 |
-| [**case-lifecycle-planning**](skills/product/case-lifecycle-planning/SKILL.md) | 案件时间线与路线图 |
-| [**billing-and-litigation-budget**](skills/product/billing-and-litigation-budget/SKILL.md) | 工时/费用/预算管理 |
-| [**trial-scheduling-and-deadline-monitoring**](skills/product/trial-scheduling-and-deadline-monitoring/SKILL.md) | 开庭/举证/上诉期限跟踪 |
-| [**strategic-risk-prioritization**](skills/product/strategic-risk-prioritization/SKILL.md) | 风险排序 + 资源战略性取舍 |
-| [**administrative-value-judgment**](skills/product/administrative-value-judgment/SKILL.md) | 行政价值判断 |
-| [**judicial-value-judgment**](skills/product/judicial-value-judgment/SKILL.md) | 司法价值判断 |
-| [**legal-judgment-prediction**](skills/product/legal-judgment-prediction/SKILL.md) | 复合能力：调度多原子能力做裁决预测 |
+
 ---
 
 ## 🌟 关于
