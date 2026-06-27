@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-109-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-108-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -61,9 +61,14 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**9router**](skills/ai/9router/SKILL.md) | 本地/远程 AI 网关 — 一个 Key 调用多个 Provider，OpenAI 兼容 API |
 | [**local-model-orchestrator**](skills/ai/local-model-orchestrator/SKILL.md) | 扫描、解释、选择并调用本地 AI 模型，优先推荐 Mac 芯片优化方案 |
 | [**mmx-cli**](skills/ai/mmx-cli/SKILL.md) | 用 MiniMax 生成文本、图片、视频、音乐 — 含搜索功能 |
+| [**deductive-reasoning**](skills/ai/deductive-reasoning/SKILL.md) | 三段论 P-F-C 推理链 + 中项识别 + 谬误检测 |
+| [**inductive-reasoning**](skills/ai/inductive-reasoning/SKILL.md) | 从具体案例提炼一般规则 |
+| [**analogical-reasoning**](skills/ai/analogical-reasoning/SKILL.md) | 类比推理（法律漏洞填补） |
+| [**legal-abductive-reasoning**](skills/ai/legal-abductive-reasoning/SKILL.md) | 溯因推理：证据不完整时的最佳解释 |
+| [**counterfactual-reasoning**](skills/ai/counterfactual-reasoning/SKILL.md) | 反事实推理：因果认定/责任比例 |
+| [**formal-legal-consequence**](skills/ai/formal-legal-consequence/SKILL.md) | 推理链终端：推导具体法律后果 |
 
 ---
-
 ### 🧑‍💼 Assistant
 
 | Name | How to trigger |
@@ -78,9 +83,21 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | 看看我的硬盘 / C 盘满了 / 清理一下 |
 | [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | 把这篇微信文章转成 markdown |
 | [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | 抓取这个 YouTube 视频的字幕 |
+| [**legal-element-extraction**](skills/assistant/legal-element-extraction/SKILL.md) | 从非结构化文本提取法律事实（生活语言→法律语言） |
+| [**structured-element-extraction**](skills/assistant/structured-element-extraction/SKILL.md) | 结构化要素清单，下游推理的质量闸门 |
+| [**dispute-issue-identification**](skills/assistant/dispute-issue-identification/SKILL.md) | 争议焦点识别，排除无争议事项 |
+| [**legal-concept-comprehension**](skills/assistant/legal-concept-comprehension/SKILL.md) | 法律概念解析、构成要件拆解 |
+| [**legal-terminology**](skills/assistant/legal-terminology/SKILL.md) | 法律术语规范，贯穿所有输出 |
+| [**evidence-evaluation**](skills/assistant/evidence-evaluation/SKILL.md) | 证据三性评估 + 证明力判断 |
+| [**evidence-argument-chain**](skills/assistant/evidence-argument-chain/SKILL.md) | 主张→要件→证据→证明力完整映射 |
+| [**argument-chain-construction**](skills/assistant/argument-chain-construction/SKILL.md) | 将推理组织为完整论证结构 |
+| [**argument-strength-evaluation**](skills/assistant/argument-strength-evaluation/SKILL.md) | 论证强度/置信度评级 + 薄弱环节标注 |
+| [**legal-document-formatting**](skills/assistant/legal-document-formatting/SKILL.md) | 裁判文书格式规范 |
+| [**legal-document-summarization**](skills/assistant/legal-document-summarization/SKILL.md) | 判决/裁定结构化摘要 |
+| [**multi-document-summarization**](skills/assistant/multi-document-summarization/SKILL.md) | 跨文档综合分析 |
+| [**judgment-document-generation**](skills/assistant/judgment-document-generation/SKILL.md) | 复合能力：8步流水线生成完整判决书 |
 
 ---
-
 ### 🎨 Creative
 
 | Name | How to trigger |
@@ -104,9 +121,13 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**skill-creator**](skills/developer/skill-creator/SKILL.md) | 从零创建一个新 Skill |
 | [**skill-github-sync**](skills/developer/skill-github-sync/SKILL.md) | 把本地 Skills 同步到 GitHub |
 | [**skill-maintenance**](skills/developer/skill-maintenance/SKILL.md) | 整理 Skill 库 / 查重 / **安装前安全审计**（v2.1+ skillspector） |
+| [**legal-interpretation-argument**](skills/developer/legal-interpretation-argument/SKILL.md) | 综合文义/体系/目的解释 |
+| [**systematic-interpretation**](skills/developer/systematic-interpretation/SKILL.md) | 体系解释：规范在体系中的位置 |
+| [**teleological-interpretation**](skills/developer/teleological-interpretation/SKILL.md) | 目的解释：条文目的论证 |
+| [**normative-meaning-argumentation**](skills/developer/normative-meaning-argumentation/SKILL.md) | 规范目的与价值导向分析 |
+| [**conflict-resolution**](skills/developer/conflict-resolution/SKILL.md) | 法条竞合/证据矛盾/法源冲突 |
 
 ---
-
 ### 📊 Operations
 
 | Name | How to trigger |
@@ -123,95 +144,15 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 今天 GitHub 有什么趋势 |
 | [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | 给我一份 Radar 日报 |
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | 舆情数据采集标准规范 |
+| [**case-retrieval**](skills/operations/case-retrieval/SKILL.md) | 类案检索，查找相似判决与裁判规则 |
+| [**legal-article-retrieval**](skills/operations/legal-article-retrieval/SKILL.md) | 法条检索，生成标准化检索报告 |
+| [**other-legal-retrieval**](skills/operations/other-legal-retrieval/SKILL.md) | 立法背景、监管案例、行业标准、学术通说检索 |
+| [**legal-norm-validity-check**](skills/operations/legal-norm-validity-check/SKILL.md) | 法条效力验证：现行有效、层级正确、无冲突 |
 
 ---
 
 
 ---
-
-### ⚖️ Legal
-
-> 来自 [THUYRan/Legal-Skills-Chinese](https://github.com/THUYRan/Legal-Skills-Chinese)，清华大学智能法治研究院。38 个法律推理原子技能，覆盖「检索 → 推理 → 论证 → 文书」全链条。
-
-<details>
-<summary>📥 输入层（9）— 信息检索与事实提取</summary>
-
-| Name | One-liner |
-|------|-----------|
-| [**case-retrieval**](skills/legal/case-retrieval/SKILL.md) | 类案检索，查找相似判决与裁判规则 |
-| [**legal-article-retrieval**](skills/legal/legal-article-retrieval/SKILL.md) | 法条检索，生成标准化检索报告 |
-| [**other-legal-retrieval**](skills/legal/other-legal-retrieval/SKILL.md) | 立法背景、监管案例、行业标准、学术通说检索 |
-| [**legal-norm-validity-check**](skills/legal/legal-norm-validity-check/SKILL.md) | 法条效力验证：现行有效、层级正确、无冲突 |
-| [**legal-concept-comprehension**](skills/legal/legal-concept-comprehension/SKILL.md) | 法律概念解析、构成要件拆解 |
-| [**legal-element-extraction**](skills/legal/legal-element-extraction/SKILL.md) | 从非结构化文本提取法律事实（生活语言→法律语言） |
-| [**structured-element-extraction**](skills/legal/structured-element-extraction/SKILL.md) | 结构化要素清单，下游推理的质量闸门 |
-| [**dispute-issue-identification**](skills/legal/dispute-issue-identification/SKILL.md) | 争议焦点识别，排除无争议事项 |
-| [**evidence-evaluation**](skills/legal/evidence-evaluation/SKILL.md) | 证据三性评估 + 证明力判断 |
-
-</details>
-
-<details>
-<summary>⚙️ 处理层（22）— 法律解释 · 推理 · 论证 · 风险评估</summary>
-
-**法律解释（4）**
-
-| Name | One-liner |
-|------|-----------|
-| [**legal-interpretation-argument**](skills/legal/legal-interpretation-argument/SKILL.md) | 综合文义/体系/目的解释 |
-| [**systematic-interpretation**](skills/legal/systematic-interpretation/SKILL.md) | 体系解释：规范在体系中的位置 |
-| [**teleological-interpretation**](skills/legal/teleological-interpretation/SKILL.md) | 目的解释：条文目的论证 |
-| [**normative-meaning-argumentation**](skills/legal/Normative-Meaning-Argumentation/SKILL.md) | 规范目的与价值导向分析 |
-
-**法律推理（7）**
-
-| Name | One-liner |
-|------|-----------|
-| [**deductive-reasoning**](skills/legal/deductive-reasoning/SKILL.md) | 三段论 P-F-C 推理链 + 中项识别 + 谬误检测 |
-| [**inductive-reasoning**](skills/legal/inductive-reasoning/SKILL.md) | 从具体案例提炼一般规则 |
-| [**analogical-reasoning**](skills/legal/analogical-reasoning/SKILL.md) | 类比推理（法律漏洞填补） |
-| [**legal-abductive-reasoning**](skills/legal/Legal-Abductive-Reasoning/SKILL.md) | 溯因推理：证据不完整时的最佳解释 |
-| [**counterfactual-reasoning**](skills/legal/counterfactual-reasoning/SKILL.md) | 反事实推理：因果认定/责任比例 |
-| [**formal-legal-consequence**](skills/legal/formal-legal-consequence/SKILL.md) | 推理链终端：推导具体法律后果 |
-| [**conflict-resolution**](skills/legal/conflict-resolution/SKILL.md) | 法条竞合/证据矛盾/法源冲突 |
-
-**论证组织与评估（4）**
-
-| Name | One-liner |
-|------|-----------|
-| [**argument-chain-construction**](skills/legal/argument-chain-construction/SKILL.md) | 将推理组织为完整论证结构 |
-| [**argument-strength-evaluation**](skills/legal/argument-strength-evaluation/SKILL.md) | 论证强度/置信度评级 + 薄弱环节标注 |
-| [**evidence-argument-chain**](skills/legal/evidence-argument-chain/SKILL.md) | 主张→要件→证据→证明力完整映射 |
-| [**strategic-risk-prioritization**](skills/legal/strategic-risk-prioritization/SKILL.md) | 风险排序 + 资源战略性取舍 |
-
-**风险评估与价值判断（6）**
-
-| Name | One-liner |
-|------|-----------|
-| [**dispute-and-performance-risk**](skills/legal/dispute-and-performance-risk/SKILL.md) | 合同争议与履约风险评估 |
-| [**internal-compliance-risk-identification**](skills/legal/internal-compliance-risk-identification/SKILL.md) | 内部合规风险识别 |
-| [**legal-risk-assessment**](skills/legal/legal-risk-assessment/SKILL.md) | 综合法律风险评估 |
-| [**judicial-value-judgment**](skills/legal/judicial-value-judgment/SKILL.md) | 司法价值判断 |
-| [**administrative-value-judgment**](skills/legal/administrative-value-judgment/SKILL.md) | 行政价值判断 |
-| [**legal-judgment-prediction**](skills/legal/legal-judgment-prediction/SKILL.md) | 复合能力：调度多原子能力做裁决预测 |
-
-</details>
-
-<details>
-<summary>📤 输出层（8）— 文书与事务管理</summary>
-
-| Name | One-liner |
-|------|-----------|
-| [**legal-document-formatting**](skills/legal/legal-document-formatting/SKILL.md) | 裁判文书格式规范 |
-| [**judgment-document-generation**](skills/legal/judgment-document-generation/SKILL.md) | 复合能力：8步流水线生成完整判决书 |
-| [**legal-document-summarization**](skills/legal/legal-document-summarization/SKILL.md) | 判决/裁定结构化摘要 |
-| [**multi-document-summarization**](skills/legal/multi-document-summarization/SKILL.md) | 跨文档综合分析 |
-| [**legal-terminology**](skills/legal/legal-terminology/SKILL.md) | 术语规范，贯穿所有输出 |
-| [**case-lifecycle-planning**](skills/legal/case-lifecycle-planning/SKILL.md) | 案件时间线与路线图 |
-| [**trial-scheduling-and-deadline-monitoring**](skills/legal/trial-scheduling-and-deadline-monitoring/SKILL.md) | 开庭/举证/上诉期限跟踪 |
-| [**billing-and-litigation-budget**](skills/legal/billing-and-litigation-budget/SKILL.md) | 工时/费用/预算管理 |
-
-</details>
-
 ### 📦 Product
 
 | Name | How to trigger |
@@ -222,7 +163,16 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**research-synth**](skills/product/research-synth/SKILL.md) | 综合用户访谈 / Survey 开放题 / Synthetic User Q&A，生成产品洞察、机会 backlog、研究计划和知识图谱 |
 | [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 通用中国专利挖掘、查新、技术交底书生成与自检；触发：专利挖掘 / 技术交底书 / patent-disclosure。 |
 | [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | 生成软件著作权申请材料 |
-
+| [**legal-risk-assessment**](skills/product/legal-risk-assessment/SKILL.md) | 综合法律风险评估 |
+| [**dispute-and-performance-risk**](skills/product/dispute-and-performance-risk/SKILL.md) | 合同争议与履约风险评估 |
+| [**internal-compliance-risk-identification**](skills/product/internal-compliance-risk-identification/SKILL.md) | 内部合规风险识别 |
+| [**case-lifecycle-planning**](skills/product/case-lifecycle-planning/SKILL.md) | 案件时间线与路线图 |
+| [**billing-and-litigation-budget**](skills/product/billing-and-litigation-budget/SKILL.md) | 工时/费用/预算管理 |
+| [**trial-scheduling-and-deadline-monitoring**](skills/product/trial-scheduling-and-deadline-monitoring/SKILL.md) | 开庭/举证/上诉期限跟踪 |
+| [**strategic-risk-prioritization**](skills/product/strategic-risk-prioritization/SKILL.md) | 风险排序 + 资源战略性取舍 |
+| [**administrative-value-judgment**](skills/product/administrative-value-judgment/SKILL.md) | 行政价值判断 |
+| [**judicial-value-judgment**](skills/product/judicial-value-judgment/SKILL.md) | 司法价值判断 |
+| [**legal-judgment-prediction**](skills/product/legal-judgment-prediction/SKILL.md) | 复合能力：调度多原子能力做裁决预测 |
 ---
 
 ## 🌟 关于
