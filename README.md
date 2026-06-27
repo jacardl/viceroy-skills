@@ -29,7 +29,6 @@
 | [Developer](#-developer) | Skill 创建与维护、代码质量 |
 | [Operations](#-operations) | SEO / GEO 策略、舆情、爬虫、自动化 |
 | [Product](#-product) | 竞品分析、人群研究、专利、软著 |
-| [**Legal** ⚖️](#-legal) | 法律推理能力库 — 检索→推理→论证→文书，清华智能法治研究院 |
 
 ---
 
