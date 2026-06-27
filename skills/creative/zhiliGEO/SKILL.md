@@ -11,6 +11,10 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
 
 **不是** SEO 教程，不是行业报告，是**品牌在 AI 搜索时代如何被准确理解**的实战故事。
 
+## 参考范文
+
+**必读**：`references/geo-article-sample.md` — GEO 系列第一篇原文，含全文骨架、每个模块的实际写法要点、金句位置、数据密度参考。写新 GEO 文章前通读一遍。
+
 ## 品牌参数
 
 | 参数 | 值 |
@@ -165,5 +169,6 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
    - 无 emoji、无 bullet point、无企业全名
    - 分隔符 `· · ·` 出现不超过 3 次
    - 标题 16–24 字
-2. 调用 zhili-publish 技能推送草稿箱
-3. 飞书汇报：标题 + 字数 + 封面图建议
+2. **配图：调用 `zhili-illustration` 技能**（读取 HTML → 提取 shot list → xiaohu-ip-studio 生成图片 → 注入 HTML → 上传微信素材获取 media_id）
+3. 调用 zhili-publish 技能推送草稿箱
+4. 飞书汇报：标题 + 字数 + 封面图建议
