@@ -15,6 +15,7 @@ description: >
   1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
   2. 按规范生成 HTML，内联所有 CSS
   3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
+---
 ...
 
 # 直隶按察使 · 短评论发布技能
@@ -375,6 +376,7 @@ payload = json.dumps({
 }, ensure_ascii=False).encode('utf-8')  # Content-Type: application/json（无 charset）
 ```
 
+> ⚠️ **草稿创建前必须验证 HTML 中的图片URL**：如果文章有配图（cover.jpg / cover.png），必须确认 HTML 里使用的是本次实际上传的图片 media_id 对应的 mmbiz URL，而不是上一次残留的旧URL。验证方法：检查 HTML 中所有 `src="http://mmbiz.qpic.cn/` 是否与封面图的 url 一致。如果用了旧图，微信会报 `40007` 或显示异常。
 > ⚠️ **push.py digest 提取结构性冲突（2026-06-28 实战）**：`scripts/push.py` 第 155-159 行从 HTML 第一个 `<p>` 标签提取 digest 文本。但 zhilicomments HTML 的第一个 `<p>` 是「文 / 刘生」作者行，不是正文内容，导致草稿 digest 变成无意义的「文 / 刘生」。
 >
 > **解法**：在正文第一段 `<p>` 之前插入一个空 `<p>` 标签（只含 `style="display:none"` 或留空），让 push.py 取到的正好是正文第一句；或者在调用 push.py 之前手动检查生成的 digest 是否合理。不修的话草稿能发，但 digest 字段内容不对。
@@ -593,4 +595,5 @@ H2 本身就是最强的转场信号，再加一句「说完了 X」是冗余。
 - 结尾不求 Star/项目地址，纯观点文
 - **禁用词（严禁出现）**：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`冒号`、`破折号`
 - 所有文字 **`text-align:left`**，无例外
+- **禁止连续 bullet list**，超过2个观点必须改散文叙述
 - **禁止连续 bullet list**，超过2个观点必须改散文叙述
