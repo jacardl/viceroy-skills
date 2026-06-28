@@ -30,23 +30,6 @@ description: >
 
 # 直隶按察使 · 公众号发布技能
 
-## 📥 候选评估流程（收到 Trending 候选时必走）
-
-**接收任何 GitHub 候选（"Zhiligithub :6️⃣ xxx" 格式）后，先评估是否值得写，再决定要不要进入调研+写作流程**。评估没通过的候选**直接放下**，不要硬写。
-
-**6 步评估**（详见 `references/candidate-evaluation-checklist.md`）：
-
-1. **客观事实表**：调 GitHub API 查 stars / forks / license / 出生日期 / open issues / topics / README 长度
-2. **黑马分复核**：月均 stars 算出来，**单日 +X today 不算黑马信号**（playlist/awesome/crack 仓库刷星常态）
-3. **公众号合规性检查**：监管 / 版权 / 政治 / 平台审核 / 品牌调性 5 维度（**直隶按察使是大陆 公众号，这是硬约束**）
-4. **6 段式可写性**：「三、架构设计」和「五、实战场景」能否各写出 350-500 字**不灌水**？数据型项目（聚合 / playlist / awesome list）通常过不了这一关
-5. **主题与读者匹配度**：核心读者是开发者/AI 技术爱好者，Windows 专属窄但可写，IPTV/灰色消费级直接不写
-6. **输出推荐**：✅ 推荐写（列 3 个角度） / ⚠️ 可写但有风险（说明绕开什么） / ❌ 不写（说明理由）
-
-**真实教训（2026-06-16）**：黑马分 541 的 IPTV/M3U 聚合项目虽然 stars 17k，但 License=NONE + 公众号监管风险 + 6 段式难写 + 调性错位，**评估结论就是不写**。黑马分只是参考，合规和可写性才是硬约束。
-
-完整评估模板 + 真实案例见 `references/candidate-evaluation-checklist.md`。
-
 ## ⚠️ 路由规则（zhiliGitHub 自己的事，不替其他技能定规范）
 
 zhiliGitHub 是**独立技能**，只管 GitHub 黑马长文（1500-2000字）。
@@ -74,7 +57,7 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 > ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
 ## zhiliGitHub 写作格式：三种结构可选
 
-> ⚠️ **格式说明（2026-06-16 确认 + 2026-05-20 旧版）**：zhiliGitHub 支持三种内容结构——**编号盘点**（多项目合集）、**六段式**（单项目技术解剖）、**01-05 黑马扫描体**（单项目黑马角度）。三种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝 + 样式A 签名 H2 左边框）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
+> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
 
 ## ✅ CSS 渲染规范：样式A（标准模板，2026-05-30 固化）
 
@@ -244,8 +227,6 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 ```
 
 六段式允许章节标题，与编号盘点格式并列，agent 根据文章内容类型自行选择。
-
-> 📘 **非工具类项目（教科书 / 课程 / 数据集 / 文档）的适配**：六段式默认按"工具/框架"调优。碰到 TeX / ipynb / 数据集 / 文档型项目时**每个 H2 都要重新框定**（快速上手=怎么读，架构设计=目录结构+写作方法论）。详见 `references/non-tool-project-pattern.md`（含 6 段模板对照表 + 教科书"必含 5 件事 / 必删 3 件事" + Introduction-to-Autonomous-Robots 实战样本）。
 
 **六段式字数分配参考**（总 1500-2000 字）：
 
@@ -1236,8 +1217,6 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py --cov
 - [ ] 所有间距只设 `margin-bottom`，不用 `margin-top`
 - [ ] `grep -n '^$'` 确认 0 个空行
 
-> ⚠️ **Self-check 误报陷阱（2026-06-16 踩坑）**：检查"无作者页脚"时不要用 `'作者' in html` 这种**宽匹配**——正文里会出现 `作者 itsfatduck` / `作者在用 AI 辅助` 等正常用法，触发误报。要用**精确正则**：`re.search(r'作者[：:]\s*刘生|作者[：:]\s*卡兹克|来源[：:]\s*直隶按察使|本文由\s*zhiliGitHub', html)` 这类。同样原则适用于"无 `XXX` 残留"类检查——优先用 `re.findall` 数具体模式，**别用 `in` 字符串匹配**。
-
 ⚠️ **关键发现**：微信公众平台会过滤 `<style>` 标签和 CSS 类选择器，所有样式必须在 HTML 元素上直接用 `style="..."` 内联，否则格式全部失效。
 
 ### 正确的 HTML 结构（全部内联样式）
@@ -1645,60 +1624,5 @@ html = f'<img src="{img_url}" style="width:100%;border-radius:6px;" />'
 | `urllib.request` multipart 上传报 41005 | Python urllib.request 上传图片返回 `media data missing` | 改用 subprocess + curl：`curl -s -F 'media=@img.jpg' 'https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=TOKEN&type=image'` |
 | execute_code 的 Python sandbox 看不到 `~/.hermes/.env` 中的 API Key | `os.environ.get('MINIMAX_API_KEY')` 返回空（sandbox 环境隔离） | 用 `bash -c 'source ~/.hermes/.env && python3 -c "import os; print(os.environ[...])"'` 或直接用 `terminal` 执行含凭证的脚本 |
 | WeChat `access_token` 缓存路径 | sandbox 内写 `~/.hermes/mp_token_cache.json` 后，sandbox 下次运行看不到（路径重置） | WeChat API 调用必须在 `terminal` 执行，或通过 `scripts/publish_zhili.py`（它从 `load_config()` 读取 APPSECRET 后内联进脚本）调用 |
-
----
-
-## ✅ 统一 Pre-submit 检查清单（2026-06-23 合并版）
-
-> 本清单合并了 SKILL.md 精简规则 7 条 + zhili-style-refinements.md 改稿模式 8 条，共 **15 项硬约束**。每篇发布前必须逐项过，任何一项失败都要修复后再推。
-
-### 格式篇（7项）
-
-- [ ] **标题 ≤ 22 字节**（实测稳定值，超过 60 字节报 45003）
-- [ ] **body 无 H1 标题行**（WeChat 草稿 `title` 字段已是标题）
-- [ ] **body 无「刘生 · 2026年X月」副标题**
-- [ ] **body 无顶部分类标签 span**（如 `<span>GitHub</span>`）
-- [ ] **body 无「作者：刘生 / 来源：直隶按察使」页脚**
-- [ ] **无「六、总结」H2**——总结内容跟在五、实战场景后的 `· · ·` 之后
-- [ ] **无 ✅/❌ 适合/不适合 标签盒**——边界条件融进散文
-
-### 内容篇（renwei 硬约束，8项）
-
-> 来自 2026-06-21 Tw93/Pake 草稿箱 diff 实战（18+ 处改稿归纳）。
-
-- [ ] **中文冒号 `：` 为 0**（「赛道 X：Y」→ 改为「赛道 X——Y」或「赛道 X，Y」）
-- [ ] **中文破折号 `——` 为 0**（stop-slop 框架要求；中文破折号保留算例外）
-- [ ] **中文双引号 `""` 为 0**（用「」或直接不加）
-- [ ] **inline code 反引号**：英文术语（.dmg / API名）去掉反引号；命令/路径保留；代码块（`<pre><code>`）永远保留
-- [ ] **无排比三连**（「X、X、X」）——AI 套话，发现即砍
-- [ ] **无「不是 X 是 Y」二元结构**——改为纯判断「Z 是 W」
-- [ ] **无段尾排比**（「54,900 颗星，3.7 年坚守，一行命令，5MB 出货」）——升华尾句砍掉
-- [ ] **数字不过度精确**：「3.7 年」→「3 年」，「98.6%」→「绝大多数」
-
-### AI 套话篇（核心 11 项，任意命中 ≥ 3 → 打回重写）
-
-> renwei 11 项清单，**写完初稿后全文 grep 一遍**。
-
-| # | 检查项 | 合格标准 |
-|---|--------|----------|
-| 1 | 「不是 X 而是 Y」句式 | 0 处 |
-| 2 | 排比三连（快、好、省） | 0 处 |
-| 3 | 破折号 `——` | 0 处 |
-| 4 | 段落级加粗 | ≤1 处/节 |
-| 5 | AI 套话（非常、极其、令人、值得） | 0 处 |
-| 6 | 意义拔高（「这不仅是 X，更是 Y」） | 0 处 |
-| 7 | 万能展望结尾（「未来属于...」） | 0 处 |
-| 8 | 谄媚语气（「你真棒」） | 0 处 |
-| 9 | emoji 装饰 | 0 处 |
-| 10 | 填充对冲（「当然也不排除」） | 0 处 |
-| 11 | AI 赞美形容词（强大、优雅、惊艳、出色） | 0 处——**用具体场景代替** |
-
-**失败兜底**：renwei 命中率 ≥ 3 项，**先打回重写**（不要一边改一边扫——AI 改稿会越改越用力）。
-
-### 发布前最后检查
-
-- [ ] `grep -n '^\*\*' /tmp/article.html` → 应返回空（`**` 残留）
-- [ ] `grep -n '^$' /tmp/article.html` → 应返回空（空行）
-- [ ] `python3 scripts/validate_zhili_article.py` → 4 重验证全部 PASS
 | WeChat草稿正文中文显示为 `\uXXXX` 转义序列 | `json.dumps()` 默认 `ensure_ascii=True` 将中文转为 `\uXXXX`。**正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，Content-Type: `application/json`（不带 `charset=utf-8`）。WeChat 自己推断 UTF-8，不要声明编码。`fix_double_encoded_content()` 函数无法阻止这个问题 |
 | mmx CLI 读取 `~/.hermes/.env` | mmx CLI 用 Node.js 读取环境变量，直接 `mmx auth login` 会报 key 无效 | 用 `bash -c 'source ~/.hermes/.env && mmx auth login --api-key "$MINIMAX_API_KEY"'` 确保环境变量展开 |
