@@ -11,7 +11,7 @@ description: |
   - 用户说"这篇写完后直接发到草稿箱"/"一键发布到直隶按察使"
   
   不适用：短评（用 zhilicomments-publish）、教程（用 khazix-writer）、GitHub 项目介绍（用 khazix-writer 模板）
----
+...
 
 # 直隶按察使 · 长文输出（zhililong）
 
@@ -39,7 +39,7 @@ description: |
 - 输入 30-60 分钟视频 → 4500-5500 字
 - 用户指定字数 → 以用户为准（但保留劝告：低于 4000 字不如不写）
 
-## Workflow（必走 8 步）
+## Workflow（必走 9 步）
 
 ### Step 1：素材接收 + 真实性核对
 
@@ -223,66 +223,60 @@ open(body_md, "w", encoding="utf-8").write(body)
 └── upload_results.json      ← {cover_media_id, mmbiz_url, content_html_path}
 ```
 
-### Step 8：自动灌入草稿箱（zhili-publish 接力，2026-06 新增；2026-06-20 实战修正）
+### Step 8：自动灌入草稿箱（publish_lanlong.py 自包含 WeChat API + zhili-illustration，2026-06-28 新版）
 
-> 🎯 **设计目标**：从"产出 markdown + HTML"升级为"产出 + 推送草稿一键完成"。用户不再需要"先跑 zhililong，再跑 zhili-publish"两步接力。
+> 🎯 **设计目标**：从"产出 markdown + HTML"升级为"产出 + 推送草稿一键完成"。用户不再需要两步接力。
 
-**触发方式**：用户在主任务里说"这篇直接发到草稿箱" / "一键发布" / "灌入公众号"，或在本 Step 7 输出 schema 后默认执行。
+**发布脚本**：`scripts/publish_lanlong.py`（自包含，直接调 WeChat API）
 
-**对接流程**：直接复用 `openclaw-imports/zhili-publish/scripts/publish_pipeline.py` 一站式入口（zhililong 没有自己的发布脚本）。
+**zhili-illustration 集成（2026-06-28 新增）**：
+- 配图：自动提取 HTML 中所有 H2 章节（最多 5 张），每张配图对应一个章节，注入到该 H2 之后的第一个 `</p>` 位置
+- 封面：xiaohu-ip-studio 生成 16:9 → PIL 裁剪为 900×383（2.35:1）
 
-**⚠️ 关键修正（2026-06-20 实战）**：SKILL.md 之前提到的 `scripts/publish_lanlong.py` 不存在。**正确做法**：
-1. HTML 加 `<img src="PLACEHOLDER_OG" id="og-img" />` 占位符（publish_pipeline.py 协议）
-2. PIL 生成 900×520 信息图作为 `og_image_path`
-3. 调 `publish_pipeline.publish()` 传 title / digest / project_name 等参数（用 zhiligithub 风格的参数承载 zhililong 的元信息）
+**用法**：
+```bash
+python3 scripts/publish_lanlong.py \
+  --title "文章标题" \
+  --author "刘生" \
+  --digest "文章摘要（≤54字节）" \
+  --html /tmp/article.html \
+  --cover /tmp/cover.png
 
-**最小 Python 调用**：
-```python
-import sys
-sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhili-publish/scripts')
-from publish_pipeline import publish
+# 跳过配图（快速重推）
+python3 scripts/publish_lanlong.py ... --skip-illustration
 
-result = publish(
-    html_path='/tmp/.../article.html',
-    og_image_path='/tmp/.../concept.jpg',
-    title='禁止开源 AI，会是一个怎样的错误',  # ≤60B
-    project_name='Interconnects',
-    stars='Lambert',
-    subtitle='Nathan Lambert × Kevin Xu 联名 op-ed',
-    tag='开源 AI 监管',
-    slogan='禁止开源 AI，会是一个怎样的错误',
-    digest='Lambert 长文反驳许可证式开源 AI 监管。',  # ≤54B
-)
-# → result['media_id'] 草稿 ID
+# 跳过封面（用已有封面）
+python3 scripts/publish_lanlong.py ... --skip-cover
+
+# 重推（先删旧草稿）
+python3 scripts/publish_lanlong.py ... --delete-first kiuyle4KZHC7JKxp...
 ```
 
-**完整快速上手 + 失败速查 + 参数命名坑**：见 `references/zhililong-publish-howto.md`（2026-06-20 沉淀的实战文件）。
+**全流程 5 步**：
+1. zhili-illustration 提取 shot list（每个 H2 → 一张配图）→ 调用 mmx-cli 生成
+2. 配图上传 mmbiz → 注入 HTML
+3. 封面生成（zhili-illustration，16:9 → 900×383）
+4. 封面上传 → 创建草稿
+5. 回写 upload_results.json
 
-**背后实际调用的 zhili-publish 链路**：
-
+**背后实际链路**：
 1. **封面图**（`material/add_material?type=image`）→ `media_id`（封面 thumb_media_id）
-2. **内容图**（`uploadimg`）→ 拿到 mmbiz URL（公网永久）
-3. **替换 HTML 占位符**（`LOCKS_PLACEHOLDER` / `PATHWAY_PLACEHOLDER`）为 mmbiz URL
-4. **mmbiz Gate 检查**（HTML 必须含 mmbiz 字面字符）
-5. **创建草稿**（`draft/add`）→ 返回 `media_id`（草稿箱 id）
-6. **回写** upload_results.json（草稿 id + mmbiz URL + 草稿链接）
+2. **配图**（每个 H2 后一张，`media/uploadimg`）→ 拿到 mmbiz URL
+3. **替换 HTML**（每个 H2 之后的 `</p>` 注入 mmbiz `<img>`）
+4. **创建草稿**（`draft/add`）→ 返回 `media_id`（草稿箱 id）
+5. **回写** upload_results.json
 
-**沙箱安全姿态**（重要）：
-- 走 `publish_zhili.py` 而**不**走 `execute_code` 内联 Python——sandbox 会脱敏 APPSECRET 等关键字
-- 凭证路径：`~/.hermes/skills/openclaw-imports/zhili-publish/references/config.md`
-- 不要在 zhililong 输出里 print 任何 token
+### Step 9：封面 zhili-illustration 生成
 
-**失败处理**：
-- mmbiz Gate 失败 → 自动重试（先检查 HTML 是否真含 mmbiz URL）
-- 标题超长 → 自动用 `safe_title_shorten.py` 截到 ≤16 字（中文字符 3 字节算）
-- digest 超 54 字节 → 自动压缩摘要
+封面图生成在 Step 8 中由 `publish_lanlong.py` 自动调用 xiaohu-ip-studio 完成。如需单独生成封面：
 
-**草稿成功后的用户提示**：
-```
-✅ 草稿已推送
-- 草稿 media_id：xxx
-- 草稿链接：https://mp.weixin.qq.com/cgi-bin/appmsg?action=list&type=10
-- 请到微信公众平台 → 内容管理 → 草稿箱 → 编辑 → 群发
+```bash
+# 封面走 zhili-illustration：xiaohu-ip-studio 生成 16:9 底图 → PIL 裁剪 900×383
+python3 -c "
+import sys; sys.path.insert(0, 'scripts')
+from publish_lanlong import generate_cover
+generate_cover(open('article.html').read(), '文章标题', '/tmp/zhili_cover.png')
+"
 ```
 
 ## Output Schema
@@ -310,8 +304,7 @@ result = publish(
 ### scripts/
 - `markdown_to_html.py` — markdown → zhili-publish 规范 HTML（已在实战中验证）
 - `post_edit_check.py` — 跑 renwei 套话清单（破折号/排比/AI 套话）
-- `cover_pil.py` — PIL 自动生成 900×540 封面图（无需 AI）
-- `publish_lanlong.py` — Step 8 一键发布封装（调用 zhili-publish 的 publish_zhili.py）
+- `publish_lanlong.py` — **Step 8/9 一键发布**（自包含 WeChat API + zhili-illustration：封面 16:9→900×383、配图最多 5 张 H2 锚点注入）
 
 ### references/
 - `post-edit-checklist.md` — 完整事后清单（11 项硬约束）
@@ -323,8 +316,7 @@ result = publish(
 
 - 不写代码示例/技术教程（用 khazix-writer）
 - 不写短评/热评（用 zhilicomments-publish）
-- **不自己实现图片上传**——复用 zhili-publish 的 publish_zhili.py（不要重新造轮子）
-- **不直接调 WeChat API**——所有 token / 凭证操作走 zhili-publish 的封装
+- **封面和配图生成走 zhili-illustration（xiaohu-ip-studio + mmx-cli）**，不要自己调用其他 AI 画图工具
 
 ## ⚠️ Hermes sandbox 安全姿势（zhililong + zhili-publish 共有）
 
