@@ -1,9 +1,9 @@
 ---
 name: skill-maintenance
-description: 维护技能库整洁，系统性整理、归类、查重、清理废弃技能（含项目源码误入 skills/ 目录的情况），**以及在 install 前对 skill 做安全审计（调用 skillspector）**。当用户说「整理技能库」「skills太乱了」「删除重复技能」「技能库查重」「技能分类」「整理skills」「安装前先扫一下」「这个 skill 安全吗」「audit my skills」「批量体检」时触发。配套 skill-github-sync 使用效果最佳。
+description: "维护技能库整洁，系统性整理、归类、查重、清理废弃技能（含项目源码误入 skills/ 目录的情况），**以及在 install 前对 skill 做安全审计（调用 skillspector）**。当用户说「整理技能库」「skills太乱了」「删除重复技能」「技能库查重」「技能分类」「整理skills」「安装前先扫一下」「这个 skill 安全吗」「audit my skills」「批量体检」时触发。配套 skill-github-sync 使用效果最佳。"
 
-**新能力（v2.2）**：对指定 skill 进行合规/规范检查（YAML frontmatter / description 规范 / 多余文件 / 目录结构），并与 viceroy-skills 云端同名 skill 比对，**自动三向 merge**，保证本地和云端都是最新文件。触发词：「检查 skill 规范」「合规检查」「跟云端比对」「merge skill」「同步 skill 到云端」「检查并更新 skill」。
 ---
+**新能力（v2.2）**：对指定 skill 进行合规/规范检查（YAML frontmatter / description 规范 / 多余文件 / 目录结构），并与 viceroy-skills 云端同名 skill 比对，**自动三向 merge**，保证本地和云端都是最新文件。触发词：「检查 skill 规范」「合规检查」「跟云端比对」「merge skill」「同步 skill 到云端」「检查并更新 skill」。
 
 # Skill Maintenance
 
