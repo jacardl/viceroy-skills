@@ -1,6 +1,6 @@
 ---
 name: radar-data-collection
-description: 雷达数据采集 Skill — 采集金价、国际政治、AI热讯，写入 PostgreSQL 向量数据库，验证新闻真实性，按日期归档。
+description: "采集金价+TIPS、国际政治、AI热讯、GitHub Trending 写入 PostgreSQL，按日期归档"
 metadata: { "openclaw": { "emoji": "🛰️" } }
 ---
 
@@ -16,6 +16,7 @@ metadata: { "openclaw": { "emoji": "🛰️" } }
 | 国内金价 | 雪球（SGE:au99.99 上海金交所 Au99.99 现货，CNY/克）| 1 条 |
 | 国际政治 | 9Router tavily 搜索 | 10 条 |
 | AI热讯 | aihot.virxact.com 精选 | 10 条 |
+| GitHub黑马 | agent-reach WebChannel（Jina Reader）| 10 条 |
 | 补充信源 | Twitter/X（英文AI/科技动态）、Reddit（AI社区讨论）| 各3~5条 |
 
 ## 采集步骤
@@ -49,7 +50,73 @@ article_date = 北京时间今天日期
 
 字段：`intl_price_usd`, `intl_price_change`, `domestic_price_cny`, `domestic_price_change`
 
-### 第三步：采集国际政治（分区域链路）
+### 第三步：采集 GitHub Trending（agent-reach）
+
+用 agent-reach WebChannel 抓取 GitHub Trending，写入 news_articles (category='github')。
+
+⚠️ python3 被 git alias 拦截，执行时必须用：
+```bash
+bash --noprofile --norc -c '/Users/apple/.agent-reach-venv314/bin/python3 <script.py>'
+```
+
+**采集脚本（保存到 /tmp/gh_collector.py）：**
+```python
+import re, sys, json
+from agent_reach.channels.web import WebChannel
+
+ch = WebChannel()
+md = ch.read('https://github.com/trending')
+repos = []
+lines = md.split('\n')
+for i, line in enumerate(lines):
+    if not line.strip().startswith('## ['): continue
+    m = re.search(r'\[([^\]]+)\]\(https://github\.com/([^\)]+)\)', line)
+    if not m: continue
+    full_name = m.group(2).strip()
+    desc = ''
+    for j in range(i+1, i+5):
+        if j >= len(lines): break
+        nl = lines[j].strip()
+        if nl and not nl.startswith('[') and 'stars' not in nl.lower():
+            desc = nl; break
+    stars_line = ''
+    for j in range(i+1, i+10):
+        if j >= len(lines): break
+        if 'stars today' in lines[j]:
+            stars_line = lines[j]; break
+    if not stars_line: continue
+    m_lang = re.search(r'^([A-Za-z+#]+)\[([\d,]+)\]', stars_line)
+    m_today = re.search(r'([\d,]+)\s+stars\s+today', stars_line, re.I)
+    if m_lang and m_today:
+        lang = m_lang.group(1)
+        ts = int(m_lang.group(2).replace(',', ''))
+        today = int(m_today.group(1).replace(',', ''))
+        bonus = 2.0 if ts < 5000 else 1.5 if ts < 20000 else 1.0 if ts < 100000 else 0.8
+        score = today * bonus
+        repos.append({'num': len(repos)+1, 'name': full_name, 'desc': desc[:120],
+                     'lang': lang, 'total': ts, 'today': today,
+                     'score': int(score), 'url': f'https://github.com/{full_name}'})
+    if len(repos) >= 10: break
+with open('/tmp/gh_repos.json', 'w') as f:
+    json.dump(repos, f, ensure_ascii=False)
+```
+
+**执行步骤：**
+1. 将脚本写入 /tmp/gh_collector.py
+2. 执行：`bash --noprofile --norc -c '/Users/apple/.agent-reach-venv314/bin/python3 /tmp/gh_collector.py'`
+3. 读取 /tmp/gh_repos.json 验证有 10 条数据
+4. 每条 repo 写入 DB：category='github', title=项目全名, content=描述, source=语言, url=GitHub URL
+
+**入库字段：**
+- `article_date`：北京时间今天日期
+- `category`：`'github'`
+- `title`：项目全名（如 `CopilotKit/CopilotKit`）
+- `content`：项目描述 + `黑马分=N` + `今日新增=N` + `总⭐=N`
+- `source`：编程语言（如 `TypeScript`）
+- `url`：`https://github.com/{full_name}`
+- `lang`：`'en'`
+
+### 第四步：采集国际政治（分区域链路）
 
 搜索 query：分3 组执行，覆盖亚太 / 中东·欧洲 / 美洲：
 | 区域 | 搜索 query | 目标条数 |
@@ -88,7 +155,7 @@ article_date = 北京时间今天日期
   ```
 - `source`, `url`, `category='politics'`, `lang='zh'`
 
-### 第四步：采集 AI 热讯（aihot + 备选源）
+### 第五步：采集 AI 热讯（aihot + 备选源）
 
 **主选：aihot.virxact.com**
 ```bash
@@ -113,7 +180,7 @@ curl -s "https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.LG&
 解析返回的 JSON，取 `title`、`publishedAt`、`summary`、`source`、`url`
 字段：`category='ai'`, `lang='zh'`
 
-### 第五步：采集 Twitter/X AI/科技动态
+### 第六步：采集 Twitter/X AI/科技动态
 
 ```bash
 export PATH="$PATH:/Users/apple/.npm-global/bin"
@@ -135,7 +202,7 @@ twitter search "AI OR artificial intelligence OR GPT OR LLM OR AI agent" -n 5
   原文链接：https://x.com/screenName/status/id
   ```
 
-### 第六步：采集 Reddit AI 社区讨论
+### 第七步：采集 Reddit AI 社区讨论
 
 ```bash
 export PATH="$PATH:/Users/apple/.npm-global/bin"
@@ -157,7 +224,7 @@ rdt search "AI agent OR AI agents OR autonomous AI" -n 5
   原文链接：https://reddit.com/permalink
   ```
 
-### 第七步：SimHash 去重（写入前质检）
+### 第八步：SimHash 去重（写入前质检）
 
 每条新闻入库前，用 SimHash 检测与已有文章的相似度：
 
@@ -200,7 +267,7 @@ LIMIT 5;
 
 **字段**：`simhash`（64位十六进制字符串，可为空），写入 `news_articles.simhash`。
 
-### 第八步：向量 embedding（Ollama 本地）
+### 第九步：向量 embedding（Ollama 本地）
 
 ```bash
 # Ollama 地址（nomic-embed-text，768维）
@@ -216,7 +283,7 @@ curl -s -X POST "$OLLAMA_URL" \
 
 维度 768，写入 `embedding` 字段（格式：`'[v1,v2,...]'`）。
 
-### 第九步：写入数据库
+### 第十步：写入数据库
 
 ```bash
 # 金价写入
@@ -238,7 +305,7 @@ docker exec radar-db psql -U radar -d radar -c \
 
 > Twitter 的 `source` 填推文作者 `@screenName`，Reddit 的 `source` 填 `u/author`。
 
-### 第十步：验证数据
+### 第十一步：验证数据
 
 采集完成后执行：
 ```sql

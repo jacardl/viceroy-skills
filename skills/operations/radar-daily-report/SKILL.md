@@ -1,6 +1,6 @@
 ---
 name: radar-daily-report
-description: 雷达每日报告推送 Skill — 从 PostgreSQL 读取今日数据，分 4 条飞书消息发送（金价 / AI热讯 / 国际政治 / GitHub黑马），周六发周报，月末发月报
+description: "从 PostgreSQL 读取今日雷达数据，分 4 条飞书消息发送（金价+AI+政治+GitHub），周六周报，月末月报"
 metadata: { "openclaw": { "emoji": "📡" } }
 ---
 
@@ -16,7 +16,7 @@ metadata: { "openclaw": { "emoji": "📡" } }
 
 | 序号 | 板块 | 内容 |
 |------|------|------|
-| 消息一 | 💰 金价速览 | Markdown 表格：国际金价 + 国内金价 |
+| 消息一 | 💰 金价速览 | Markdown 表格：国际金价 + 国内金价 + 美10年TIPS收益率 |
 | 消息二 | 🤖 AI 热讯 | 最近 24 小时热度最高 10 条，**每条附摘要**，按 `blacklist_score DESC` 排序 |
 | 消息三 | 🌍 国际政治 | 按区域分类，每条「事件/背景/影响」三段展开 |
 | 消息四 | 💻 GitHub 黑马 | 按黑马分排序 Top 10，**必须含 owner/repo 完整路径** |
@@ -54,7 +54,8 @@ docker exec radar-db psql -U radar -d radar -t -c "SELECT COUNT(*) FROM news_art
 
 ```bash
 docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT intl_price_usd, intl_price_change, domestic_price_cny, domestic_price_change
+  "SELECT intl_price_usd, intl_price_change, domestic_price_cny, domestic_price_change,
+          tips_yield_10y, tips_yield_change
    FROM gold_prices WHERE price_date='${USE_DATE}';"
 ```
 
@@ -67,10 +68,13 @@ docker exec radar-db psql -U radar -d radar -t -c \
 |---|---|---|
 | 国际金价（USD/盎司） | $X,XXX.XX | +/-XX% |
 | 国内金价（CNY/克） | ¥XXX.XX | +/-XX% |
+| 美10年TIPS收益率 | X.XX% | +/-X.XXpp |
 
 📊 一句话趋势点评
 💡 定投建议（可选）
 ```
+
+> TIPS 收益率（DFII10）= 扣除通胀后的实际利率。上升 → 持有黄金机会成本增加 → 金价承压；下降 → 黄金相对吸引力上升。
 
 通过 `message tool action=send` 发送，失败重试 1 次。
 
