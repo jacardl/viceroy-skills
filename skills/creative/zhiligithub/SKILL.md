@@ -5,6 +5,15 @@ description: >
   适用：GitHub Trending 黑马开源项目介绍文章（1500-2000字，流式叙事）。
   触发条件：用户说「写文章」「发长文」「GitHub」「黑马」。
   **技能边界（2026-06-04 确认，已踩坑修复 12 处）**：本技能只管 GitHub 黑马长文（1500-2000字 / 六段式 / 流式叙事），**不替兄弟技能定规范**。要发短评/观点/Reaction → 独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`）。要发日常复盘/公众号通告 → 独立技能 `openclaw-imports/zhili-publish/`。完整边界模式见 `references/skill-boundary.md`。
+  **执行前必读**：每次写 HTML 前必须按顺序执行以下三步，再开始写作：
+  1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
+  2. 按规范生成 HTML，内联所有 CSS
+  3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
+---
+---
+
+# 直隶按察使 · 公众号发布技能
+
   **执行前必读**：写 HTML 前先用渲染脚本生成（CSS 已内嵌，无需手动读取 reference）：
   1. 写 markdown 草稿（1500-2000字）
   2. `python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html`（脚本已固化所有 CSS，含 H2 #00d4aa 左边框）
@@ -60,6 +69,9 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 3. `【重点】句子` 转为 `<strong style="color:#1B365D;">`
 4. 嵌入 mmbiz 图片（正文必须至少一张）
 
+## zhiliGitHub 写作格式：编号盘点 + 底层路线框架
+
+> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
 ## zhiliGitHub 写作格式：三种结构可选
 
 > ⚠️ **格式说明（2026-06-16 确认 + 2026-05-20 旧版）**：zhiliGitHub 支持三种内容结构——**编号盘点**（多项目合集）、**六段式**（单项目技术解剖）、**01-05 黑马扫描体**（单项目黑马角度）。三种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝 + 样式A 签名 H2 左边框）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
@@ -320,6 +332,7 @@ H2 本身就是最强的转场信号，再加一句"说完了 X"是冗余。
 
 > 🎯 **目的**：把 zhiligithub 从"AI 写得整齐"升级为"佳哥写得有手迹"。GitHub 项目介绍最容易掉进 AI 套话：每个项目都"非常强大"、每个特性都"令人惊艳"、最后来一句"值得一试"。
 
+**前置动作（必走）**：写正文前**先 `skill_view('renwei-writing')` 加载 renwei 技能**。三件套内化后再下笔。
 **前置动作（必走）**：renwei 写作规则**已集成在本 skill 第七节**（位置 / 代价 / 手迹 / 11 项套话清单 / 反 AI 词），写正文前直接精读下文三件套即可，**不要再调用不存在的 `skill_view('renwei-writing')`**（历史 SKILL.md 残留引用，会返回 'Skill not found'，已踩坑 2026-06-16）。
 
 #### 1. 位置（作者站在哪里说话）
@@ -633,6 +646,8 @@ screenshots/ 目录
 
 ## 封面图生成
 
+### 封面图生成
+
 > ⚠️ **9Router 路径不可用于 MiniMax 图片生成**：`POST /v1/images/generations` via 9Router 需要 OpenAI key server-side（`No active credentials for provider: openai`）。MiniMax 图片生成必须走**直接 API**。
 
 ### 方式一：MiniMax 直接 API（推荐）
@@ -758,6 +773,7 @@ C = {
 import urllib.request, json, ssl, os
 
 APPID = 'wx38a91c353554588a'  # 公众号 ID，非密
+APPSECRET = os.environ.get('WX_APP_SECRET', '__REDACTED__')   # 真实值见 ~/.openclaw/secrets/zhili-credentials.md（不进 Git）
 APPSECRET = os.environ.get('WX_APP_SECRET', '__REDACTED__')   # 真实值在 ~/.hermes/keys/wx_appsecret.txt（权限 600，不进 Git）
 
 # 1. 获取 access_token
@@ -922,6 +938,7 @@ on a clean white/light gray background, high contrast, vibrant accent colors (bl
 | `references/article-template.html` | 模板起点 | 结构完整但H2无左边框，**需自行添加** `border-left:4px solid #00d4aa` |
 
 **正确流程（每次写 HTML 前必须执行）**：
+1. `skill_view("zhiligithub", "references/streambert-reference.html")` — 读取样式A的H2左边框实现
 1. `read_file("~/.hermes/skills/creative/zhiligithub/references/streambert-reference.html")` — 读取样式A的H2左边框实现
 2. 从 `article-template.html` 复制结构作为起点，**然后将所有 H2 改为 streambert-reference 的样式**（添加 `border-left:4px solid #00d4aa;padding-left:12px`）
 3. 生成完毕后，对照 streambert-reference.html 的 CSS 值逐项验证
@@ -956,6 +973,7 @@ on a clean white/light gray background, high contrast, vibrant accent colors (bl
 | footer 颜色 | `#6b665b` | `#7c6f64` |
 
 **正确流程（每次写 HTML 前必须执行）**：
+1. `skill_view("zhiligithub", "references/streambert-reference.html")` — 读取实际 HTML 输出
 1. `read_file("~/.hermes/skills/creative/zhiligithub/references/streambert-reference.html")` — 读取实际 HTML 输出
 2. 提取 CSS 值，写入 HTML
 3. 生成完毕后，对照第 1 步的检查清单逐项验证
@@ -1103,6 +1121,7 @@ mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众
 **正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，`Content-Type: application/json`（不带 `charset=utf-8`）。
 - `ensure_ascii=False` → 直接输出 UTF-8 原文，WeChat 自己推断编码
 - 禁止在 Content-Type 里加 `charset=utf-8`（会导致 JSON 处理管线无法解码）
+- 脚本位置：`/root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py` 第 443 行、第 564 行
 - 脚本位置：`~/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py`（实际路径）
 
 **错误修复**（不要用）：
@@ -1133,6 +1152,7 @@ python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<dig
 ```python
 # ✅ 方式一：Python API（推荐，sandbox 可见 config.md）
 import sys
+sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhiligithub/scripts')
 sys.path.insert(0, '/root/.hermes/skills/creative/zhiligithub/scripts')
 import publish_zhili as pz
 token = pz.get_access_token(appid, appsecret)
@@ -1143,6 +1163,7 @@ result = pz.create_draft(token, title, author, digest, content, thumb_media_id)
 
 # ✅ 方式二：CLI + bash 命令替换（实测可用）
 # 原理：$(python3 -c ...) 在 shell 层展开为 HTML 文本，作为第4个位置参数传入
+python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py \
 python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
@@ -1169,6 +1190,7 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
 ### 自动生成封面图发布
 
 ```bash
+python3 skills/zhili-publish/scripts/publish_zhili.py \
 python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
   --title "文章标题" \
   --author "作者" \
@@ -1180,6 +1202,7 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
 ### 仅生成封面图（不上传）
 
 ```bash
+python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 ```
 
