@@ -5,35 +5,14 @@ description: >
   适用：GitHub Trending 黑马开源项目介绍文章（1500-2000字，流式叙事）。
   触发条件：用户说「写文章」「发长文」「GitHub」「黑马」。
   **技能边界（2026-06-04 确认，已踩坑修复 12 处）**：本技能只管 GitHub 黑马长文（1500-2000字 / 六段式 / 流式叙事），**不替兄弟技能定规范**。要发短评/观点/Reaction → 独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`）。要发日常复盘/公众号通告 → 独立技能 `openclaw-imports/zhili-publish/`。完整边界模式见 `references/skill-boundary.md`。
-  **执行前必读**：写 HTML 前先用渲染脚本生成（CSS 已内嵌，无需手动读取 reference）：
-  1. 写 markdown 草稿（1500-2000字）
-  2. `python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html`（脚本已固化所有 CSS，含 H2 #00d4aa 左边框）
-  3. **配图：调用 `zhili-illustration` 技能**（读取 HTML → 提取 shot list → xiaohu-ip-studio 生成图片 → 注入 HTML → 上传微信素材获取 media_id）
-  4. `python3 scripts/validate_zhili_article.py /tmp/article.html --title "<标题>"`（4 重验证：硬约束7条 + 精简规则7条 + stop-slop + renwei 11项）
-  5. 发布前：pre-submit 检查清单（本文档最底部）逐项过一遍
-  6. `python3 scripts/publish_zhili.py ...` 推草稿
-  ⚠️ **不要凭记忆手写 HTML CSS**（历史已证明记忆值 100% 错误），用脚本生成。
+  **执行前必读**：每次写 HTML 前必须按顺序执行以下三步，再开始写作：
+  1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
+  2. 按规范生成 HTML，内联所有 CSS
+  3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
 ---
 ---
 
 # 直隶按察使 · 公众号发布技能
-
-## 📥 候选评估流程（收到 Trending 候选时必走）
-
-**接收任何 GitHub 候选（"Zhiligithub :6️⃣ xxx" 格式）后，先评估是否值得写，再决定要不要进入调研+写作流程**。评估没通过的候选**直接放下**，不要硬写。
-
-**6 步评估**（详见 `references/candidate-evaluation-checklist.md`）：
-
-1. **客观事实表**：调 GitHub API 查 stars / forks / license / 出生日期 / open issues / topics / README 长度
-2. **黑马分复核**：月均 stars 算出来，**单日 +X today 不算黑马信号**（playlist/awesome/crack 仓库刷星常态）
-3. **公众号合规性检查**：监管 / 版权 / 政治 / 平台审核 / 品牌调性 5 维度（**直隶按察使是大陆 公众号，这是硬约束**）
-4. **6 段式可写性**：「三、架构设计」和「五、实战场景」能否各写出 350-500 字**不灌水**？数据型项目（聚合 / playlist / awesome list）通常过不了这一关
-5. **主题与读者匹配度**：核心读者是开发者/AI 技术爱好者，Windows 专属窄但可写，IPTV/灰色消费级直接不写
-6. **输出推荐**：✅ 推荐写（列 3 个角度） / ⚠️ 可写但有风险（说明绕开什么） / ❌ 不写（说明理由）
-
-**真实教训（2026-06-16）**：黑马分 541 的 IPTV/M3U 聚合项目虽然 stars 17k，但 License=NONE + 公众号监管风险 + 6 段式难写 + 调性错位，**评估结论就是不写**。黑马分只是参考，合规和可写性才是硬约束。
-
-完整评估模板 + 真实案例见 `references/candidate-evaluation-checklist.md`。
 
 ## ⚠️ 路由规则（zhiliGitHub 自己的事，不替其他技能定规范）
 
@@ -57,9 +36,9 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 3. `【重点】句子` 转为 `<strong style="color:#1B365D;">`
 4. 嵌入 mmbiz 图片（正文必须至少一张）
 
-## zhiliGitHub 写作格式：三种结构可选
+## zhiliGitHub 写作格式：编号盘点 + 底层路线框架
 
-> ⚠️ **格式说明（2026-06-16 确认 + 2026-05-20 旧版）**：zhiliGitHub 支持三种内容结构——**编号盘点**（多项目合集）、**六段式**（单项目技术解剖）、**01-05 黑马扫描体**（单项目黑马角度）。三种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝 + 样式A 签名 H2 左边框）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
+> ⚠️ **格式说明（2026-05-20 确认）**：zhiliGitHub 支持两种内容结构——**编号盘点**（多项目合集）和**六段式**（单项目介绍）。两种都允许章节标题，共用本技能内的 HTML 渲染规范（`#f5f4ed` 羊皮纸 + `#1B365D` 墨蓝）。**短评的渲染规范由独立技能 zhilicomments 自行规定，本技能不接管。**
 
 ## ✅ CSS 渲染规范：样式A（标准模板，2026-05-30 固化）
 
@@ -230,8 +209,6 @@ khazix-writer 产出**纯文本**，含【场景标签】标注。zhili-publish 
 
 六段式允许章节标题，与编号盘点格式并列，agent 根据文章内容类型自行选择。
 
-> 📘 **非工具类项目（教科书 / 课程 / 数据集 / 文档）的适配**：六段式默认按"工具/框架"调优。碰到 TeX / ipynb / 数据集 / 文档型项目时**每个 H2 都要重新框定**（快速上手=怎么读，架构设计=目录结构+写作方法论）。详见 `references/non-tool-project-pattern.md`（含 6 段模板对照表 + 教科书"必含 5 件事 / 必删 3 件事" + Introduction-to-Autonomous-Robots 实战样本）。
-
 **六段式字数分配参考**（总 1500-2000 字）：
 
 | 章节 | 字数目标 | 警示信号 |
@@ -317,7 +294,7 @@ H2 本身就是最强的转场信号，再加一句"说完了 X"是冗余。
 
 > 🎯 **目的**：把 zhiligithub 从"AI 写得整齐"升级为"佳哥写得有手迹"。GitHub 项目介绍最容易掉进 AI 套话：每个项目都"非常强大"、每个特性都"令人惊艳"、最后来一句"值得一试"。
 
-**前置动作（必走）**：renwei 写作规则**已集成在本 skill 第七节**（位置 / 代价 / 手迹 / 11 项套话清单 / 反 AI 词），写正文前直接精读下文三件套即可，**不要再调用不存在的 `skill_view('renwei-writing')`**（历史 SKILL.md 残留引用，会返回 'Skill not found'，已踩坑 2026-06-16）。
+**前置动作（必走）**：写正文前**先 `skill_view('renwei-writing')` 加载 renwei 技能**。三件套内化后再下笔。
 
 #### 1. 位置（作者站在哪里说话）
 
@@ -387,48 +364,6 @@ GitHub 项目介绍最常踩的高频 AI 套话（**写完必查**）：
 两个清单**独立扫描**，不互相替代。每一项失败都算失败。
 
 **失败兜底**：如果 renwei 清单命中率 ≥ 3 项，**先打回重写**（不要尝试一边改一边扫——AI 改稿会越改越用力）。
-
-#### 7a. renwei 写作新增陷阱（2026-06-25 实测沉淀）
-
-以下三条均从 hiring-agent 项目（interviewstreet/hiring-agent）初稿验证失败中提取：
-
-**陷阱A：「不是X是Y」是长程正则匹配，word-swap 修不完**
-
-验证脚本的检测 regex 是 `不是.+?[，,].+?是`（最大宽度匹配，从「不是」到文本中任意后续的「是」）。即使把「不是X而是Y」改成「没有X有Y」，中间若出现独立「是」字（如「……没有X。有证据的是，……」），仍会被捕获。
-
-安全写法：彻底避免「不是……是……」结构，用「给的是X，没有的是Y」「有X，无Y」等平行结构替换。
-
-**陷阱B：emoji 检测器只豁免 📌，🍴/⭐ 等 GitHub 常用 emoji 会触发**
-
-GitHub 元信息卡片写成 `⭐ 2.1k | 🍴 597` 时，🍴 不是 📌，会被 emoji 装饰检测器捕获（renwei 第9项）。
-
-安全写法：元信息卡片行不用 emoji，用文字如「Stars 2.1k / Forks 597」，或直接用 render 脚本内置的 `<div>` 元信息卡片（emoji 在 HTML 渲染层注入，不进纯文本检测）。
-
-**陷阱C：中文字数统计排除数字和西文标点**
-
-字数验证器 `re.sub(r'[^\u4e00-\u9fff]', '', text)` 只计算 CJK 统一汉字，星号 `2.1k`、括号、`%`、英文标点均不计入。1501 字（含数字/英文）实测通过，但中文字符可能不足 1500。
-
-验证字数用 `python3 -c "import re; print(len(re.sub(r'[^\u4e00-\u9fff]', '', open('/tmp/draft.md').read())))"` 粗估；最终以 `validate_zhili_article.py` 输出为准。
-
-#### 7. NSA/Fable 改稿实例：「评论者思维」vs「报道者思维」（2026-06-22）
-
-> 来源：NSA 局长推文短评（zhiliComments 方向），但改稿逻辑同样适用于 zhiliGitHub 的 H2 章节。
->
-> **核心发现**：AI 写 H2 倾向于描述「发生了什么」，佳哥改 H2 倾向于表达「这意味着什么」。
-
-**改稿前后对照**：
-
-| | ❌ AI 报道者思维 | ✅ 佳哥评论者思维 |
-|---|---|---|
-| H2 首句 | 「NSA 局长说 AI 风险迫在眉睫」 | 「NSA 局长出来说话了——而且说得很直」 |
-| 句式 | 「NSA 局长 Paul 可以确定...」 | 「NSA 局长 Paul 的这三条，简单说就是——」 |
-| 否定结构 | 缺乏否定句式 | 「没热度，本身就是热度」「不是没人看，是没人敢说」 |
-| 收尾 | 展望未来 | 「你把 NSA 换成 X 国，结果一模一样」 |
-
-**三句核心原则**：
-1. **H2 第一句 = 立场句**，不是事件描述——读者看了第一句就知道你想说什么
-2. **平行否定句 > 平铺直叙**——「没 X，就是 Y」比「X 是 Y」更有张力
-3. **收尾回到读者自己**——「这事跟我们有什么关系」比「这事很有意思」更能让人转发
 
 ### 八、格式规范速查
 
@@ -616,6 +551,8 @@ screenshots/ 目录
 
 ## 封面图生成
 
+### 封面图生成
+
 > ⚠️ **9Router 路径不可用于 MiniMax 图片生成**：`POST /v1/images/generations` via 9Router 需要 OpenAI key server-side（`No active credentials for provider: openai`）。MiniMax 图片生成必须走**直接 API**。
 
 ### 方式一：MiniMax 直接 API（推荐）
@@ -741,7 +678,7 @@ C = {
 import urllib.request, json, ssl, os
 
 APPID = 'wx38a91c353554588a'  # 公众号 ID，非密
-APPSECRET = os.environ.get('WX_APP_SECRET', '__REDACTED__')   # 真实值在 ~/.hermes/keys/wx_appsecret.txt（权限 600，不进 Git）
+APPSECRET = os.environ.get('WX_APP_SECRET', '__REDACTED__')   # 真实值见 ~/.openclaw/secrets/zhili-credentials.md（不进 Git）
 
 # 1. 获取 access_token
 req = urllib.request.urlopen(
@@ -905,7 +842,7 @@ on a clean white/light gray background, high contrast, vibrant accent colors (bl
 | `references/article-template.html` | 模板起点 | 结构完整但H2无左边框，**需自行添加** `border-left:4px solid #00d4aa` |
 
 **正确流程（每次写 HTML 前必须执行）**：
-1. `read_file("~/.hermes/skills/creative/zhiligithub/references/streambert-reference.html")` — 读取样式A的H2左边框实现
+1. `skill_view("zhiligithub", "references/streambert-reference.html")` — 读取样式A的H2左边框实现
 2. 从 `article-template.html` 复制结构作为起点，**然后将所有 H2 改为 streambert-reference 的样式**（添加 `border-left:4px solid #00d4aa;padding-left:12px`）
 3. 生成完毕后，对照 streambert-reference.html 的 CSS 值逐项验证
 4. **严禁省略 H2 的左边框**——这是样式A的标志性特征
@@ -939,7 +876,7 @@ on a clean white/light gray background, high contrast, vibrant accent colors (bl
 | footer 颜色 | `#6b665b` | `#7c6f64` |
 
 **正确流程（每次写 HTML 前必须执行）**：
-1. `read_file("~/.hermes/skills/creative/zhiligithub/references/streambert-reference.html")` — 读取实际 HTML 输出
+1. `skill_view("zhiligithub", "references/streambert-reference.html")` — 读取实际 HTML 输出
 2. 提取 CSS 值，写入 HTML
 3. 生成完毕后，对照第 1 步的检查清单逐项验证
 4. **严禁凭记忆生成 CSS**——历史已证明记忆值 100% 错误
@@ -1086,7 +1023,7 @@ mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众
 **正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，`Content-Type: application/json`（不带 `charset=utf-8`）。
 - `ensure_ascii=False` → 直接输出 UTF-8 原文，WeChat 自己推断编码
 - 禁止在 Content-Type 里加 `charset=utf-8`（会导致 JSON 处理管线无法解码）
-- 脚本位置：`~/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py`（实际路径）
+- 脚本位置：`/root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py` 第 443 行、第 564 行
 
 **错误修复**（不要用）：
 - `ensure_ascii=True`（默认）→ 中文变 `\uXXXX` 字面量
@@ -1116,7 +1053,7 @@ python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<dig
 ```python
 # ✅ 方式一：Python API（推荐，sandbox 可见 config.md）
 import sys
-sys.path.insert(0, '/root/.hermes/skills/creative/zhiligithub/scripts')
+sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhiligithub/scripts')
 import publish_zhili as pz
 token = pz.get_access_token(appid, appsecret)
 thumb_media_id = pz.upload_thumb_material(token, '/tmp/cover.jpg')
@@ -1126,7 +1063,7 @@ result = pz.create_draft(token, title, author, digest, content, thumb_media_id)
 
 # ✅ 方式二：CLI + bash 命令替换（实测可用）
 # 原理：$(python3 -c ...) 在 shell 层展开为 HTML 文本，作为第4个位置参数传入
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
+python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
   "摘要" \
@@ -1152,7 +1089,7 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
 ### 自动生成封面图发布
 
 ```bash
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
+python3 skills/zhili-publish/scripts/publish_zhili.py \
   --title "文章标题" \
   --author "作者" \
   --digest "摘要" \
@@ -1163,7 +1100,7 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
 ### 仅生成封面图（不上传）
 
 ```bash
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
+python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 ```
 
 脚本自动完成：
@@ -1195,8 +1132,6 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py --cov
 - [ ] 代码块用 `<br>` 换行，不用真实换行符
 - [ ] 所有间距只设 `margin-bottom`，不用 `margin-top`
 - [ ] `grep -n '^$'` 确认 0 个空行
-
-> ⚠️ **Self-check 误报陷阱（2026-06-16 踩坑）**：检查"无作者页脚"时不要用 `'作者' in html` 这种**宽匹配**——正文里会出现 `作者 itsfatduck` / `作者在用 AI 辅助` 等正常用法，触发误报。要用**精确正则**：`re.search(r'作者[：:]\s*刘生|作者[：:]\s*卡兹克|来源[：:]\s*直隶按察使|本文由\s*zhiliGitHub', html)` 这类。同样原则适用于"无 `XXX` 残留"类检查——优先用 `re.findall` 数具体模式，**别用 `in` 字符串匹配**。
 
 ⚠️ **关键发现**：微信公众平台会过滤 `<style>` 标签和 CSS 类选择器，所有样式必须在 HTML 元素上直接用 `style="..."` 内联，否则格式全部失效。
 
@@ -1605,60 +1540,5 @@ html = f'<img src="{img_url}" style="width:100%;border-radius:6px;" />'
 | `urllib.request` multipart 上传报 41005 | Python urllib.request 上传图片返回 `media data missing` | 改用 subprocess + curl：`curl -s -F 'media=@img.jpg' 'https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=TOKEN&type=image'` |
 | execute_code 的 Python sandbox 看不到 `~/.hermes/.env` 中的 API Key | `os.environ.get('MINIMAX_API_KEY')` 返回空（sandbox 环境隔离） | 用 `bash -c 'source ~/.hermes/.env && python3 -c "import os; print(os.environ[...])"'` 或直接用 `terminal` 执行含凭证的脚本 |
 | WeChat `access_token` 缓存路径 | sandbox 内写 `~/.hermes/mp_token_cache.json` 后，sandbox 下次运行看不到（路径重置） | WeChat API 调用必须在 `terminal` 执行，或通过 `scripts/publish_zhili.py`（它从 `load_config()` 读取 APPSECRET 后内联进脚本）调用 |
-
----
-
-## ✅ 统一 Pre-submit 检查清单（2026-06-23 合并版）
-
-> 本清单合并了 SKILL.md 精简规则 7 条 + zhili-style-refinements.md 改稿模式 8 条，共 **15 项硬约束**。每篇发布前必须逐项过，任何一项失败都要修复后再推。
-
-### 格式篇（7项）
-
-- [ ] **标题 ≤ 22 字节**（实测稳定值，超过 60 字节报 45003）
-- [ ] **body 无 H1 标题行**（WeChat 草稿 `title` 字段已是标题）
-- [ ] **body 无「刘生 · 2026年X月」副标题**
-- [ ] **body 无顶部分类标签 span**（如 `<span>GitHub</span>`）
-- [ ] **body 无「作者：刘生 / 来源：直隶按察使」页脚**
-- [ ] **无「六、总结」H2**——总结内容跟在五、实战场景后的 `· · ·` 之后
-- [ ] **无 ✅/❌ 适合/不适合 标签盒**——边界条件融进散文
-
-### 内容篇（renwei 硬约束，8项）
-
-> 来自 2026-06-21 Tw93/Pake 草稿箱 diff 实战（18+ 处改稿归纳）。
-
-- [ ] **中文冒号 `：` 为 0**（「赛道 X：Y」→ 改为「赛道 X——Y」或「赛道 X，Y」）
-- [ ] **中文破折号 `——` 为 0**（stop-slop 框架要求；中文破折号保留算例外）
-- [ ] **中文双引号 `""` 为 0**（用「」或直接不加）
-- [ ] **inline code 反引号**：英文术语（.dmg / API名）去掉反引号；命令/路径保留；代码块（`<pre><code>`）永远保留
-- [ ] **无排比三连**（「X、X、X」）——AI 套话，发现即砍
-- [ ] **无「不是 X 是 Y」二元结构**——改为纯判断「Z 是 W」
-- [ ] **无段尾排比**（「54,900 颗星，3.7 年坚守，一行命令，5MB 出货」）——升华尾句砍掉
-- [ ] **数字不过度精确**：「3.7 年」→「3 年」，「98.6%」→「绝大多数」
-
-### AI 套话篇（核心 11 项，任意命中 ≥ 3 → 打回重写）
-
-> renwei 11 项清单，**写完初稿后全文 grep 一遍**。
-
-| # | 检查项 | 合格标准 |
-|---|--------|----------|
-| 1 | 「不是 X 而是 Y」句式 | 0 处 |
-| 2 | 排比三连（快、好、省） | 0 处 |
-| 3 | 破折号 `——` | 0 处 |
-| 4 | 段落级加粗 | ≤1 处/节 |
-| 5 | AI 套话（非常、极其、令人、值得） | 0 处 |
-| 6 | 意义拔高（「这不仅是 X，更是 Y」） | 0 处 |
-| 7 | 万能展望结尾（「未来属于...」） | 0 处 |
-| 8 | 谄媚语气（「你真棒」） | 0 处 |
-| 9 | emoji 装饰 | 0 处 |
-| 10 | 填充对冲（「当然也不排除」） | 0 处 |
-| 11 | AI 赞美形容词（强大、优雅、惊艳、出色） | 0 处——**用具体场景代替** |
-
-**失败兜底**：renwei 命中率 ≥ 3 项，**先打回重写**（不要一边改一边扫——AI 改稿会越改越用力）。
-
-### 发布前最后检查
-
-- [ ] `grep -n '^\*\*' /tmp/article.html` → 应返回空（`**` 残留）
-- [ ] `grep -n '^$' /tmp/article.html` → 应返回空（空行）
-- [ ] `python3 scripts/validate_zhili_article.py` → 4 重验证全部 PASS
 | WeChat草稿正文中文显示为 `\uXXXX` 转义序列 | `json.dumps()` 默认 `ensure_ascii=True` 将中文转为 `\uXXXX`。**正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，Content-Type: `application/json`（不带 `charset=utf-8`）。WeChat 自己推断 UTF-8，不要声明编码。`fix_double_encoded_content()` 函数无法阻止这个问题 |
 | mmx CLI 读取 `~/.hermes/.env` | mmx CLI 用 Node.js 读取环境变量，直接 `mmx auth login` 会报 key 无效 | 用 `bash -c 'source ~/.hermes/.env && mmx auth login --api-key "$MINIMAX_API_KEY"'` 确保环境变量展开 |
