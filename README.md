@@ -155,7 +155,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**zhili-publish**](skills/creative/zhili-publish/SKILL.md) | 把这个 HTML 草稿发布到微信公众号 |
 | [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | 发一条短评论到公众号 |
 | [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | 把这个 GitHub 项目写成一篇公众号文章 |
-| [**zhililong**](skills/creative/zhililong/SKILL.md) | 写 4000-5500 字公众号长文，自动对接 zhili-publish 推送到草稿箱 |
+| [**zhililong**](skills/creative/zhililong/SKILL.md) | 写 4000-5500 字公众号长文，自动生成封面图（zhili-illustration）+ 最多 5 张配图（H2 锚点注入） |
 | [**zhiliGEO**](skills/creative/zhiliGEO/SKILL.md) | 写一篇 GEO 文章 / GEO 系列 / GEO 选题 |
 | [**guizang-ppt-skill**](skills/creative/guizang-ppt-skill/SKILL.md) | 生成横向翻页网页 PPT；触发：杂志风 PPT / 瑞士风 PPT / Swiss Style / horizontal swipe deck |
 | [**xiaohu-ip-studio**](skills/creative/xiaohu-ip-studio/SKILL.md) | 给文章配图/正文配图/IP配图；自带31个原创IP角色生成正文解释图 |
@@ -218,4 +218,5 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 Made by [@jacardl](https://github.com/jacardl)
 
 </div>
+
 
