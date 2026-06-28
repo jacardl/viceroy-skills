@@ -15,7 +15,7 @@ description: >
   1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
   2. 按规范生成 HTML，内联所有 CSS
   3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
----
+...
 
 # 直隶按察使 · 短评论发布技能
 
@@ -249,15 +249,41 @@ description: >
 **写作技能统一配图流程**：HTML 完成后自动引入 `zhili-illustration` 技能生成正文配图。
 
 **本技能适用规格**（2026-06-27 确认）：
-- 配图数量：1-2 张（正文 1 张，封面图独立走封面流程）
-- 比例：4:3（900×675px）为主
+- 配图数量：2 张（开头钩子 + 结尾情绪锚点），固定，不可选
+- 比例：4:3（900×675px）
 - IP 角色：问号人（极简线条符号人），单张内嵌 ~15%
 - 画风：手绘线稿·淡彩
+- **注入位置（实测）**：img_01 → 第一个 `<h2>` 之后的第一个 `</p>` 处；img_02 → HTML 最后一个 `</p>` 之后
 
-**封面图**（独立流程，不走 zhili-illustration）：
-- 尺寸：900×383px（2.35:1）
-- 格式：PNG/JPG，保存到 `/tmp/zhili_cover.png`
+**push.py 自动集成（2026-06-28 实测落地）**：
+`scripts/push.py` 已内置 zhili-illustration 完整流程，无需手动触发：
+```
+preflight 过关
+    ↓
+extract_shot_list()        # 解析 HTML，生成 2 张 prompt 文件
+    ↓
+generate_illustrations()  # mmx-cli 经 run_mmx.py 生成图片（不需要 token）
+    ↓
+[获取 access_token]        # 拉取 token
+    ↓
+upload_illustrations()     # 上传 img_01 + img_02 到 media/uploadimg 得 mmbiz URL
+    ↓
+inject_into_html()         # 在开头钩子/结尾位置注入 <img src="mmbiz://...">
+    ↓
+封面上传 + 创建草稿
+```
+
+**快速重推（不需要重新生成图）**：
+```bash
+python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-illustration
+```
+
+**封面图**（2026-06-28 改造：走 zhili-illustration）：
+- 比例：16:9，生成底图后 PIL 裁剪为 900×383（2.35:1）
+- 流程：`generate_cover()` → 调用 xiaohu-ip-studio 生成 16:9 深色科技风底图 → PIL 裁剪输出 `/tmp/zhili_cover.png`
 - 上传 type：**`type=image`**（不是 `thumb`）
+- 风格默认：深色背景（`#1B365D`）+ 标题文字 + 问号人 IP（如不需要问号人，直接改 `generate_cover()` 里的 `cover_prompt` 变量）
+- `push.py` 全自动执行，无需手动介入
 
 **正文配图流程**（zhili-illustration 负责）：
 1. 读取 HTML，提取 shot list（每节一张）
@@ -271,16 +297,17 @@ description: >
 
 > ⚠️ **写 HTML 前必须先读** `scripts/preflight.py` 第 95-114 行的 CSS 检查逻辑（exact string match），否则 preflight 会反复失败 3-4 次才能通过。
 >
-> **CSS precision 铁律（preflight 用子串匹配检查，下述必须完全一致）**：
+> ⚠️ **CSS precision 铁律（preflight 用子串匹配检查，下述必须完全一致）**：
 > - `background:#f5f4ed`（不是 `background-color:`）
 > - `font-family:'Noto Serif SC', Georgia, serif`（逗号后有空格，Noto 在前）
-> - H2 style 必须含 `font-size:20px;color:#1B365D`（两个属性在同一个 style 值里相邻）
-> - H2 margin: `margin:0 0 16px`，P margin: `margin:0 0 28px`
+> - **H2 style 属性顺序铁律**：`font-weight:700` 必须写在 `font-size:20px` 前面，完整 H2 style 字符串为 `font-weight:700;font-size:20px;color:#1B365D;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0`（这样 `font-size:20px` 和 `color:#1B365D` 才在字符串里相邻，preflight 检查的就是这个相邻子串）
+> - H2 margin: `margin:0 0 16px`，P margin: `margin:0 0 28px`（注意：P 段距是 28px 不是 14px）
 > - 作者行颜色：`#7c6f64`（不是 `#6b665b`），font-family 要单独写
 > - 来源行：`font-family:monospace`
 > - H2 font-weight: `700`（不是 `bold`）
 > - 禁止 `background-color:`，一律用 `background:`
 > - 禁止中文冒号 `：` 和中文破折号 `——`
+> - 黄底高亮：`background:#fff3b0` 必须作为独立 `<strong>` 属性出现
 
 > ⚠️ **写 HTML 时优先复制** `references/format.md` 中的增强版 HTML 模板（含 Pull Quote、装饰线、标签卡片等完整样式）。
 
@@ -345,7 +372,9 @@ payload = json.dumps({
 }, ensure_ascii=False).encode('utf-8')  # Content-Type: application/json（无 charset）
 ```
 
-> ⚠️ **草稿创建前必须验证 HTML 中的图片URL**：如果文章有配图（cover.jpg / cover.png），必须确认 HTML 里使用的是本次实际上传的图片 media_id 对应的 mmbiz URL，而不是上一次残留的旧URL。验证方法：检查 HTML 中所有 `src="http://mmbiz.qpic.cn/` 是否与封面图的 url 一致。如果用了旧图，微信会报 `40007` 或显示异常。
+> ⚠️ **push.py digest 提取结构性冲突（2026-06-28 实战）**：`scripts/push.py` 第 155-159 行从 HTML 第一个 `<p>` 标签提取 digest 文本。但 zhilicomments HTML 的第一个 `<p>` 是「文 / 刘生」作者行，不是正文内容，导致草稿 digest 变成无意义的「文 / 刘生」。
+>
+> **解法**：在正文第一段 `<p>` 之前插入一个空 `<p>` 标签（只含 `style="display:none"` 或留空），让 push.py 取到的正好是正文第一句；或者在调用 push.py 之前手动检查生成的 digest 是否合理。不修的话草稿能发，但 digest 字段内容不对。
 
 ## access_token 获取（2026-05-28 实测正确方式）
 ## access_token 获取（2026-05-30 确认）
