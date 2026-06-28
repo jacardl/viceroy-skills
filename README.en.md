@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-68-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-69-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -89,6 +89,7 @@ Examples:
 | [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | Turn this GitHub project into a WeChat article |
 | [**zhililong**](skills/creative/zhililong/SKILL.md) | Write 4000-5500 char WeChat long-form article, auto-pushes draft via zhili-publish |
 | [**renwei-writing**](skills/creative/renwei-writing/SKILL.md) | Polish/rewrite text while preserving the author's voice — position, cost, hand-trace; strip AI flavor |
+| [**9router-image**](skills/creative/9router-image/SKILL.md) | Generate images via 9Router local gateway — cx/gpt-5.5-image model |
 
 ---
 

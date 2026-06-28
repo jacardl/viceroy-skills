@@ -1,0 +1,37 @@
+# ============================================================
+# 9Router Image Generation — config.yaml 示例
+# 完整路径: ~/.hermes/config.yaml
+# ============================================================
+#
+# 两处必须配置：
+#   1. providers.9router      — 9Router 网关连接信息
+#   2. image_gen             — 激活 9Router 作为生图 provider
+#
+# 注意：api_key 是 9Router 网关自身的 key，
+#       不是 cx / qwen / openai 的 key。
+#       9Router 在服务端路由到内置的 cx provider。
+# ============================================================
+
+providers:
+  # ----- 9Router 网关（必须） -----
+  9router:
+    # 9Router 网关地址，本地部署默认端口 20128
+    api: http://127.0.0.1:20128/v1
+    # 9Router 注册后拿到的 API Key（不是 cx 的 key）
+    api_key: sk-your-9router-key-here
+
+  # 其他 provider（非必须，供参考）
+  # qwen:
+  #   api: https://ws-xxx.maas.aliyuncs.com/api/v1
+  #   api_key: sk-ws-xxx
+
+# ============================================================
+# 图像生成配置
+# ============================================================
+image_gen:
+  # 激活 9Router provider（必须写死 "9router"）
+  provider: 9router
+
+  # 使用的模型（可选；不写则默认 cx/gpt-5.5-image）
+  # 可选值：cx/gpt-5.5-image / cx/gpt-5.4-image / cx/gpt-5.3-image
+  model: cx/gpt-5.5-image

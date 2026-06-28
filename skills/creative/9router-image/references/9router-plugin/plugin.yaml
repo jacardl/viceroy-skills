@@ -1,0 +1,6 @@
+name: 9router
+version: 1.0.0
+description: "9Router image generation backend (cx/gpt-5.5-image etc. via local 9Router gateway at http://127.0.0.1:20128)."
+author: NousResearch
+kind: backend
+requires_env: []

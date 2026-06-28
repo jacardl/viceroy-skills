@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-110-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-111-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -160,6 +160,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**guizang-ppt-skill**](skills/creative/guizang-ppt-skill/SKILL.md) | 生成横向翻页网页 PPT；触发：杂志风 PPT / 瑞士风 PPT / Swiss Style / horizontal swipe deck |
 | [**xiaohu-ip-studio**](skills/creative/xiaohu-ip-studio/SKILL.md) | 给文章配图/正文配图/IP配图；自带31个原创IP角色生成正文解释图 |
 | [**zhili-illustration**](skills/creative/zhili-illustration/SKILL.md) | 写作技能统一配图：读取HTML→shot list→IP配图→注入HTML→上传微信素材 |
+| [**9router-image**](skills/creative/9router-image/SKILL.md) | 画一张图 / 生成图片 — via 9Router 本地网关，cx/gpt-5.5-image 模型 |
 
 ---
 ### 🛠️ Developer
