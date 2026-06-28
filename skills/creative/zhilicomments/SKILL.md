@@ -38,7 +38,7 @@ description: >
 |------|-----|
 | 背景色 | `#f5f4ed`（羊皮纸） |
 | 正文字体 | `Georgia, 'Noto Serif SC', serif` |
-| H2 标题 | `font-size:20px;color:#1B365D;font-weight:700;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0`（**注意：`font-size` 和 `color` 必须在同一 `style=` 字符串内连续出现**，preflight 检查精确字符串 `font-size:20px;color:#1B365D`） |
+| H2 标题 | `border-left: 4px solid #00d4aa`，青色左边框高亮（**样式A 标志性特征，与 zhiliGitHub 完全一致**） |
 | 强调色（数据/核心） | `#c9553d`（红棕色） |
 | 强调色（关键词/重点） | `#1B365D`（墨蓝） |
 | 警示/核心洞察背景 | `#fff3b0`（淡黄底） |
@@ -244,10 +244,12 @@ description: >
 
 详细内容见 `references/wechat-pitfalls.md` 的「内容源可访问性」章节。
 
-### 第二步：配图（调用 zhili-illustration）
+### 第二步：配图（可选）
 
-**写作技能统一配图流程**：HTML 完成后自动引入 `zhili-illustration` 技能生成正文配图。
+短评论可以无图，但如果配图：
 
+1. 用 PIL 生成信息图（900×383 或 900×900）：`/tmp/cover.jpg`
+2. 上传获取 `media_id`（必须用 urllib.request 构造 multipart）
 **本技能适用规格**（2026-06-27 确认）：
 - 配图数量：2 张（开头钩子 + 结尾情绪锚点），固定，不可选
 - 比例：4:3（900×675px）
@@ -293,8 +295,9 @@ python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-i
 
 关键踩坑见 `references/wechat-pitfalls.md`。
 
-### 第三步：写 HTML（先读 preflight 再写，少走弯路）
+> ⚠️ **封面图必须用 `type=image`**（2026-05-30 实测）。旧版记录 `type=thumb` 可用为错误信息。`type=thumb` 返回的 media_id 在 `draft/add` 时报 `40007 invalid media_id`，**必须用 `type=image`**。
 
+### 第三步：写 HTML
 > ⚠️ **写 HTML 前必须先读** `scripts/preflight.py` 第 95-114 行的 CSS 检查逻辑（exact string match），否则 preflight 会反复失败 3-4 次才能通过。
 >
 > ⚠️ **CSS precision 铁律（preflight 用子串匹配检查，下述必须完全一致）**：
