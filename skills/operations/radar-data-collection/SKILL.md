@@ -50,9 +50,9 @@ article_date = 北京时间今天日期
 
 字段：`intl_price_usd`, `intl_price_change`, `domestic_price_cny`, `domestic_price_change`
 
-### 第三步：采集 GitHub Trending（agent-reach）
+### 第三步：采集 GitHub Trending（agent-reach + GitHub API 补全）
 
-用 agent-reach WebChannel 抓取 GitHub Trending，写入 news_articles (category='github')。
+用 agent-reach WebChannel 抓取 GitHub Trending，然后用 GitHub API 补全每个项目的 description（**必须**，否则日报黑马项目缺介绍）。
 
 ⚠️ python3 被 git alias 拦截，执行时必须用：
 ```bash
@@ -61,44 +61,87 @@ bash --noprofile --norc -c '/Users/apple/.agent-reach-venv314/bin/python3 <scrip
 
 **采集脚本（保存到 /tmp/gh_collector.py）：**
 ```python
-import re, sys, json
-from agent_reach.channels.web import WebChannel
+import re, json, urllib.request
 
-ch = WebChannel()
-md = ch.read('https://github.com/trending')
-repos = []
-lines = md.split('\n')
-for i, line in enumerate(lines):
-    if not line.strip().startswith('## ['): continue
-    m = re.search(r'\[([^\]]+)\]\(https://github\.com/([^\)]+)\)', line)
-    if not m: continue
-    full_name = m.group(2).strip()
-    desc = ''
-    for j in range(i+1, i+5):
-        if j >= len(lines): break
-        nl = lines[j].strip()
-        if nl and not nl.startswith('[') and 'stars' not in nl.lower():
-            desc = nl; break
-    stars_line = ''
-    for j in range(i+1, i+10):
-        if j >= len(lines): break
-        if 'stars today' in lines[j]:
-            stars_line = lines[j]; break
-    if not stars_line: continue
-    m_lang = re.search(r'^([A-Za-z+#]+)\[([\d,]+)\]', stars_line)
-    m_today = re.search(r'([\d,]+)\s+stars\s+today', stars_line, re.I)
-    if m_lang and m_today:
+GH_TOKEN = open('/Users/apple/.hermes/keys/github_token.txt').read().strip()
+HEADERS = {
+    "Authorization": "Bearer " + GH_TOKEN,
+    "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "radar-bot/1.0"
+}
+
+def gh_api(path):
+    url = "https://api.github.com" + path
+    try:
+        r = urllib.request.urlopen(
+            urllib.request.Request(url, headers=HEADERS), timeout=8
+        )
+        return json.loads(r.read())
+    except:
+        return None
+
+def fetch_trending():
+    from agent_reach.channels.web import WebChannel
+    ch = WebChannel()
+    md = ch.read('https://github.com/trending')
+    repos, lines = [], md.split('\n')
+    for i, line in enumerate(lines):
+        if not line.strip().startswith('## ['): continue
+        m = re.search(r'\[([^\]]+)\]\(https://github\.com/([^\)]+)\)', line)
+        if not m: continue
+        full_name = m.group(2).strip()
+        # 页面描述（可能为空）
+        desc = ''
+        for j in range(i+1, i+5):
+            if j >= len(lines): break
+            nl = lines[j].strip()
+            if nl and not nl.startswith('[') and 'stars' not in nl.lower():
+                desc = nl; break
+        # stars 行
+        stars_line = ''
+        for j in range(i+1, i+10):
+            if j >= len(lines): break
+            if 'stars today' in lines[j]:
+                stars_line = lines[j]; break
+        if not stars_line: continue
+        m_lang = re.search(r'^([A-Za-z+#]+)\[([\d,]+)\]', stars_line)
+        m_today = re.search(r'([\d,]+)\s+stars\s+today', stars_line, re.I)
+        if not (m_lang and m_today): continue
         lang = m_lang.group(1)
         ts = int(m_lang.group(2).replace(',', ''))
         today = int(m_today.group(1).replace(',', ''))
         bonus = 2.0 if ts < 5000 else 1.5 if ts < 20000 else 1.0 if ts < 100000 else 0.8
         score = today * bonus
-        repos.append({'num': len(repos)+1, 'name': full_name, 'desc': desc[:120],
-                     'lang': lang, 'total': ts, 'today': today,
-                     'score': int(score), 'url': f'https://github.com/{full_name}'})
-    if len(repos) >= 10: break
-with open('/tmp/gh_repos.json', 'w') as f:
-    json.dump(repos, f, ensure_ascii=False)
+        repos.append({
+            'num': len(repos)+1, 'name': full_name,
+            'desc': desc[:120] if desc else '',
+            'lang': lang, 'total': ts, 'today': today,
+            'score': int(score), 'url': f'https://github.com/{full_name}'
+        })
+        if len(repos) >= 15: break
+    return repos
+
+def enrich_with_api(repos):
+    """用 GitHub API 补全 description（核心步骤，不能跳过）"""
+    for r in repos:
+        owner, repo = r['name'].split('/', 1)
+        data = gh_api(f"/repos/{owner}/{repo}")
+        if data:
+            api_desc = (data.get('description') or '').strip()
+            if api_desc and not r['desc']:
+                r['desc'] = api_desc[:120]
+            r['topics'] = data.get('topics', [])[:3]
+        else:
+            r['topics'] = []
+        if not r['desc']:
+            r['desc'] = f"{r['lang']} project on GitHub"
+    return repos
+
+if __name__ == '__main__':
+    repos = fetch_trending()
+    repos = enrich_with_api(repos)
+    with open('/tmp/gh_repos.json', 'w') as f:
+        json.dump(repos, f, ensure_ascii=False, indent=2)
 ```
 
 **执行步骤：**
