@@ -180,7 +180,6 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**geo-content-strategy**](skills/operations/geo-content-strategy/SKILL.md) | 构建一套 GEO 内容策略 |
 | [**geo-keyword-research**](skills/operations/geo-keyword-research/SKILL.md) | 研究 GEO 关键词 |
 | [**geo-strategy-report**](skills/operations/geo-strategy-report/SKILL.md) | 生成一份 GEO 策略报告 |
-| **GEO 系列（3个）** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
 | **SEO 系列（25个）** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
 | [**tender-response-maker**](skills/operations/tender-response-maker/SKILL.md) | 分析标书 / 输出应标材料清单 |
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 今天 GitHub 有什么趋势 |
