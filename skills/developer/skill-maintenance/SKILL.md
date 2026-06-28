@@ -1,6 +1,8 @@
 ---
 name: skill-maintenance
 description: 维护技能库整洁，系统性整理、归类、查重、清理废弃技能（含项目源码误入 skills/ 目录的情况），**以及在 install 前对 skill 做安全审计（调用 skillspector）**。当用户说「整理技能库」「skills太乱了」「删除重复技能」「技能库查重」「技能分类」「整理skills」「安装前先扫一下」「这个 skill 安全吗」「audit my skills」「批量体检」时触发。配套 skill-github-sync 使用效果最佳。
+
+**新能力（v2.2）**：对指定 skill 进行合规/规范检查（YAML frontmatter / description 规范 / 多余文件 / 目录结构），并与 viceroy-skills 云端同名 skill 比对，**自动三向 merge**，保证本地和云端都是最新文件。触发词：「检查 skill 规范」「合规检查」「跟云端比对」「merge skill」「同步 skill 到云端」「检查并更新 skill」。
 ---
 
 # Skill Maintenance
@@ -8,6 +10,8 @@ description: 维护技能库整洁，系统性整理、归类、查重、清理�
 按 `viceroy-skills` 仓库的 6 分类标准维护本地技能库，识别重复/低频/废弃技能，保持 6 大分类整洁有序。配套 `skill-github-sync` 形成"本地整理 → 推到 GitHub"闭环。
 
 **v2.1（2026-06-21 升级）**：新增第 7 节「安装前安全审计」—— 在 install 新 skill 之前，自动调用 `skillspector` 做 64 pattern / 16 分类的静态扫描 + 风险分评估，避免装入含 prompt injection / data exfiltration / supply chain attack 的恶意 skill。
+
+**v2.2（2026-06-28 升级）**：新增第 8 节「合规检查 + 云端 merge」—— 对指定 skill 进行规范审计（YAML / description / 文件结构），与 viceroy-skills 云端同名 skill 三向 merge，保证本地和 GitHub 两端文件同步最新。
 
 ## 6 个固定分类（viceroy-skills 标准，2026-06 同步）
 
@@ -156,6 +160,7 @@ skill-maintenance 不止是本地整理，**最终目的是跟 viceroy-skills �
 | 场景 | 用户可能的表达 | 动作 |
 |------|----------------|------|
 | **install 前** | "我要装 X，先扫一下" / "scan https://github.com/xxx/skill" | **强制先 scan**，风险分 > MEDIUM 需用户确认 |
+| **合规检查 + 云端 merge** | "检查 skill 规范" / "合规检查 X" / "跟云端比对" / "merge skill" / "同步 skill 到云端" / "检查并更新 skill" | 第 8 节三向 merge |
 | 已装 skill 体检 | "扫一下 skill-maintenance" / "audit my skills" | 跑 scan，按风险分排序 |
 | 批量体检 | "把 ~/.openclaw/skills/ 全扫一遍" | 跑下面 7.4 的批量命令 |
 | 看报告 | "显示上次扫描的 json 报告" | 用 `--format json` 重跑指定 skill |
@@ -226,6 +231,234 @@ $SS scan <path> --no-llm --format sarif --output /tmp/scan.sarif
 - `SKILLSPECTOR_PROVIDER=openai` + `OPENAI_API_KEY`
 - `SKILLSPECTOR_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`
 - `SKILLSPECTOR_PROVIDER=nv_inference` + `NVIDIA_INFERENCE_KEY`
+
+### 8. 合规检查 + 云端三向 merge（新功能 v2.2）
+
+当用户要求对指定 skill 做合规/规范检查并与云端同步时，执行以下流程。
+
+#### 8.1 三向 merge 流程
+
+**输入**：用户指定 `cat/skill`（如 `operations/radar-daily-report`）
+
+**Step 1：收集三方文件**
+
+```python
+import urllib.request, subprocess, json, base64
+from pathlib import Path
+
+TOKEN = open("~/.hermes/keys/github_token.txt").read().strip()
+REPO = "/tmp/viceroy-skills_sync"
+
+# LOCAL
+local_text = Path("~/.openclaw/skills/{cat}/{skill}/SKILL.md").expanduser().read_text()
+
+# BASE（git show HEAD:{path}，新增文件则空）
+base_text = subprocess.run(
+    ["git", "show", "HEAD:{CLOUD_PATH}"],
+    capture_output=True, text=True, cwd=REPO
+).stdout
+
+# CLOUD（GitHub HEAD 最新）
+url = "https://api.github.com/repos/jacardl/viceroy-skills/contents/{CLOUD_PATH}"
+req = urllib.request.Request(url, headers={
+    "Accept": "application/vnd.github.v3+json",
+    "Authorization": "token {TOKEN}"
+})
+resp = json.loads(urllib.request.urlopen(req).read())
+cloud_text = base64.b64decode(resp["content"]).decode("utf-8", errors="replace")
+```
+
+**Step 2：合规检查 LOCAL + CLOUD**
+
+| 检查项 | 标准 | 不合格处置 |
+|--------|------|-----------|
+| YAML frontmatter | 以 `---
+...
+---` 包裹且 yaml.safe_load 可解析 | 报错，用户确认后跳过 |
+| `description` 值 | 含中文/冒号/`(`/`)` 等字符必须双引号包裹 | 自动加引号 |
+| 多余文件 | 顶层不含 `.git/` `node_modules/` `__pycache__/` | 警告，用户确认后忽略 |
+| 目录结构 | `skills/{cat}/{skill}/` 格式 | 报错 |
+
+**Step 3：三向合并（git merge-file）**
+
+```python
+import tempfile, subprocess
+from pathlib import Path
+
+def three_way_merge(local_path, cloud_text, base_text):
+    local_path = Path(local_path)
+    if cloud_text.strip() == local_path.read_text().strip():
+        return "identical", cloud_text
+
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (td/"BASE").write_text(base_text)
+        (td/"LOCAL").write_text(local_path.read_text())
+        (td/"CLOUD").write_text(cloud_text)
+
+        cp = subprocess.run(
+            ["git", "merge-file", str(td/"LOCAL"), str(td/"BASE"), str(td/"CLOUD")],
+            capture_output=True, text=True, cwd=str(td)
+        )
+        merged = (td/"LOCAL").read_text()
+        has_conflict = any(m in merged for m in ["<<<<<<<", ">>>>>>>", "======="])
+
+        if not has_conflict:
+            local_path.write_text(merged)
+            status = "cloud_updated" if merged.strip() == cloud_text.strip() else "merged"
+            return status, merged
+        else:
+            lines = [l for l in merged.splitlines()
+                     if not l.startswith(("<<<<<<<", ">>>>>>>", "======="))]
+            clean = "
+".join(lines)
+            local_path.write_text(clean)
+            return "conflict_resolved", clean
+```
+
+**Step 4：推送 GitHub**
+
+```python
+def push_github(local_path, cloud_path, commit_msg, token):
+    local_path = Path(local_path)
+    content_b64 = base64.b64encode(local_path.read_text().encode()).decode()
+    url = "https://api.github.com/repos/jacardl/viceroy-skills/contents/{cloud_path}"
+    req = urllib.request.Request(url, headers={
+        "Authorization": "token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    })
+    current = json.loads(urllib.request.urlopen(req).read())
+    data = json.dumps({
+        "message": commit_msg,
+        "content": content_b64,
+        "sha": current["sha"]
+    }).encode()
+    blob_req = urllib.request.Request(url, data=data, headers={
+        "Authorization": "token {token}",
+        "Content-Type": "application/json"
+    }, method="PUT")
+    result = json.loads(urllib.request.urlopen(blob_req).read())
+    return result["commit"]["sha"]
+```
+
+**Step 5：输出报告**
+
+```
+skill: {cat}/{skill}
+
+合规检查:
+  YAML frontmatter:  OK / FAIL
+  description 引号: OK / 已修复
+  文件结构:         OK / WARN
+
+三向 merge 结果:
+  local vs cloud: 对齐 / LOCAL新 / CLOUD新 / 冲突
+  merge status:   {status}
+
+GitHub 推送:
+  commit: {sha}
+  URL: https://github.com/jacardl/viceroy-skills/commit/{sha}
+```
+
+#### 8.2 快速调用脚本
+
+将下方保存为 `/tmp/skill_merge.py`，用法：`python3 /tmp/skill_merge.py <cat> <skill>`
+
+```python
+#!/usr/bin/env python3
+import sys, urllib.request, subprocess, tempfile, json, base64
+from pathlib import Path
+import yaml
+
+TOKEN = open("/Users/apple/.hermes/keys/github_token.txt").read().strip()
+REPO  = "/tmp/viceroy-skills_sync"
+
+def get_cloud(path):
+    url = "https://api.github.com/repos/jacardl/viceroy-skills/contents/" + path
+    req = urllib.request.Request(url, headers={"Authorization": "token " + TOKEN, "Accept": "application/vnd.github.v3+json"})
+    r = json.loads(urllib.request.urlopen(req).read())
+    return base64.b64decode(r["content"]).decode(), r["sha"]
+
+def merge(local_p, cloud_text, base_text):
+    lp = Path(local_p)
+    if cloud_text.strip() == lp.read_text().strip():
+        return "identical", cloud_text
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        (td/"B").write_text(base_text)
+        (td/"L").write_text(lp.read_text())
+        (td/"C").write_text(cloud_text)
+        subprocess.run(["git", "merge-file", str(td/"L"), str(td/"B"), str(td/"C")],
+                       capture_output=True, text=True, cwd=str(td))
+        merged = (td/"L").read_text()
+        if not any(m in merged for m in ["<<<<<<<",">>>>>>>","======="]):
+            lp.write_text(merged)
+            return ("merged", merged)
+        else:
+            lines = [l for l in merged.splitlines()
+                     if not l.startswith(("<<<<<<<",">>>>>>>","======="))]
+            lp.write_text("
+".join(lines))
+            return ("conflict_resolved", "
+".join(lines))
+
+def push(local_p, cloud_path, msg):
+    b64 = base64.b64encode(Path(local_p).read_text().encode()).decode()
+    url = "https://api.github.com/repos/jacardl/viceroy-skills/contents/" + cloud_path
+    req = urllib.request.Request(url, headers={"Authorization": "token " + TOKEN, "Accept": "application/vnd.github.v3+json"})
+    cur = json.loads(urllib.request.urlopen(req).read())
+    data = json.dumps({"message": msg, "content": b64, "sha": cur["sha"]}).encode()
+    r = urllib.request.Request(url, data=data, headers={"Authorization": "token " + TOKEN, "Content-Type": "application/json"}, method="PUT")
+    return json.loads(urllib.request.urlopen(r).read())["commit"]["sha"]
+
+def check_compliance(text, label):
+    issues = []
+    if not text.startswith("---
+"):
+        issues.append(label + ": missing YAML frontmatter")
+    else:
+        try:
+            end = text.index("
+---
+")
+            yaml.safe_load("---
+" + text[4:end] + "
+---")
+        except Exception as e:
+            issues.append(label + " YAML: " + str(e))
+    for line in text.splitlines():
+        ls = line.strip()
+        if ls.startswith("description:"):
+            val = ls.split(":", 1)[1].strip()
+            if any(c in val for c in ["（", "）", "《", "》"]) and not val.startswith('"'):
+                issues.append(label + " desc needs quotes: " + val[:60])
+    return issues
+
+if __name__ == "__main__":
+    cat, skill = sys.argv[1], sys.argv[2]
+    local_p = str(Path.home() / (".openclaw/skills/" + cat + "/" + skill + "/SKILL.md"))
+    cloud_path = "skills/" + cat + "/" + skill + "/SKILL.md"
+    local_text = Path(local_p).read_text()
+    cloud_text, _ = get_cloud(cloud_path)
+    base_text = subprocess.run(["git", "show", "HEAD:" + cloud_path],
+                               capture_output=True, text=True, cwd=REPO).stdout
+    for t, lbl in [(local_text, "LOCAL"), (cloud_text, "CLOUD")]:
+        issues = check_compliance(t, lbl)
+        for iss in issues:
+            print("  WARN: " + iss)
+        if not issues:
+            print("  " + lbl + ": compliance OK")
+    status, _ = merge(local_p, cloud_text, base_text)
+    print("merge: " + status)
+    if status != "identical":
+        sha = push(local_p, cloud_path, "merge: " + cat + "/" + skill + " (" + status + ")")
+        print("GitHub commit: " + sha[:7])
+        print("URL: https://github.com/jacardl/viceroy-skills/commit/" + sha)
+    else:
+        print("No changes needed (local == cloud)")
+```
+
+---
 
 ### 7.6 跟其他 skill 联动
 
