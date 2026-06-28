@@ -276,6 +276,25 @@ inject_into_html()         # 在开头钩子/结尾位置注入 <img src="mmbiz:
 封面上传 + 创建草稿
 ```
 
+
+**push.py 自动集成（2026-06-28 实测落地）**：
+`scripts/push.py` 已内置 zhili-illustration 完整流程，无需手动触发：
+```
+preflight 过关
+    ↓
+extract_shot_list()        # 解析 HTML，生成 2 张 prompt 文件
+    ↓
+generate_illustrations()  # mmx-cli 经 run_mmx.py 生成图片（不需要 token）
+    ↓
+[获取 access_token]        # 拉取 token
+    ↓
+upload_illustrations()     # 上传 img_01 + img_02 到 media/uploadimg 得 mmbiz URL
+    ↓
+inject_into_html()         # 在开头钩子/结尾位置注入 <img src="mmbiz://...">
+    ↓
+封面上传 + 创建草稿
+```
+
 **快速重推（不需要重新生成图）**：
 ```bash
 python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-illustration
