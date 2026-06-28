@@ -11,6 +11,7 @@ description: |
   - 用户说"这篇写完后直接发到草稿箱"/"一键发布到直隶按察使"
   
   不适用：短评（用 zhilicomments-publish）、教程（用 khazix-writer）、GitHub 项目介绍（用 khazix-writer 模板）
+---
 ...
 
 # 直隶按察使 · 长文输出（zhililong）
@@ -39,6 +40,7 @@ description: |
 - 输入 30-60 分钟视频 → 4500-5500 字
 - 用户指定字数 → 以用户为准（但保留劝告：低于 4000 字不如不写）
 
+## Workflow（必走 8 步）
 ## Workflow（必走 9 步）
 
 ### Step 1：素材接收 + 真实性核对
@@ -209,6 +211,10 @@ open(body_md, "w", encoding="utf-8").write(body)
 ```
 
 ### Step 8：自动灌入草稿箱（zhili-publish 接力，2026-06 新增）
+
+> 🎯 **设计目标**：从"产出 markdown + HTML"升级为"产出 + 推送草稿一键完成"。用户不再需要"先跑 zhililong，再跑 zhili-publish"两步接力。
+
+**触发方式**：用户在主任务里说"这篇直接发到草稿箱" / "一键发布" / "灌入公众号"，或在本 Step 7 输出 schema 后默认执行。
 ### Step 8：自动灌入草稿箱（publish_lanlong.py 自包含 WeChat API + zhili-illustration，2026-06-28 新版）
 
 > 🎯 **设计目标**：从"产出 markdown + HTML"升级为"产出 + 推送草稿一键完成"。用户不再需要两步接力。
@@ -238,6 +244,9 @@ python3 /Users/apple/.hermes/skills/zhililong/scripts/publish_lanlong.py \
 **最小 5 入参**（必填）：`--title` / `--author` / `--digest` / `--html` / `--cover`。
 **配图占位符**（可选）：`--image-locks` 对应 HTML 里的 `LOCKS_PLACEHOLDER`，`--image-pathway` 对应 `PATHWAY_PLACEHOLDER`。
 **完整快速上手 + 失败速查**：见 `references/lanlong-quickstart.md`。
+
+**背后实际调用的 zhili-publish 链路**：
+
 **用法**：
 ```bash
 python3 scripts/publish_lanlong.py \
@@ -331,6 +340,8 @@ generate_cover(open('article.html').read(), '文章标题', '/tmp/zhili_cover.pn
 ### scripts/
 - `markdown_to_html.py` — markdown → zhili-publish 规范 HTML（已在实战中验证）
 - `post_edit_check.py` — 跑 renwei 套话清单（破折号/排比/AI 套话）
+- `cover_pil.py` — PIL 自动生成 900×540 封面图（无需 AI）
+- `publish_lanlong.py` — Step 8 一键发布封装（调用 zhili-publish 的 publish_zhili.py）
 - `publish_lanlong.py` — **Step 8/9 一键发布**（自包含 WeChat API + zhili-illustration：封面 16:9→900×383、配图最多 5 张 H2 锚点注入）
 
 ### references/
@@ -343,6 +354,8 @@ generate_cover(open('article.html').read(), '文章标题', '/tmp/zhili_cover.pn
 
 - 不写代码示例/技术教程（用 khazix-writer）
 - 不写短评/热评（用 zhilicomments-publish）
+- **不自己实现图片上传**——复用 zhili-publish 的 publish_zhili.py（不要重新造轮子）
+- **不直接调 WeChat API**——所有 token / 凭证操作走 zhili-publish 的封装
 - **封面和配图生成走 zhili-illustration（xiaohu-ip-studio + mmx-cli）**，不要自己调用其他 AI 画图工具
 
 ## ⚠️ Hermes sandbox 安全姿势（zhililong + zhili-publish 共有）
@@ -380,4 +393,5 @@ APP_SECRET="****... (一串字符)"  # ✅ 不在替换列表里
 | "GitHub 黑马项目介绍" | khazix-writer（短介绍） |
 | "写个 React 组件" | coding 类 |
 | "翻译成英文" | humanizer（去 AI 味后可改） |
+| "把这篇公众号文章改成知乎体" | humanizer（重新排版） |
 | "把这篇公众号文章改成知乎体" | humanizer（重新排版） |
