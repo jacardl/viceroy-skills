@@ -88,6 +88,8 @@ Examples:
 | [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | Post a short comment to the WeChat account |
 | [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | Turn this GitHub project into a WeChat article |
 | [**zhililong**](skills/creative/zhililong/SKILL.md) | Write 4000-5500 char WeChat long-form article, auto-pushes draft via zhili-publish |
+| [**zhiliGEO**](skills/creative/zhiliGEO/SKILL.md) | Write GEO articles for WeChat — AI search optimization, brand infrastructure in AI era |
+| [**zhili-illustration**](skills/creative/zhili-illustration/SKILL.md) | Article illustration pipeline: HTML → shot list → mmx image generate → WeChat material upload |
 | [**renwei-writing**](skills/creative/renwei-writing/SKILL.md) | Polish/rewrite text while preserving the author's voice — position, cost, hand-trace; strip AI flavor |
 | [**9router-image**](skills/creative/9router-image/SKILL.md) | Generate images via 9Router local gateway — cx/gpt-5.5-image model |
 

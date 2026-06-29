@@ -1,135 +1,144 @@
 ---
 name: zhili-illustration
 description: >
-  直隶按察使公众号统一配图技能。供 zhilicomments / zhiligithub / zhililong / zhiligeo
-  等写作技能调用，为文章正文生成 IP 角色配图并插入 HTML。
-  底层引擎：xiaohu-ip-studio（问号人等 31 个 IP + mmx-cli 后端）。
-  触发：写作技能在 HTML 完成之后自动调用本技能，无需用户另行触发。
-version: 0.1.0
-source: https://github.com/xiaohuailabs/xiaohu-ip-studio
+  为「直隶按察使」公众号长文统一配图。读取 HTML → 提取 shot list → mmx image generate 生图 → 上传微信素材 → 注入 HTML。
+  触发条件：用户说「配图」「生成插图」「zhili-illustration」「给文章配图」。
+triggers:
+  - 配图
+  - 生成插图
+  - zhili-illustration
+  - 给文章配图
+  - 文章插图
 ---
 
-# 直隶按察使 · 统一配图技能（zhili-illustration）
+# zhili-illustration · 直隶按察使公众号配图技能
 
-> 本技能是 xiaohu-ip-studio 的直隶按察使定制封装，供各写作技能在 HTML 完成后调用。
-> **不要单独触发**，由 zhilicomments / zhiligithub / zhililong / zhiligeo 等写作技能在各自流程的第 N 步自动引入。
-
-## 工作流总览
+## 核心链路
 
 ```
-写作技能完成 HTML 草稿
-    ↓
-① 提取 shot list（每节一张配图方案）
-    ↓
-② 生成图片（调用 xiaohu-ip-studio + mmx-cli）
-    ↓
-③ 注入 HTML（img 标签插入对应段落）
-    ↓
-④ 上传微信素材（获取 media_id）
-    ↓
-写作技能继续：推送草稿箱
+HTML → 提取 shot list → mmx image generate ×N
+                                  ↓
+                              下载图片
+                                  ↓
+                          微信素材上传 → mmbiz URL
+                                  ↓
+                          注入 HTML → HTML-FINAL
 ```
 
-## 第一步：提取 shot list
+## 步骤详解
 
-读取文章 HTML 或 markdown，按小节粒度列出配图方案：
+### Step 1 · 提取 Shot List
 
-| 小节 | 内容信号 | 图类型 | 核心意思（灵魂话） | IP 角色 | 比例 |
-|------|---------|--------|-----------------|--------|------|
-| 开头钩子 | 故事场景 | 情绪锚点图 | 要有共鸣感 | 问号人 | 4:3 |
-| XX 段 | 机制解释 | 解释图 | 一看就懂 | 问号人 | 4:3 |
-| XX 段 | 数据对比 | 信息图 | 数字说话 | 问号人 | 3:4 |
-| ... | ... | ... | ... | ... | ... |
+从 HTML 读取所有 H2 章节，每个 H2 对应一张配图。
 
-**图类型三轨**：
-- **情绪锚点图**：故事开场/有情感张力的段落 → 手绘线稿·淡彩
-- **解释图**：机制/流程/对比/关系 → 极简线条风格
-- **信息图**：数据/步骤/矩阵 → 纯墨线·无彩 or Notion 风格
+```python
+from bs4 import BeautifulSoup
 
-**IP 选问号人**（符号成精 meme，极简线条）：适合几乎所有技术/商业文章场景。
-如需其他 IP，参考 `~/.hermes/skills/creative/xiaohu-ip-studio/ip-library.html`。
+def extract_shots(html_path):
+    with open(html_path, encoding='utf-8') as f:
+        html = f.read()
+    soup = BeautifulSoup(html, 'html.parser')
+    shots = []
+    for h2 in soup.find_all('h2'):
+        title = h2.get_text(strip=True)
+        if title:
+            shots.append(title)
+    return shots
+```
 
-> ⚠️ Shot list 提取完成后，**必须等用户确认 IP 和风格**再生成图片。这是用户的品味节点，不能跳过。
+**Shot 即章节标题**，不需要另外写 prompt。mmx 会根据标题语义生成契合图片。
 
-## 第二步：生成图片
+### Step 2 · 生成图片（mmx image generate）
 
-**后端：MiniMax mmx-cli**（无需 config.yaml，系统已登录）：
+每张图用 `mmx image generate`，比例 `16:9`，输出到统一目录。
 
 ```bash
-# 用 xiaohu-ip-studio 的 run_mmx.py
-python3 ~/.hermes/skills/creative/xiaohu-ip-studio/scripts/run_mmx.py \
-  --prompt-file /tmp/illo_prompt.md \
-  --out /tmp/illustrations/
+# 单张
+mmx image generate \
+  --prompt "Open source autonomous driving dashboard, futuristic HUD, self-driving car interface, dark blue theme" \
+  --aspect-ratio 16:9 \
+  --out-dir /tmp/zhili-illustration/ \
+  --out-prefix "shot-01" \
+  --quiet
+
+# 并发生图（可用 & / xargs -P）
+for i in "${!shots[@]}"; do
+  n=$((i+1))
+  mmx image generate \
+    --prompt "Caption for: ${shots[$i]}" \
+    --aspect-ratio 16:9 \
+    --out-dir /tmp/zhili-illustration/ \
+    --out-prefix "shot-$(printf '%02d' $n)" \
+    --quiet \
+    &
+done
+wait
 ```
 
-**Prompt 文件格式**（`/tmp/illo_prompt.md`）：
-```
-[Task]
-为文章段落生成配图，IP 角色：问号人（极简线条符号人），画风：手绘线稿·淡彩。
+**Prompt 优化策略**：
+- 科技/AI 类 → `futuristic, dark theme, neon accents`
+- 开源/协作 → `open source, community, code interface`
+- 人物/传记 → `clean editorial, portrait style`
+- 产品/工具 → `minimalist product shot, clean background`
+- 自动适配 HTML 内容关键词
 
-[Content]
-- 用途：放在文章「XXX」段落之后
-- 核心意思：XXXXXXXX（一句话灵魂）
-- 必现内容点：XX、XX、XX
-- 建议中文标注词：XX、XX
+### Step 3 · 上传微信素材
 
-[Visual Requirements]
-- 比例：4:3
-- 角色占比：小·嵌入（~15%）
-- 不要任何文字（标签/标题/注释都不要）
-- 纯符号表达，禁止 emoji
-```
+用 `publish_zhili.py` 内部函数，避免硬编码凭证。
 
-**生图节奏**：
-1. 先只生 **1 张基准图**，确认风格 OK 再批量
-2. 批量生成，每张独立 prompt
-3. 保存到 `/tmp/illustrations/img_01.png`、`img_02.png`...
+```python
+import sys, os
+sys.path.insert(0, os.path.expanduser(
+    "~/.hermes/skills/social-media/.agents/skills/zhili-publish/scripts/"
+))
+from publish_zhili import load_config, get_access_token, upload_article_image
 
-## 第三步：注入 HTML
+def upload_to_mmbiz(image_path):
+    config = load_config()
+    token = get_access_token(config["APPID"], config["APPSECRET"])
+    return upload_article_image(token, image_path)
 
-配图插入文章正文对应段落之后：
-
-```html
-<!-- img_01 · 开头钩子情绪锚点 -->
-<div style="text-align:center;margin:32px 0;">
-  <img src="mmbiz://xxx" style="width:100%;max-width:660px;border-radius:8px;" />
-</div>
+mmbiz_urls = {}
+for i, shot in enumerate(shots, 1):
+    local = f"/tmp/zhili-illustration/shot-{i:02d}.png"
+    url = upload_to_mmbiz(local)
+    mmbiz_urls[i] = url
 ```
 
-> ⚠️ 微信草稿箱 HTML 用 `mmbiz://` 协议引用已上传素材的 media_id。
-> 暂用本地路径调试，上传步骤见第四步。
+### Step 4 · 注入 HTML
 
-## 第四步：上传微信素材（img 标签转 media_id）
+统计 HTML 中「图片」占位符数量，逐一替换为 mmbiz URL。
 
-每个配图必须上传微信素材获取 `media_id`，再替换 HTML 中的路径：
+```python
+def inject_mmbiz(html, mmbiz_urls):
+    for i, url in mmbiz_urls.items():
+        placeholder = f'<img src="图片{i}">'
+        replacement = f'<img src="{url}">'
+        html = html.replace(placeholder, replacement, 1)
+    return html
 
-```bash
-# 上传图片素材（示例）
-curl -X POST "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=TOKEN&type=image" \
-  -F "media=@/tmp/illustrations/img_01.png"
-
-# 返回 {"media_id":"xxx","url":"mmbiz://..."}
-# 将 HTML 中 <img src="..." /> 替换为 <img src="mmbiz://xxx" />
+with open("article-final.html", "w", encoding="utf-8") as f:
+    f.write(final_html)
 ```
 
-上传后返回的 `url` 字段即为 `mmbiz://` 协议的 media_id，直接写入 HTML 即可在公众号预览/发布。
+## 输出文件
 
-## 微信封面图规范（独立流程）
+- `/tmp/zhili-illustration/shot-01.png` … `shot-NN.png` — 配图原图
+- `{html_同目录}/xxx-final.html` — 已注入 mmbiz URL 的发布用 HTML
 
-封面图**不走 xiaohu-ip-studio**，直接用以下规格：
+## 凭证说明
 
-| 参数 | 值 |
-|------|-----|
-| 尺寸 | 900×383（2.35:1） |
-| 格式 | JPG/PNG |
-| 文件名 | `/tmp/zhili_cover.png` |
-| 上传 type | `image`（不是 `thumb`） |
+凭证由 `zhili-publish/scripts/publish_zhili.py` 的 `load_config()` 管理，
+无需传入 APPID/APPSECRET。技能内部通过 `sys.path.insert` 复用。
 
-## 参考文件
+## 封面图（单独处理）
 
-| 文件 | 用途 |
-|------|-----|
-| `~/.hermes/skills/creative/xiaohu-ip-studio/SKILL.md` | 完整配图方法论（shot list / 三轨 / 深层提炼） |
-| `~/.hermes/skills/creative/xiaohu-ip-studio/scripts/run_mmx.py` | mmx-cli 后端封装 |
-| `~/.hermes/skills/creative/xiaohu-ip-studio/references/geo-sample-prompts.md` | GEO 文章配图 prompt 样本 |
-| `references/html-image-injection.md` | HTML img 标签注入规范 |
+封面图不走本技能。用 `zhiliGitHub`/`zhililong` 的封面图流程：
+`zhiliGitHub/scripts/cover_pil.py`（PIL 渐变）或 `mmx image generate` 生成后
+单独用 `material/add_material` 上传。
+
+## 已知限制
+
+- mmx image generate 推理约 30-60s/张，并发过多可能触发 rate limit（MiniMax RPM）
+- 微信素材 API 要求图片格式为 jpg/png，大小 ≤ 2MB
+- HTML 中占位符必须为 `<img src="图片N">` 格式（N 从 1 开始连续）
