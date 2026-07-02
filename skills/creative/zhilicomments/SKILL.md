@@ -15,7 +15,9 @@ description: >
   1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
   2. 按规范生成 HTML，内联所有 CSS
   3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
-...
+  ***
+
+---
 
 # 直隶按察使 · 短评论发布技能
 
@@ -38,7 +40,7 @@ description: >
 |------|-----|
 | 背景色 | `#f5f4ed`（羊皮纸） |
 | 正文字体 | `Georgia, 'Noto Serif SC', serif` |
-| H2 标题 | `font-size:20px;color:#1B365D;font-weight:700;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0`（**注意：`font-size` 和 `color` 必须在同一 `style=` 字符串内连续出现**，preflight 检查精确字符串 `font-size:20px;color:#1B365D`） |
+| H2 标题 | `border-left: 4px solid #00d4aa`，青色左边框高亮（**样式A 标志性特征，与 zhiliGitHub 完全一致**） |
 | 强调色（数据/核心） | `#c9553d`（红棕色） |
 | 强调色（关键词/重点） | `#1B365D`（墨蓝） |
 | 警示/核心洞察背景 | `#fff3b0`（淡黄底） |
@@ -112,7 +114,7 @@ description: >
 
 **基础检查（任何不通过必须修复）**：
 
-- [ ] 禁用词零命中：`说白了`、`意味着什么`、`这意味着`、`本质上`、`换句话说`、`不可否认`、`综上所述`、`头皮发麻`
+- [ ] 禁用词零命中：`说白了`、`意味着什么`、`这意味着`、`本质上`、`换句话说`、`不可否认`、`综上所述`
 - [ ] 禁用标点零命中：冒号`：`、破折号`——`、双引号`""`
 - [ ] 空泛工具名零命中：没有「AI工具」「某个模型」等表述
 - [ ] 开头是否具体当下？第一句话是否让读者产生"然后呢"的冲动？
@@ -137,7 +139,7 @@ description: >
 
 ### 禁止出现（绝对禁区）
 
-- 禁用词：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`头皮发麻`
+- 禁用词：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`
 - 禁用标点：冒号`：`、破折号`——`、双引号`""`（用「」或直接不加）
 - 禁用开头：`在当今AI快速发展的时代`、`随着技术的不断进步`、`让我们来看看`
 - 禁止连续使用 bullet point 罗列观点（超过2个就要改散文叙述）
@@ -244,16 +246,37 @@ description: >
 
 详细内容见 `references/wechat-pitfalls.md` 的「内容源可访问性」章节。
 
-### 第二步：配图（调用 zhili-illustration）
+### 第二步：配图（可选）
 
-**写作技能统一配图流程**：HTML 完成后自动引入 `zhili-illustration` 技能生成正文配图。
+短评论可以无图，但如果配图：
 
+1. 用 PIL 生成信息图（900×383 或 900×900）：`/tmp/cover.jpg`
+2. 上传获取 `media_id`（必须用 urllib.request 构造 multipart）
 **本技能适用规格**（2026-06-27 确认）：
 - 配图数量：2 张（开头钩子 + 结尾情绪锚点），固定，不可选
 - 比例：4:3（900×675px）
 - IP 角色：问号人（极简线条符号人），单张内嵌 ~15%
 - 画风：手绘线稿·淡彩
 - **注入位置（实测）**：img_01 → 第一个 `<h2>` 之后的第一个 `</p>` 处；img_02 → HTML 最后一个 `</p>` 之后
+
+**push.py 自动集成（2026-06-28 实测落地）**：
+`scripts/push.py` 已内置 zhili-illustration 完整流程，无需手动触发：
+```
+preflight 过关
+    ↓
+extract_shot_list()        # 解析 HTML，生成 2 张 prompt 文件
+    ↓
+generate_illustrations()  # mmx-cli 经 run_mmx.py 生成图片（不需要 token）
+    ↓
+[获取 access_token]        # 拉取 token
+    ↓
+upload_illustrations()     # 上传 img_01 + img_02 到 media/uploadimg 得 mmbiz URL
+    ↓
+inject_into_html()         # 在开头钩子/结尾位置注入 <img src="mmbiz://...">
+    ↓
+封面上传 + 创建草稿
+```
+
 
 **push.py 自动集成（2026-06-28 实测落地）**：
 `scripts/push.py` 已内置 zhili-illustration 完整流程，无需手动触发：
@@ -293,8 +316,9 @@ python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-i
 
 关键踩坑见 `references/wechat-pitfalls.md`。
 
-### 第三步：写 HTML（先读 preflight 再写，少走弯路）
+> ⚠️ **封面图必须用 `type=image`**（2026-05-30 实测）。旧版记录 `type=thumb` 可用为错误信息。`type=thumb` 返回的 media_id 在 `draft/add` 时报 `40007 invalid media_id`，**必须用 `type=image`**。
 
+### 第三步：写 HTML
 > ⚠️ **写 HTML 前必须先读** `scripts/preflight.py` 第 95-114 行的 CSS 检查逻辑（exact string match），否则 preflight 会反复失败 3-4 次才能通过。
 >
 > ⚠️ **CSS precision 铁律（preflight 用子串匹配检查，下述必须完全一致）**：
@@ -372,6 +396,7 @@ payload = json.dumps({
 }, ensure_ascii=False).encode('utf-8')  # Content-Type: application/json（无 charset）
 ```
 
+> ⚠️ **草稿创建前必须验证 HTML 中的图片URL**：如果文章有配图（cover.jpg / cover.png），必须确认 HTML 里使用的是本次实际上传的图片 media_id 对应的 mmbiz URL，而不是上一次残留的旧URL。验证方法：检查 HTML 中所有 `src="http://mmbiz.qpic.cn/` 是否与封面图的 url 一致。如果用了旧图，微信会报 `40007` 或显示异常。
 > ⚠️ **push.py digest 提取结构性冲突（2026-06-28 实战）**：`scripts/push.py` 第 155-159 行从 HTML 第一个 `<p>` 标签提取 digest 文本。但 zhilicomments HTML 的第一个 `<p>` 是「文 / 刘生」作者行，不是正文内容，导致草稿 digest 变成无意义的「文 / 刘生」。
 >
 > **解法**：在正文第一段 `<p>` 之前插入一个空 `<p>` 标签（只含 `style="display:none"` 或留空），让 push.py 取到的正好是正文第一句；或者在调用 push.py 之前手动检查生成的 digest 是否合理。不修的话草稿能发，但 digest 字段内容不对。
@@ -588,6 +613,6 @@ H2 本身就是最强的转场信号，再加一句「说完了 X」是冗余。
 - 正文配图可选，有则用深色信息图风格
 - 观点要有立场，不做理中客
 - 结尾不求 Star/项目地址，纯观点文
-- **禁用词（严禁出现）**：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`冒号`、`破折号`、`头皮发麻`
+- **禁用词（严禁出现）**：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`冒号`、`破折号`
 - 所有文字 **`text-align:left`**，无例外
 - **禁止连续 bullet list**，超过2个观点必须改散文叙述
