@@ -1,6 +1,6 @@
 ---
 name: radar-daily-report
-description: "从 PostgreSQL 读取今日雷达数据，分 4 条飞书消息发送（金价+AI+政治+GitHub），周六周报、月末月报"
+description: "从 PostgreSQL 读取今日雷达数据，分 4 条飞书消息发送（金价+AI+政治+GitHub），周六周报，月末月报"
 metadata: { "openclaw": { "emoji": "📡" } }
 ---
 
