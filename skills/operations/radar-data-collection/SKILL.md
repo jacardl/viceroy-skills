@@ -6,7 +6,11 @@ metadata: { "openclaw": { "emoji": "🛰️" } }
 
 # 雷达数据采集 Skill
 
-每日 06:00 北京时间执行。采集金价、国际政治、AI热讯，写入 `radar` 数据库的 `news_articles` 和 `gold_prices` 表。
+**执行时间：每日 03:00 北京时间（Cron ID：`a174ed1a`）**
+
+**铁律：本 cron 只写 DB，禁止向任何 channel 发消息。所有推送走推送 cron。禁止写 /tmp 文件。**
+
+数据写入 `radar` 数据库的 `news_articles` 和 `gold_prices` 表，供推送 cron 读取。
 
 ## 数据源
 
