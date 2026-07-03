@@ -4,12 +4,11 @@ description: >
   微信公众号长文发布技能，专为「直隶按察使」公众号的 GitHub 黑马项目方向定制。
   适用：GitHub Trending 黑马开源项目介绍文章（1500-2000字，流式叙事）。
   触发条件：用户说「写文章」「发长文」「GitHub」「黑马」。
-  **技能边界（2026-06-04 确认，已踩坑修复 12 处）**：本技能只管 GitHub 黑马长文（1500-2000字 / 六段式 / 流式叙事），**不替兄弟技能定规范**。要发短评/观点/Reaction → 独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`）。要发日常复盘/公众号通告 → 独立技能 `openclaw-imports/zhili-publish/`。完整边界模式见 `references/skill-boundary.md`。
+  **技能边界（2026-06-04 确认，已踩坑修复 12 处）**：本技能只管 GitHub 黑马长文（1500-2000字 / 六段式 / 流式叙事），**不替兄弟技能定规范**。要发短评/观点/Reaction → 独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`）。要发日常复盘/公众号通告 → 独立技能 `creative/zhili-publish/`。完整边界模式见 `references/skill-boundary.md`。
   **执行前必读**：每次写 HTML 前必须按顺序执行以下三步，再开始写作：
   1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
   2. 按规范生成 HTML，内联所有 CSS
   3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
----
 ---
 
 # 直隶按察使 · 公众号发布技能
@@ -26,7 +25,6 @@ description: >
      - 旧脚本 `publish_zhili.py` 已废弃，改用 `push.py`（2026-06-28）
   ⚠️ **不要凭记忆手写 HTML CSS**（历史已证明记忆值 100% 错误），用脚本生成。
 ...
----
 
 # 直隶按察使 · 公众号发布技能
 
@@ -34,7 +32,7 @@ description: >
 
 zhiliGitHub 是**独立技能**，只管 GitHub 黑马长文（1500-2000字）。
 - **要发短评 / 观点 / Reaction** → 看独立技能 `social-media/zhilicomments/`（云端 `creative/zhilicomments/`），不要在本技能里改短评的字段
-- **要发日常复盘 / 公众号通告** → 看 `openclaw-imports/zhili-publish/`
+- **要发日常复盘 / 公众号通告** → 看 `creative/zhili-publish/`
 
 | 字段 | zhiliGitHub 规范（**只管自己**） |
 |------|---------------------------------|
@@ -609,7 +607,6 @@ screenshots/ 目录
 下载项目图 → 上传到微信获取mmbiz → 写HTML（嵌入mmbiz） → 图片Gate检查 → 创建草稿
 ```
 
----
 
 ## 凭证配置
 
@@ -1102,7 +1099,7 @@ mmx vision describe "/path/to/screenshot.jpg" --prompt "分析这张微信公众
 **正确修复**：`json.dumps(payload, ensure_ascii=False).encode("utf-8")`，`Content-Type: application/json`（不带 `charset=utf-8`）。
 - `ensure_ascii=False` → 直接输出 UTF-8 原文，WeChat 自己推断编码
 - 禁止在 Content-Type 里加 `charset=utf-8`（会导致 JSON 处理管线无法解码）
-- 脚本位置：`/root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py` 第 443 行、第 564 行
+- 脚本位置：`$HOME/.openclaw/skills/creative/zhiligithub/scripts/publish_zhili.py` 第 443 行、第 564 行
 - 脚本位置：`~/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py`（实际路径）
 
 **错误修复**（不要用）：
@@ -1133,8 +1130,8 @@ python3 skills/zhili-publish/scripts/publish_zhili.py "<title>" "<author>" "<dig
 ```python
 # ✅ 方式一：Python API（推荐，sandbox 可见 config.md）
 import sys
-sys.path.insert(0, '/root/.hermes/skills/openclaw-imports/zhiligithub/scripts')
-sys.path.insert(0, '/root/.hermes/skills/creative/zhiligithub/scripts')
+sys.path.insert(0, '$HOME/.openclaw/skills/creative/zhiligithub/scripts')
+sys.path.insert(0, '$HOME/.openclaw/skills/creative/zhiligithub/scripts')
 import publish_zhili as pz
 token = pz.get_access_token(appid, appsecret)
 thumb_media_id = pz.upload_thumb_material(token, '/tmp/cover.jpg')
@@ -1144,8 +1141,8 @@ result = pz.create_draft(token, title, author, digest, content, thumb_media_id)
 
 # ✅ 方式二：CLI + bash 命令替换（实测可用）
 # 原理：$(python3 -c ...) 在 shell 层展开为 HTML 文本，作为第4个位置参数传入
-python3 /root/.hermes/skills/openclaw-imports/zhiligithub/scripts/publish_zhili.py \
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
+python3 $HOME/.openclaw/skills/creative/zhiligithub/scripts/publish_zhili.py \
+python3 $HOME/.openclaw/skills/creative/zhiligithub/scripts/publish_zhili.py \
   "文章标题" \
   "作者（≤2个中文字）" \
   "摘要" \
@@ -1172,7 +1169,7 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
 
 ```bash
 python3 skills/zhili-publish/scripts/publish_zhili.py \
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
+python3 $HOME/.openclaw/skills/creative/zhiligithub/scripts/publish_zhili.py \
   --title "文章标题" \
   --author "作者" \
   --digest "摘要" \
@@ -1184,7 +1181,7 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py \
 
 ```bash
 python3 skills/zhili-publish/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
+python3 $HOME/.openclaw/skills/creative/zhiligithub/scripts/publish_zhili.py --cover-only --cover-prompt "描述"
 ```
 
 脚本自动完成：
