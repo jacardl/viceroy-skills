@@ -4,10 +4,10 @@
 
 # 🧰 viceroy-skills
 
-我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
+My personal AI skills and prompts — everything I use daily in real projects, open sourced here.
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-69-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-59-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -57,9 +57,8 @@ Examples:
 
 | Name | One-liner |
 |------|-----------|
-| [**9router**](skills/ai/9router/SKILL.md) | Local/remote AI gateway — one key, multiple providers, OpenAI-compatible API |
-| [**local-model-orchestrator**](skills/ai/local-model-orchestrator/SKILL.md) | Scan, explain, select, and call local AI models, with Mac-optimized recommendations |
-| [**mmx-cli**](skills/ai/mmx-cli/SKILL.md) | Generate text, images, video, music with MiniMax — includes web search |
+| [**9router**](skills/ai/9router/SKILL.md) | Local/remote AI gateway — one API key, multiple providers, OpenAI-compatible |
+| [**mmx-cli**](skills/ai/mmx-cli/SKILL.md) | Generate text, images, video, music with MiniMax — includes search |
 
 ---
 
@@ -67,15 +66,14 @@ Examples:
 
 | Name | How to trigger |
 |------|----------------|
-| [**find-skills**](skills/assistant/find-skills/SKILL.md) | Find SEO skills on ClawHub |
+| [**find-skills**](skills/assistant/find-skills/SKILL.md) | Find SEO-related Skills on ClawHub |
 | [**markitdown**](skills/assistant/markitdown/SKILL.md) | Convert this PDF to markdown |
-| [**markdown-to-report**](skills/assistant/markdown-to-report/SKILL.md) | Turn this markdown into a styled HTML report |
-| [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | /neat — reconcile docs & memory after a session |
-| [**obsidian**](skills/assistant/obsidian/SKILL.md) | Search my Obsidian vault |
-| [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | Create a new Obsidian note |
-| [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | Check my storage / C: drive is full / clean up disk |
-| [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | Convert this WeChat article to markdown |
-| [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | Grab the subtitles from this YouTube video |
+| [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | Clean up session noise, keep knowledge points |
+| [**obsidian**](skills/assistant/obsidian/SKILL.md) | Operate Obsidian vault |
+| [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | Obsidian CLI tool |
+| [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | Analyze local storage, clean up large files |
+| [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | Convert WeChat article to Markdown |
+| [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | Extract and translate YouTube subtitles |
 
 ---
 
@@ -83,15 +81,10 @@ Examples:
 
 | Name | How to trigger |
 |------|----------------|
-| [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | Write a WeChat article in Khazix's voice |
-| [**zhili-publish**](skills/creative/zhili-publish/SKILL.md) | Publish this HTML draft to the WeChat official account |
-| [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | Post a short comment to the WeChat account |
+| [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | Write a WeChat article in 卡兹克's style |
+| [**zhili-publish**](skills/creative/zhili-publish/SKILL.md) | Publish this HTML draft to WeChat |
+| [**zhilicomments**](skills/creative/zhilicomments/SKILL.md) | Post a short comment to WeChat |
 | [**zhiligithub**](skills/creative/zhiligithub/SKILL.md) | Turn this GitHub project into a WeChat article |
-| [**zhililong**](skills/creative/zhililong/SKILL.md) | Write 4000-5500 char WeChat long-form article, auto-pushes draft via zhili-publish |
-| [**zhiliGEO**](skills/creative/zhiliGEO/SKILL.md) | Write GEO articles for WeChat — AI search optimization, brand infrastructure in AI era |
-| [**zhili-illustration**](skills/creative/zhili-illustration/SKILL.md) | Article illustration pipeline: HTML → shot list → mmx image generate → WeChat material upload |
-| [**renwei-writing**](skills/creative/renwei-writing/SKILL.md) | Polish/rewrite text while preserving the author's voice — position, cost, hand-trace; strip AI flavor |
-| [**9router-image**](skills/creative/9router-image/SKILL.md) | Generate images via 9Router local gateway — cx/gpt-5.5-image model |
 
 ---
 
@@ -99,10 +92,10 @@ Examples:
 
 | Name | How to trigger |
 |------|----------------|
-| [**setup-matt-pocock-skills**](skills/developer/setup-matt-pocock-skills/SKILL.md) | Set up Matt Pocock's Skill spec in AGENTS.md |
-| [**skill-creator**](skills/developer/skill-creator/SKILL.md) | Create a new skill from scratch |
-| [**skill-github-sync**](skills/developer/skill-github-sync/SKILL.md) | Sync local skills to GitHub |
-| [**skill-maintenance**](skills/developer/skill-maintenance/SKILL.md) | Organize the skill library / find duplicates |
+| [**scrapling**](skills/developer/scrapling/SKILL.md) | Adaptive web scraper |
+| [**skill-creator**](skills/developer/skill-creator/SKILL.md) | Create a new Skill |
+| [**skill-github-sync**](skills/developer/skill-github-sync/SKILL.md) | Sync Skills to GitHub |
+| [**skill-maintenance**](skills/developer/skill-maintenance/SKILL.md) | Keep the skill library clean |
 
 ---
 
@@ -110,24 +103,10 @@ Examples:
 
 | Name | How to trigger |
 |------|----------------|
-| [**aihot**](skills/operations/aihot/SKILL.md) | What's new in AI today / AI papers this week |
-| [**baoyu-url-to-markdown**](skills/operations/baoyu-url-to-markdown/SKILL.md) | Convert this link to markdown |
-| [**geo-content-strategy**](skills/operations/geo-content-strategy/SKILL.md) | Build a GEO content strategy |
-| [**geo-keyword-research**](skills/operations/geo-keyword-research/SKILL.md) | Research keywords for GEO |
-| [**geo-strategy-report**](skills/operations/geo-strategy-report/SKILL.md) | Generate a GEO strategy report |
-| [**scrapling**](skills/operations/scrapling/SKILL.md) | Scrape this website |
-| **GEO Series (3)** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
-| **SEO Series (25)** | seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical |
-
----
-
-### 📊 Operations — Other
-
-| Name | How to trigger |
-|------|----------------|
+| [**aihot**](skills/operations/aihot/SKILL.md) | AI hot news query |
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | What's trending on GitHub today |
-| [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | Give me the Radar daily report |
-| [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | Public opinion data collection standards |
+| **GEO Series（3）** | geo-content-strategy · geo-keyword-research · geo-strategy-report |
+| **SEO Series（25）** | seo · seo-audit · seo-backlinks · seo-clust · seo-competitor-pages · seo-content · seo-data-forum · seo-drip · seo-ecomm · seo-flow · seo-geo · seo-google · seo-hreflang · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-technical · seo-translate · seo-x |
 
 ---
 
@@ -135,11 +114,11 @@ Examples:
 
 | Name | How to trigger |
 |------|----------------|
-| [**brand-product-audience-relevance**](skills/product/brand-product-audience-relevance/SKILL.md) | Analyze this brand vs CID audience data |
-| [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | Identify competitors from this AI response |
-| [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | Research this company / product |
-| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | Generate a patent disclosure document |
-| [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | Generate software copyright application materials |
+| [**brand-product-audience-relevance**](skills/product/brand-product-audience-relevance/SKILL.md) | Audience-product-brand match analysis |
+| [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | Competitor discovery and analysis |
+| [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | High-value audience analysis |
+| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | Patent disclosure analysis |
+| [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | Software copyright materials generation |
 
 ---
 
