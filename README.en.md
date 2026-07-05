@@ -130,7 +130,7 @@ Examples:
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | Public opinion data collection |
 | [**tender-response-maker**](skills/operations/tender-response-maker/SKILL.md) | Tender response generation |
 | [**webpage-audit**](skills/operations/webpage-audit/SKILL.md) | Webpage audit |
-| [**zhiligithub**](skills/operations/zhiligithub/SKILL.md) | GitHub project operations |
+
 
 ---
 

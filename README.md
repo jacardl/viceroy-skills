@@ -130,7 +130,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | 舆情数据采集 |
 | [**tender-response-maker**](skills/operations/tender-response-maker/SKILL.md) | 投标文件生成 |
 | [**webpage-audit**](skills/operations/webpage-audit/SKILL.md) | 网页审核 |
-| [**zhiligithub**](skills/operations/zhiligithub/SKILL.md) | GitHub 项目运营 |
+
 
 ---
 
