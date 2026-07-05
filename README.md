@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-111-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-72-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -24,7 +24,7 @@
 | Category | Description |
 |----------|-------------|
 | [AI Models](#-ai-models) | 本地/远程 AI 网关，图片生成，终端交互 |
-| [Assistant](#-assistant) | 法律推理、文档处理、知识管理、存储分析 |
+| [Assistant](#-assistant) | 文档处理、知识管理、存储分析 |
 | [Creative](#-creative) | 微信公众号写作、封面图、短评、GitHub 精选 |
 | [Developer](#-developer) | Skill 创建与维护、代码质量 |
 | [Operations](#-operations) | SEO / GEO 策略、舆情、爬虫、自动化 |
@@ -64,16 +64,11 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 
 ---
 
-### 🧑‍💼 Assistant（50个）
-
-**法律推理系列（31个）**：analogical-reasoning · argument-chain-construction · argument-strength-evaluation · counterfactual-reasoning · deductive-reasoning · evidence-argument-chain · evidence-evaluation · formal-legal-consequence · inductive-reasoning · judicial-value-judgment · legal-abductive-reasoning · legal-article-retrieval · legal-concept-comprehension · legal-document-formatting · legal-document-summarization · legal-element-extraction · legal-interpretation-argument · legal-judgment-prediction · legal-norm-validity-check · legal-risk-assessment · legal-terminology · normative-meaning-argumentation · structured-element-extraction · systematic-interpretation · teleological-interpretation
-
-**法律业务系列（15个）**：administrative-value-judgment · billing-and-litigation-budget · case-lifecycle-planning · case-retrieval · conflict-resolution · diary-write · dispute-and-performance-risk · dispute-issue-identification · internal-compliance-risk-identification · judgment-document-generation · other-legal-retrieval · patent-disclosure-skill · strategic-risk-prioritization · trial-scheduling-and-deadline-monitoring
-
-**通用工具系列（4个）**：
+### 🧑‍💼 Assistant（13个）
 
 | Name | How to trigger |
 |------|----------------|
+| [**administrative-value-judgment**](skills/assistant/administrative-value-judgment/SKILL.md) | 行政价值判断 |
 | [**baoyu-url-to-markdown**](skills/assistant/baoyu-url-to-markdown/SKILL.md) | URL 转 Markdown |
 | [**find-skills**](skills/assistant/find-skills/SKILL.md) | 在 ClawHub 上找 Skill |
 | [**markdown-to-report**](skills/assistant/markdown-to-report/SKILL.md) | Markdown 转报告 |
@@ -82,6 +77,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | 清理会话里的无用内容，保留知识点 |
 | [**obsidian**](skills/assistant/obsidian/SKILL.md) | 操作 Obsidian 笔记库 |
 | [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | Obsidian 命令行工具 |
+| [**patent-disclosure-skill**](skills/assistant/patent-disclosure-skill/SKILL.md) | 专利披露分析 |
 | [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | 分析本地存储占用，清理大文件 |
 | [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | 微信公众号文章转 Markdown |
 | [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | 提取 YouTube 字幕并翻译 |

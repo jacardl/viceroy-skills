@@ -7,7 +7,7 @@
 My personal AI skills and prompts — everything I use daily in real projects, open sourced here.
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-111-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-72-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -24,7 +24,7 @@ My personal AI skills and prompts — everything I use daily in real projects, o
 | Category | Description |
 |----------|-------------|
 | [AI Models](#-ai-models) | Local/remote AI gateway, image generation, terminal interaction |
-| [Assistant](#-assistant) | Legal reasoning, document processing, knowledge management, storage |
+| [Assistant](#-assistant) | Document processing, knowledge management, storage |
 | [Creative](#-creative) | WeChat article writing, cover images, short comments, GitHub highlights |
 | [Developer](#-developer) | Skill creation & maintenance, code quality |
 | [Operations](#-operations) | SEO / GEO strategy, public opinion, scraping, automation |
@@ -64,16 +64,11 @@ Examples:
 
 ---
 
-### 🧑‍💼 Assistant（50）
-
-**Legal Reasoning Series（31）**：analogical-reasoning · argument-chain-construction · argument-strength-evaluation · counterfactual-reasoning · deductive-reasoning · evidence-argument-chain · evidence-evaluation · formal-legal-consequence · inductive-reasoning · judicial-value-judgment · legal-abductive-reasoning · legal-article-retrieval · legal-concept-comprehension · legal-document-formatting · legal-document-summarization · legal-element-extraction · legal-interpretation-argument · legal-judgment-prediction · legal-norm-validity-check · legal-risk-assessment · legal-terminology · normative-meaning-argumentation · structured-element-extraction · systematic-interpretation · teleological-interpretation
-
-**Legal Business Series（15）**：administrative-value-judgment · billing-and-litigation-budget · case-lifecycle-planning · case-retrieval · conflict-resolution · diary-write · dispute-and-performance-risk · dispute-issue-identification · internal-compliance-risk-identification · judgment-document-generation · other-legal-retrieval · patent-disclosure-skill · strategic-risk-prioritization · trial-scheduling-and-deadline-monitoring
-
-**General Tools（4）**：
+### 🧑‍💼 Assistant（13）
 
 | Name | How to trigger |
 |------|----------------|
+| [**administrative-value-judgment**](skills/assistant/administrative-value-judgment/SKILL.md) | Administrative value judgment |
 | [**baoyu-url-to-markdown**](skills/assistant/baoyu-url-to-markdown/SKILL.md) | URL to Markdown |
 | [**find-skills**](skills/assistant/find-skills/SKILL.md) | Find Skills on ClawHub |
 | [**markdown-to-report**](skills/assistant/markdown-to-report/SKILL.md) | Markdown to report |
@@ -82,6 +77,7 @@ Examples:
 | [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | Clean up session noise, keep knowledge points |
 | [**obsidian**](skills/assistant/obsidian/SKILL.md) | Operate Obsidian vault |
 | [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | Obsidian CLI tool |
+| [**patent-disclosure-skill**](skills/assistant/patent-disclosure-skill/SKILL.md) | Patent disclosure analysis |
 | [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | Analyze local storage, clean up large files |
 | [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | Convert WeChat article to Markdown |
 | [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | Extract and translate YouTube subtitles |
