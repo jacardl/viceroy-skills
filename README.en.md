@@ -7,7 +7,7 @@
 My personal AI skills and prompts — everything I use daily in real projects, open sourced here.
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-72-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-74-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -117,13 +117,14 @@ Examples:
 
 **GEO Series（3）**：geo-content-strategy · geo-keyword-research · geo-strategy-report
 
-**SEO Series（30）**：seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical
+**SEO Series（25）**：seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical
 
-**Operations Tools（2）**：
+**Operations Tools（7）**：
 
 | Name | How to trigger |
 |------|----------------|
 | [**aihot**](skills/operations/aihot/SKILL.md) | AI hot news query |
+| [**bid-analysis**](skills/operations/bid-analysis/SKILL.md) | Bid/RFP analysis — generate tender response and delivery checklists |
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | What's trending on GitHub today |
 | [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | Radar daily report |
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | Public opinion data collection |

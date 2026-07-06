@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-72-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-74-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -117,13 +117,14 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 
 **GEO 系列（3个）**：geo-content-strategy · geo-keyword-research · geo-strategy-report
 
-**SEO 系列（30个）**：seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical
+**SEO 系列（25个）**：seo · seo-audit · seo-backlinks · seo-cluster · seo-competitor-pages · seo-content · seo-content-brief · seo-dataforseo · seo-drift · seo-ecommerce · seo-flow · seo-geo · seo-google · seo-hreflang · seo-image-gen · seo-images · seo-local · seo-maps · seo-page · seo-plan · seo-programmatic · seo-schema · seo-sitemap · seo-sxo · seo-technical
 
-**运营工具（2个）**：
+**运营工具（7个）**：
 
 | Name | How to trigger |
 |------|----------------|
 | [**aihot**](skills/operations/aihot/SKILL.md) | AI 热点资讯查询 |
+| [**bid-analysis**](skills/operations/bid-analysis/SKILL.md) | 招投标 / 标书分析，生成应标清单与交付物清单 |
 | [**github-daily-trending**](skills/operations/github-daily-trending/SKILL.md) | 今天 GitHub 有什么趋势 |
 | [**radar-daily-report**](skills/operations/radar-daily-report/SKILL.md) | Radar 日报 |
 | [**radar-data-collection**](skills/operations/radar-data-collection/SKILL.md) | 舆情数据采集 |
