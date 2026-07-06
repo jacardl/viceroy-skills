@@ -28,8 +28,7 @@ My personal AI skills and prompts — everything I use daily in real projects, o
 | [Creative](#-creative) | WeChat article writing, cover images, short comments, GitHub highlights |
 | [Developer](#-developer) | Skill creation & maintenance, code quality |
 | [Operations](#-operations) | SEO / GEO strategy, public opinion, scraping, automation |
-| [Product](#-product) | Competitor analysis, audience research, patents, copyright |
-| [Productivity](#-productivity) | Productivity tools |
+| [Product](#-product) | Competitor analysis, audience research, patents, copyright, productivity tools |
 
 ---
 
@@ -134,7 +133,7 @@ Examples:
 
 ---
 
-### 📦 Product（6）
+### 📦 Product（7）
 
 | Name | How to trigger |
 |------|----------------|
@@ -143,15 +142,8 @@ Examples:
 | [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | High-value audience analysis |
 | [**radar-data-collection**](skills/product/radar-data-collection/SKILL.md) | Public opinion data collection |
 | [**research-synth**](skills/product/research-synth/SKILL.md) | Research synthesis |
+| [**skill-creator**](skills/product/skill-creator/SKILL.md) | Create a new Skill |
 | [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | Software copyright materials |
-
----
-
-### ⚡ Productivity（1）
-
-| Name | How to trigger |
-|------|----------------|
-| [**skill-creator**](skills/productivity/skill-creator/SKILL.md) | Create a new Skill |
 
 ---
 

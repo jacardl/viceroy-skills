@@ -28,8 +28,7 @@
 | [Creative](#-creative) | 微信公众号写作、封面图、短评、GitHub 精选 |
 | [Developer](#-developer) | Skill 创建与维护、代码质量 |
 | [Operations](#-operations) | SEO / GEO 策略、舆情、爬虫、自动化 |
-| [Product](#-product) | 竞品分析、人群研究、专利、软著 |
-| [Productivity](#-productivity) | 效率工具 |
+| [Product](#-product) | 竞品分析、人群研究、专利、软著、效率工具 |
 
 ---
 
@@ -134,7 +133,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 
 ---
 
-### 📦 Product（6个）
+### 📦 Product（7个）
 
 | Name | How to trigger |
 |------|----------------|
@@ -143,15 +142,8 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | 人群价值分析 |
 | [**radar-data-collection**](skills/product/radar-data-collection/SKILL.md) | 舆情数据采集 |
 | [**research-synth**](skills/product/research-synth/SKILL.md) | 研究综合 |
+| [**skill-creator**](skills/product/skill-creator/SKILL.md) | 创建新的 Skill |
 | [**software-copyright-materials**](skills/product/software-copyright-materials/SKILL.md) | 软著材料生成 |
-
----
-
-### ⚡ Productivity（1个）
-
-| Name | How to trigger |
-|------|----------------|
-| [**skill-creator**](skills/productivity/skill-creator/SKILL.md) | 创建新的 Skill |
 
 ---
 
