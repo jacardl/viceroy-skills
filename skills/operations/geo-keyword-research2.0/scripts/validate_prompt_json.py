@@ -9,6 +9,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 VALID_CATEGORIES = {"品类问题", "场景问题", "品牌问题", "竞品比较问题"}
 VALID_PRIORITIES = {"P1", "P2", "P3"}
@@ -49,12 +50,17 @@ def contains_any(text: str, terms: list[str]) -> bool:
     return any(term and term in text for term in terms)
 
 
+def host_of(url: str) -> str:
+    return urlparse(url).netloc.lower().removeprefix("www.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="JSON result file")
     parser.add_argument("--context", help="Context JSON with brand/product/competitors/campaigns/categories")
     parser.add_argument("--categories", help="Comma-separated selected categories")
-    parser.add_argument("--strict-count", action="store_true", help="Require exactly 10 prompts per selected category")
+    parser.add_argument("--strict-count", action="store_true", help="Require at least 10 prompts per selected category")
+    parser.add_argument("--strict-references", action="store_true", help="Require at least 100 unique reference URLs")
     args = parser.parse_args()
 
     data = json.loads(Path(args.input).read_text(encoding="utf-8"))
@@ -99,8 +105,8 @@ def main() -> None:
         seen_prompts.add(prompt_text)
         if frame in OBSOLETE_CATEGORIES:
             fail(f"prompt #{index} uses obsolete category: {frame}")
-        if frame not in selected:
-            fail(f"prompt #{index} frameType not selected: {frame}")
+        if frame not in VALID_CATEGORIES:
+            fail(f"prompt #{index} invalid frameType: {frame}")
         if prompt["priority"] not in VALID_PRIORITIES:
             fail(f"prompt #{index} invalid priority: {prompt['priority']}")
         if prompt_text.count("？") + prompt_text.count("?") > 1:
@@ -125,24 +131,38 @@ def main() -> None:
 
     if args.strict_count:
         for category in selected:
-            if counts[category] != 10:
-                fail(f"{category} must have exactly 10 prompts, got {counts[category]}")
+            if counts[category] < 10:
+                fail(f"{category} must have at least 10 prompts, got {counts[category]}")
 
     artifacts = data.get("artifacts", {})
     if artifacts:
         if not isinstance(artifacts, dict):
             fail("artifacts must be an object")
-        for field in ["promptAnalysisPath", "sourcesPath"]:
+        required_paths = ["promptAnalysisPath", "sourcesPath", "knowledgeBaseDir"]
+        for field in required_paths:
             path = str(artifacts.get(field, "")).strip()
             if not path:
                 fail(f"artifacts missing {field}")
             if Path(path).is_absolute() or ".." in Path(path).parts:
                 fail(f"artifacts.{field} must be workspace-relative")
+            if not path.startswith("final_report/brands/"):
+                fail(f"artifacts.{field} must use brand-level final_report/brands path")
+        knowledge_paths = artifacts.get("knowledgeBasePaths", [])
+        if knowledge_paths is not None and not isinstance(knowledge_paths, list):
+            fail("artifacts.knowledgeBasePaths must be an array")
+        for index, item in enumerate(knowledge_paths or [], 1):
+            path = str(item).strip()
+            if Path(path).is_absolute() or ".." in Path(path).parts:
+                fail(f"artifacts.knowledgeBasePaths[{index}] must be workspace-relative")
+            if not path.startswith("final_report/brands/"):
+                fail(f"artifacts.knowledgeBasePaths[{index}] must use brand-level final_report/brands path")
 
     refs = data.get("references", [])
     if refs is not None and not isinstance(refs, list):
         fail("references must be an array")
     urls: set[str] = set()
+    official_host = host_of(str(ctx.get("website") or ctx.get("websiteUrl") or ""))
+    third_party_urls: set[str] = set()
     for index, ref in enumerate(refs or [], 1):
         if not isinstance(ref, dict):
             fail(f"reference #{index} must be an object")
@@ -153,7 +173,11 @@ def main() -> None:
             fail(f"reference #{index} uses placeholder URL: {url}")
         if url:
             urls.add(url)
-    if len(urls) < MIN_REFERENCES:
+            if official_host and host_of(url) != official_host:
+                third_party_urls.add(url)
+    if official_host and refs and not third_party_urls:
+        fail("references must include at least one third-party URL from search preset results")
+    if args.strict_references and len(urls) < MIN_REFERENCES:
         fail(f"references must include at least {MIN_REFERENCES} unique URLs, got {len(urls)}")
 
     print(json.dumps({"ok": True, "counts": dict(counts), "references": len(urls)}, ensure_ascii=False))

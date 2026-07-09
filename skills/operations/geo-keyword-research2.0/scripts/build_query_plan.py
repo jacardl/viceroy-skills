@@ -6,12 +6,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 CATEGORIES = ["品类问题", "场景问题", "品牌问题", "竞品比较问题"]
 DEFAULT_CATEGORIES = ["品类问题", "竞品比较问题"]
-DEFAULT_WORKSPACE = "geo-keyword-research2.0"
+DEFAULT_WORKSPACE = "final_report"
+UNSAFE_PATH_CHARS = re.compile(r"[\\/:*?\"<>|\x00-\x1f]+")
 
 
 def clean_list(items: Any) -> list[str]:
@@ -23,6 +26,34 @@ def clean_list(items: Any) -> list[str]:
 def slug(value: str) -> str:
     digest = hashlib.sha1(value.encode("utf-8")).hexdigest()[:8]
     return f"geo_{digest}"
+
+
+def safe_path_segment(value: str) -> str:
+    name = " ".join(value.strip().split())
+    name = UNSAFE_PATH_CHARS.sub("-", name).strip(" .-")
+    return name or slug(value)
+
+
+def website_host(value: str) -> str:
+    if not value.strip():
+        return ""
+    parsed = urlparse(value if "://" in value else f"https://{value}")
+    return (parsed.netloc or parsed.path.split("/")[0]).strip().lower()
+
+
+def normalize_identity(value: str) -> str:
+    return " ".join(value.strip().casefold().split())
+
+
+def canonical_brand(ctx: dict[str, Any]) -> str:
+    brand = str(ctx.get("brand") or "").strip()
+    product = str(ctx.get("product") or "").strip()
+    host = website_host(str(ctx.get("website") or ctx.get("websiteUrl") or ""))
+    return brand or product or host or "unknown-brand"
+
+
+def brand_id(ctx: dict[str, Any]) -> str:
+    return safe_path_segment(canonical_brand(ctx))
 
 
 def campaign_text(campaigns: Any) -> str:
@@ -94,15 +125,15 @@ def dimension_queries(category: str, ctx: dict[str, Any]) -> list[dict[str, str]
 
 def build_dimensions(categories: list[str], ctx: dict[str, Any]) -> list[dict[str, Any]]:
     brand = str(ctx.get("brand") or ctx.get("product") or "").strip()
-    website = str(ctx.get("website") or "").strip()
-    host = website.replace("https://", "").replace("http://", "").split("/")[0]
+    website = str(ctx.get("website") or ctx.get("websiteUrl") or "").strip()
+    host = website_host(website)
     dims: list[dict[str, Any]] = [{
         "id": "brand_official",
         "required": True,
         "category": "品牌问题" if "品牌问题" in categories else categories[0],
         "queries": [
             q(f"{brand} 官网", f"{brand} 官网".strip(), "品牌问题", "brand_official"),
-            *( [q(f"{brand} site", f"site:{host} {brand}".strip(), "品牌问题", "official_site")] if host else [] ),
+            *([q(f"{brand} site", f"site:{host} {brand}".strip(), "品牌问题", "official_site")] if host else []),
         ],
         "writeTo": "{taskId}_search_01.tmp.md",
     }]
@@ -128,20 +159,35 @@ def build_plan(ctx: dict[str, Any], mode: str, workspace: str) -> dict[str, Any]
     categories = [c for c in clean_list(ctx.get("categories")) if c in CATEGORIES] or DEFAULT_CATEGORIES
     brand = str(ctx.get("brand") or ctx.get("product") or "").strip()
     task_id = str(ctx.get("taskId") or slug(json.dumps(ctx, ensure_ascii=False, sort_keys=True)))
-    out_dir = f"{workspace}/{task_id}"
-    min_urls = 100
+    brand_name = canonical_brand(ctx)
+    brand_slug = brand_id(ctx)
+    out_dir = f"{workspace}/brands/{brand_slug}"
+    min_urls = 100 if mode == "full-research" else 1
+    target_urls = 100 if mode == "full-research" else 20
     per_category = 20 if mode == "full-research" else 10
 
     return {
         "taskId": task_id,
+        "brandId": brand_slug,
+        "brandName": brand_name,
         "mode": mode,
         "brand": brand,
         "categories": categories,
         "aliases": aliases(ctx),
         "sourceTargets": {
             "minDedupUrls": min_urls,
+            "targetDedupUrls": target_urls,
             "minUrlsPerCategory": per_category,
             "fetchPages": "8-12" if mode == "full-research" else "optional",
+        },
+        "executionContract": {
+            "searchPreset": "search",
+            "fetchPreset": "fetch",
+            "searchTool": "model_preset_call",
+            "fetchTool": "model_preset_call",
+            "requiredTraceFile": f"{out_dir}/research-trace.json",
+            "forbiddenAsPrimarySearch": ["web_search"],
+            "minThirdPartySources": 1 if mode == "frontend-json" else 5,
         },
         "dimensions": build_dimensions(categories, ctx),
         "fetchPolicy": {
@@ -151,9 +197,14 @@ def build_plan(ctx: dict[str, Any], mode: str, workspace: str) -> dict[str, Any]
         },
         "outputFiles": {
             "directory": out_dir,
-            "urls": f"{out_dir}/{task_id}_urls.md",
-            "report": f"{out_dir}/{task_id}_report.md",
-            "frontendJson": f"{out_dir}/{task_id}_result.json",
+            "urls": f"{out_dir}/urls.md",
+            "report": f"{out_dir}/report.md",
+            "frontendJson": f"{out_dir}/result.json",
+            "promptAnalysis": f"{out_dir}/prompt-analysis.json",
+            "sourcesJson": f"{out_dir}/sources.json",
+            "researchTrace": f"{out_dir}/research-trace.json",
+            "knowledgeBaseDir": f"{out_dir}/brand_knowledge",
+            "runScratchDir": f"{workspace}/runs/{task_id}",
         },
     }
 

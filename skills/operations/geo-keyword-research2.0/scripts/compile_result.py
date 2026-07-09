@@ -13,8 +13,8 @@ DEFAULT_TASKS = [
     "接收任务与读取品牌信息",
     "搜索官网、竞品和第三方来源",
     "抓取核心页面并整理证据",
-    "生成 Prompt 与分析原因",
-    "汇总参考 URL 和覆盖结论",
+    "沉淀品牌/产品知识库",
+    "生成 Prompt、参考 URL 和覆盖结论",
 ]
 
 
@@ -72,6 +72,30 @@ def normalize_sources(value: Any) -> list[dict[str, str]]:
     return refs
 
 
+def merge_prompts(existing: list[dict[str, str]], new: list[dict[str, str]]) -> list[dict[str, str]]:
+    merged: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in [*existing, *new]:
+        key = (item["frameType"], item["prompt"])
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append({**item, "id": f"p{len(merged) + 1}"})
+    return merged
+
+
+def write_urls_markdown(path: Path, refs: list[dict[str, str]]) -> None:
+    lines = [
+        "# 品牌级信源链接",
+        "",
+        "| # | 标题 | URL | 来源 | 支持点 |",
+        "|---:|---|---|---|---|",
+    ]
+    for index, ref in enumerate(refs, 1):
+        lines.append(f"| {index} | {ref['title']} | {ref['url']} | {ref['source']} | {ref['supportPoint']} |")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def sources_from_csv(path: str) -> list[dict[str, str]]:
     with Path(path).open(encoding="utf-8", newline="") as f:
         return normalize_sources(list(csv.DictReader(f)))
@@ -114,11 +138,21 @@ def main() -> None:
         artifact_dir.mkdir(parents=True, exist_ok=True)
         prompt_path = artifact_dir / "prompt-analysis.json"
         source_path = artifact_dir / "sources.json"
+        urls_path = artifact_dir / "urls.md"
+        existing_prompts = normalize_prompts(load_json(str(prompt_path), {})) if prompt_path.exists() else []
+        existing_refs = normalize_sources(load_json(str(source_path), {})) if source_path.exists() else []
+        prompts = merge_prompts(existing_prompts, prompts)
+        refs = normalize_sources({"references": [*existing_refs, *refs]})
         prompt_path.write_text(json.dumps({"prompts": prompts}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         source_path.write_text(json.dumps({"references": refs}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        write_urls_markdown(urls_path, refs)
+        knowledge_base_dir = artifact_dir / "brand_knowledge"
+        knowledge_base_paths = sorted(str(path) for path in knowledge_base_dir.glob("*.md")) if knowledge_base_dir.exists() else []
         artifacts = {
             "promptAnalysisPath": str(prompt_path),
             "sourcesPath": str(source_path),
+            "knowledgeBaseDir": str(knowledge_base_dir),
+            "knowledgeBasePaths": knowledge_base_paths,
         }
 
     result = {

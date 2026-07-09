@@ -13,7 +13,7 @@ This project provides Nanobot model presets in `nanobot-runtime/config.json`:
 - `fetch` → fetch-combo, for URL/page reading, extraction, and source summarization.
 - `geoPrimary` → final synthesis and frontend JSON generation.
 
-Use `model_preset_call(preset="search", prompt=...)` for every search/source-discovery phase and `model_preset_call(preset="fetch", prompt=...)` for every URL/page-reading phase. These configured presets are the联网检索/抓取执行层 for this skill.
+Use `model_preset_call(preset="search", prompt=...)` for every search/source-discovery phase and `model_preset_call(preset="fetch", prompt=...)` for every URL/page-reading phase. These configured presets are the联网检索/抓取执行层 for this skill. Do not use `web_search` as the primary search path; the run must prove configured preset usage by writing `outputFiles.researchTrace` and passing `scripts/validate_research_trace.py`.
 
 ## 1. Search DAG planning
 
@@ -44,10 +44,10 @@ Minimum targets:
 
 | Mode | De-duplicated URLs | Per selected category | Fetch pages |
 |---|---:|---:|---:|
-| frontend-json | 100+ required | 10+ preferred | optional |
+| frontend-json | 20 target, not blocking | 10+ preferred | optional |
 | full-research | 100+ required | 20+ preferred | 8-12 |
 
-If any run has fewer than 100 de-duplicated URLs, perform补搜 before generating prompts.
+In frontend-json mode, return once useful real sources and knowledge-base calibration are available; do not stall only to collect more URLs. Treat official/customer material plus a concise third-party source set as enough for Step 3. In full-research mode, if a run has fewer than 100 de-duplicated URLs, perform补搜 before generating prompts.
 
 For each dimension, call `search` separately so the result can be traced back to its category and intent. Ask the `search` preset to return only real titles/URLs/snippets and to omit unknown URLs instead of inventing them.
 
@@ -62,7 +62,15 @@ For each useful source, record:
 - Candidate prompt/keyword supported
 - Support point in one sentence
 
-Use `templates/data-url-template.md` for the final URL file. In frontend mode, also save the machine-readable source artifact to `prompt-artifacts/{taskId}/sources.json`; save categorized prompt/rationale/evidence output to `prompt-artifacts/{taskId}/prompt-analysis.json`. The final response must include both paths in `artifacts`.
+Also write `research-trace.json` with events like:
+
+```json
+{"events":[{"tool":"model_preset_call","preset":"search","query":"...","urls":["https://third-party.example/page"]},{"tool":"model_preset_call","preset":"fetch","url":"https://third-party.example/page"}]}
+```
+
+If the `search` preset returns third-party URLs, include them in `sources.json`; official-only `sources.json` is invalid when third-party evidence was found.
+
+Use `templates/data-url-template.md` for the brand-level URL file. In frontend mode, save and merge the machine-readable source artifact to `final_report/brands/{brandId}/sources.json`; save and merge categorized prompt/rationale/evidence output to `final_report/brands/{brandId}/prompt-analysis.json`; save and merge Markdown brand/product knowledge-base pages to `final_report/brands/{brandId}/brand_knowledge/`. The final response must include these brand-level paths in `artifacts`.
 
 ## 3. Evidence priority
 
@@ -105,13 +113,15 @@ Input priority for prompt angles:
 
 These inputs must shape the prompt wording before category expansion. For example, a positioning like “面向商务和休闲旅客的国际酒店与度假住宿服务” plus a “暑期出行预订增长” campaign should produce scenario prompts around business travel, leisure travel, summer booking timing, hotel/room selection, membership rights, booking workflow, and travel audience needs — without naming the target brand in `场景问题`.
 
-Before prompt generation, classify material evidence into a reusable brand/product knowledge-base note:
+Before prompt generation, classify material evidence into reusable Markdown brand/product knowledge-base pages under `final_report/brands/{brandId}/brand_knowledge/`. Read existing pages first and merge updates in place:
 - Entity and positioning
 - Main scenarios and audiences
 - Functions/capabilities/benefits
 - Campaign signals and timing
 - Competitor/differentiation evidence
 - Source URLs/files and confidence
+
+Use `references/brand-knowledge-base.md` for page names and templates. If evidence is missing, write `待验证` instead of inventing claims.
 
 Synthesize:
 - Brand/entity understanding
