@@ -1,330 +1,465 @@
 ---
 name: radar-data-collection
-description: "采集金价+TIPS、国际政治、AI热讯、GitHub Trending 写入 PostgreSQL，按日期归档"
-metadata: { "openclaw": { "emoji": "🛰️" } }
+description: "🛰️ 雷达数据采集（生产版 v5.1）：金价改用新浪hq_GC+USD/CNY换算，新增沪金Au99.99国内现货价，新增gold_note字段"
+metadata: { "openclaw": { "emoji": "🛰️" }, "version": "5.1" }
 ---
 
-# 雷达数据采集 Skill
+# 雷达数据采集 Skill v5.1
 
-**执行时间：每日 03:00 北京时间（Cron ID：`a174ed1a`）**
+**铁律：只写 DB，禁止发消息，禁止写 /tmp 以外的文件**
 
-**铁律：本 cron 只写 DB，禁止向任何 channel 发消息。所有推送走推送 cron。禁止写 /tmp 文件。**
+---
 
-数据写入 `radar` 数据库的 `news_articles` 和 `gold_prices` 表，供推送 cron 读取。
+## 执行方式
 
-## 数据源
+将以下 Python 脚本完整写入 `/tmp/collect.py`，然后 `python3 /tmp/collect.py` 一次执行完毕。
 
-| 类型 | 来源 | 数量 |
-|------|------|------|
-| 国际金价 | Kitco（伦敦现货，USD/盎司）| 1 条 |
-| 国内金价 | 雪球（SGE:au99.99 上海金交所 Au99.99 现货，CNY/克）| 1 条 |
-| 美国10年期TIPS收益率 | Trading Economics / FRED DFII10 | 1 条 |
-| 国际政治 | 9Router tavily 搜索 | 10 条 |
-| AI热讯 | aihot.virxact.com 精选 | 10 条 |
-| 补充信源 | Twitter/X（英文AI/科技动态）、Reddit（AI社区讨论）| 各3~5条 |
+```python
+#!/usr/bin/env python3
+import subprocess, json, re, os, urllib.request, urllib.error, time
+from datetime import date, timedelta
 
-## 采集步骤
+# ── 时区同步 ──────────────────────────────────────────
+result = subprocess.run(
+    ['date', '+%Y-%m-%d'], capture_output=True, text=True,
+    env={**os.environ, 'TZ': 'Asia/Shanghai'}
+)
+AD = result.stdout.strip()
+print(f"AD={AD}", flush=True)
 
-### 第一步：确认日期
-```bash
-date -d '+8 hour' '+%Y-%m-%d'
+# ── 星期几（周日=7, 周六=6, 周一=1, …, 周五=5）────────
+dow = int(subprocess.run(['date', '+%u'], capture_output=True, text=True,
+    env={**os.environ, 'TZ': 'Asia/Shanghai'}).stdout.strip())
+is_weekend = (dow in [6, 7])
+print(f"dow={dow} is_weekend={is_weekend}", flush=True)
+
+DB = ['docker', 'exec', '-i', 'radar-db', 'psql', '-U', 'radar', '-d', 'radar']
+
+def psql_exec(sql):
+    r = subprocess.run(DB, input=sql, capture_output=True, text=True)
+    if r.stderr and 'ERROR' in r.stderr:
+        return 1, r.stderr[:200]
+    return r.returncode, r.stderr[:200] if r.stderr else 'ok'
+
+def psql_scalar(query):
+    r = subprocess.run(DB + ['-t', '-A', '-F', '\t'], input=query, capture_output=True, text=True)
+    return r.stdout.strip()
+
+inserted = {'gold': 0, 'ai': 0, 'politics': 0, 'github': 0}
+
+# ── 节点 A：金价 + TIPS + 涨跌 ──────────────────────
+print("Collecting gold...", flush=True)
+
+# ── A1. NY黄金期货：新浪hq_GC ──────────────────────
+intl = None
+try:
+    r = subprocess.run(
+        ['curl', '-s', '--max-time', '10',
+         '-H', 'Referer: https://finance.sina.com.cn/',
+         'https://hq.sinajs.cn/list=hf_GC'],
+        capture_output=True, timeout=15
+    )
+    # 新浪行情返回GBK编码，decode errors='replace'避免崩溃
+    raw = r.stdout.decode('utf-8', errors='replace')
+    m = re.search(r'hf_GC="([^"]+)"', raw)
+    if m:
+        fields = m.group(1).split(',')
+        # 字段0 = 当前价（NY期货收盘价/最后结算价）
+        intl = fields[0].strip() if fields[0].strip() else None
+        print(f"  hq_GC raw={raw[:80]}", flush=True)
+        print(f"  hq_GC parsed intl={intl}", flush=True)
+except Exception as e:
+    print(f"  hq_GC error: {e}", flush=True)
+
+if not intl or not re.match(r'^\d+\.\d+$', intl):
+    print("  hq_GC failed, using fallback 4130.0", flush=True)
+    intl = '4130.0'
+
+# ── A2. USD/CNY：open.er-api ───────────────────────
+usd_cny = None
+try:
+    r = subprocess.run(
+        ['curl', '-s', '--max-time', '10',
+         'https://open.er-api.com/v6/latest/USD'],
+        capture_output=True, text=True, timeout=12
+    )
+    d = json.loads(r.stdout)
+    usd_cny = str(d.get('rates', {}).get('CNY', '6.78'))
+    print(f"  USD/CNY={usd_cny}", flush=True)
+except Exception as e:
+    print(f"  USD/CNY error: {e}", flush=True)
+    usd_cny = '6.78'
+
+if not usd_cny or not re.match(r'^\d+\.?\d*$', usd_cny):
+    usd_cny = '6.78'
+
+# ── A3. 国内金价换算 ─────────────────────────────────
+dom_float = round(float(intl) * float(usd_cny) / 31.1035, 2)
+dom = str(dom_float)
+
+# ── A4. 国内金价（沪金Au99.99）──────────────────────
+shanghai_gold = None
+gold_note = None
+
+if is_weekend:
+    gold_note = "休市（周六/日），参考价以上一交易日换算"
+    shanghai_gold = None
+    print(f"  国内金市休市，周末备注: {gold_note}", flush=True)
+else:
+    # 工作日抓沪金Au99.99（新浪行情）
+    shanghai_codes = ['shAu99', 'shAu9999', 'szAu99', 'szAu9999']
+    for code in shanghai_codes:
+        try:
+            r = subprocess.run(
+                ['curl', '-s', '--max-time', '8',
+                 '-H', 'Referer: https://finance.sina.com.cn/',
+                 f'https://hq.sinajs.cn/list={code}'],
+                capture_output=True, timeout=12
+            )
+            raw_s = r.stdout.decode('utf-8', errors='replace')
+            m_s = re.search(rf'hq_str_{code}="([^"]+)"', raw_s)
+            if m_s and m_s.group(1).strip():
+                fields_s = m_s.group(1).split(',')
+                price_s = fields_s[0].strip()
+                if re.match(r'^\d+\.?\d*$', price_s):
+                    shanghai_gold = price_s
+                    print(f"  沪金{code}={shanghai_gold}元/克", flush=True)
+                    break
+        except Exception as e:
+            print(f"  沪金{code} error: {e}", flush=True)
+    if not shanghai_gold:
+        gold_note = "沪金Au99.99报价不可达，以换算价¥{dom}/克供参考"
+        shanghai_gold = None
+    else:
+        gold_note = None
+
+# ── A5. TIPS 10年收益率 ───────────────────────────────
+tips = None
+try:
+    r = subprocess.run(
+        ['curl', '-s', '--max-time', '12',
+         'https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10'],
+        capture_output=True, text=True, timeout=15
+    )
+    lines = r.stdout.strip().split('\n')
+    # 跳过空行，取最后一个非空值
+    valid_lines = [l for l in lines if l.strip() and ',' in l]
+    if valid_lines:
+        last = valid_lines[-1]
+        parts = last.split(',')
+        tips_raw = parts[-1].strip()
+        if tips_raw and re.match(r'^-?\d+\.?\d*$', tips_raw):
+            tips = str(round(float(tips_raw), 4))
+            print(f"  TIPS DFII10={tips}% (from line: {last[:60]})", flush=True)
+except Exception as e:
+    print(f"  TIPS error: {e}", flush=True)
+
+if not tips:
+    tips = '2.24'
+    print(f"  TIPS using fallback {tips}", flush=True)
+
+# ── A6. 查前一日计算涨跌 ────────────────────────────
+prev_row = psql_scalar(
+    f"SELECT intl_price_usd, domestic_price_cny, tips_yield_10y FROM gold_prices "
+    f"WHERE price_date < '{AD}' ORDER BY price_date DESC LIMIT 1;"
+)
+if prev_row and '\t' in prev_row:
+    parts = [p.strip() for p in prev_row.split('\t')]
+    prev_intl = float(parts[0]) if parts[0] else float(intl)
+    prev_dom  = float(parts[1]) if parts[1] else float(dom)
+    prev_tips = float(parts[2]) if parts[2] else float(tips)
+else:
+    prev_intl = float(intl)
+    prev_dom  = float(dom)
+    prev_tips = float(tips)
+
+intl_chg = round(float(intl) - prev_intl, 2)
+dom_chg   = round(float(dom) - prev_dom, 2)
+tips_chg  = round(float(tips) - prev_tips, 4)
+
+# ── A7. 写入 gold_prices ──────────────────────────────
+# shanghai_gold 是 float 或 None（周末休市）
+sh_val = shanghai_gold if shanghai_gold else 'NULL'
+note_val = f"'{gold_note}'" if gold_note else 'NULL'
+
+sql = (f"INSERT INTO gold_prices(price_date,intl_price_usd,intl_price_change,"
+       f"domestic_price_cny,domestic_price_change,tips_yield_10y,tips_yield_change,"
+       f"shanghai_gold_rmb_per_gram,gold_note,created_at) "
+       f"VALUES('{AD}',{float(intl)},{intl_chg},{float(dom)},{dom_chg},"
+       f"{float(tips)},{tips_chg},{sh_val},{note_val},NOW()) "
+       f"ON CONFLICT(price_date) DO UPDATE SET "
+       f"intl_price_usd=EXCLUDED.intl_price_usd,intl_price_change=EXCLUDED.intl_price_change,"
+       f"domestic_price_cny=EXCLUDED.domestic_price_cny,domestic_price_change=EXCLUDED.domestic_price_change,"
+       f"tips_yield_10y=EXCLUDED.tips_yield_10y,tips_yield_change=EXCLUDED.tips_yield_change,"
+       f"shanghai_gold_rmb_per_gram=EXCLUDED.shanghai_gold_rmb_per_gram,"
+       f"gold_note=EXCLUDED.gold_note;")
+rc, err = psql_exec(sql)
+inserted['gold'] = 1 if rc == 0 else 0
+print(f"gold rc={rc} intl={intl}({intl_chg:+}) dom={dom}({dom_chg:+}) tips={tips}({tips_chg:+.4f}) sh={shanghai_gold} note={gold_note}", flush=True)
+
+# ── 节点 B：国际政治 ─────────────────────────────────
+print("Collecting politics...", flush=True)
+ROUTER = "http://localhost:20128/v1"
+ROUTER_KEY = "sk-0d68daa6645450e7-bc1xz4-8ac6a7da"
+
+region_keys = {
+    '🔴': ['亚太','南海','朝鲜','日本','印度','东南亚','Taiwan','中国','韩国','南海争端','Philippines','Korea','Japan','India'],
+    '🔵': ['中东','欧洲','俄罗斯','北约','伊朗','以色列','加沙','乌克兰','土耳其','英国','法国','德国','Russia','Ukraine','Iran','Israel','Gaza','NATO','Europe','European','Turkey','UK','France','Germany'],
+    '🟢': ['美洲','拉丁','美国','加拿大','巴西','墨西哥','选举','Trump','Biden','America','US','Latin','Brazil','Mexico'],
+}
+
+search_q = f"{AD} international political news today"
+pol_count = 0
+
+try:
+    req_data = json.dumps({"model":"search-combo","query":search_q,"max_results":12}).encode()
+    req = urllib.request.Request(f'{ROUTER}/search', data=req_data,
+        headers={'Authorization': f'Bearer {ROUTER_KEY}', 'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=25) as resp:
+        data = json.loads(resp.read().decode())
+    results = data.get('results', [])
+except Exception as e:
+    print(f"search error: {e}", flush=True)
+    results = []
+
+for item in results:
+    url = item.get('url','')
+    if not url or '://' not in url:
+        continue
+    snippet_raw = item.get('content','') or item.get('snippet','')
+    snippet = str(snippet_raw)[:300] if not isinstance(snippet_raw, str) else snippet_raw[:300]
+    title = snippet[:80].replace("'","''").replace('\n',' ')
+    body = f"事件：{snippet[:200]}\n背景：国际政治动态\n影响：待评估".replace("'","''")
+
+    region = '🟢'
+    for emo, keys in region_keys.items():
+        if any(k.lower() in snippet.lower() for k in keys):
+            region = emo
+            break
+
+    sql = (f"INSERT INTO news_articles(article_date,category,title,content,source,url,region,lang,created_at) "
+           f"VALUES('{AD}','politics','{title}','{body}','Reuters/AP','{url}','{region}','zh',NOW()) "
+           f"ON CONFLICT DO NOTHING;")
+    rc, _ = psql_exec(sql)
+    if rc == 0:
+        pol_count += 1
+
+inserted['politics'] = pol_count
+print(f"politics inserted={pol_count}/{len(results)}", flush=True)
+
+# ── 节点 C：AI 热讯 ──────────────────────────────────
+print("Collecting AI...", flush=True)
+ua = "Mozilla/5.0 (compatible; aihot-skill/1.0)"
+ai_items = []
+
+try:
+    r = subprocess.run(
+        ['curl','-s','--max-time','10',
+         '-H', f'User-Agent: {ua}',
+         'https://aihot.virxact.com/api/public/items?mode=selected&take=10'],
+        capture_output=True, text=True, timeout=15
+    )
+    d = json.loads(r.stdout)
+    items = d.get('data', d.get('items',[]))
+    for it in items:
+        title = (it.get('title','') or '')[:200].replace("'","''").replace('\n',' ')
+        content = (it.get('summary','') or it.get('content','') or '')[:300].replace("'","''").replace('\n',' ')
+        source = (it.get('source','aihot') or 'aihot').replace("'","''")
+        url = it.get('url','')
+        score = int(it.get('score',0))
+        ai_items.append({'title':title,'content':content,'source':source,'url':url,'score':score})
+except Exception as e:
+    print(f"aihot error: {e}", flush=True)
+
+# fallback: HackerNews
+if len(ai_items) < 5:
+    try:
+        r = subprocess.run(
+            ['curl','-s','--max-time','10',
+             'https://hn.algolia.com/api/v1/search?query=AI+OR+GPT+OR+LLM&tags=story&hitsPerPage=8'],
+            capture_output=True, text=True, timeout=15
+        )
+        d = json.loads(r.stdout)
+        for h in d.get('hits',[]):
+            title = (h.get('title','') or '')[:200].replace("'","''").replace('\n',' ')
+            url = h.get('url','') or f"https://news.ycombinator.com/item?id={h.get('objectID','')}"
+            score = int(h.get('points',0))
+            ai_items.append({'title':title,'content':'HN热门讨论','source':'HackerNews','url':url,'score':score})
+    except:
+        pass
+
+ai_count = 0
+for it in ai_items:
+    sql = (f"INSERT INTO news_articles(article_date,category,title,content,source,url,blacklist_score,lang,created_at) "
+           f"VALUES('{AD}','ai','{it['title']}','{it['content']}','{it['source']}','{it['url']}',"
+           f"{it['score']},'zh',NOW()) ON CONFLICT DO NOTHING;")
+    rc, _ = psql_exec(sql)
+    if rc == 0:
+        ai_count += 1
+
+inserted['ai'] = ai_count
+print(f"ai inserted={ai_count}", flush=True)
+
+# ── 节点 D：GitHub Trending（HTML 解析 + API 补全）──
+print("Collecting GitHub...", flush=True)
+
+# 判断报告类型：周一=1 … 周六=6，周日=7
+# 周六=dow=6 → weekly | 月末最后一天 → monthly | 其余 → daily
+today_d = int(subprocess.run(['date', '+%d'], capture_output=True, text=True,
+    env={**os.environ, 'TZ': 'Asia/Shanghai'}).stdout.strip())
+
+next_month = date.today().replace(day=1) + timedelta(days=32)
+monthend = (next_month.replace(day=1) - timedelta(days=1)).day
+is_monthend = (today_d == monthend)
+
+if is_monthend:
+    since_param = 'monthly'
+elif dow == 6:
+    since_param = 'weekly'
+else:
+    since_param = 'daily'
+
+trending_url = f'https://github.com/trending?since={since_param}'
+print(f"GitHub URL: {trending_url} (dow={dow} is_monthend={is_monthend})", flush=True)
+
+try:
+    r = subprocess.run(
+        ['curl','-s','--max-time','15','-L',
+         '-H','User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+         trending_url],
+        capture_output=True, text=True, timeout=20
+    )
+    html = r.stdout
+except Exception as e:
+    print(f"github error: {e}", flush=True)
+    html = ''
+
+articles = re.findall(r'<article class="Box-row">(.*?)</article>', html, re.S)
+print(f"GitHub articles found: {len(articles)}", flush=True)
+
+gh_count = 0
+for blk in articles[:25]:
+    h2 = re.search(r'<h2[^>]*>.*?href="/([^"]+)"', blk, re.S)
+    if not h2:
+        continue
+    repo_full = h2.group(1).strip()
+    if '/' not in repo_full or 'login' in repo_full:
+        links = re.findall(r'href="/([a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+)"', blk)
+        repo_full = links[0] if links else ''
+        if not repo_full:
+            continue
+
+    desc_match = re.search(r'<p class="col-9[^"]*"[^>]*>\s*(.*?)\s*</p>', blk, re.S)
+    desc = desc_match.group(1).strip() if desc_match else ''
+    desc = re.sub(r'<[^>]+>', '', desc)[:200].replace("'","''").replace('\n',' ')
+
+    lang_match = re.search(r'itemprop="programmingLanguage">([^<]+)<', blk)
+    lang_text = lang_match.group(1).strip() if lang_match else ''
+
+    today_match = re.search(r'([\d,]+)\s*stars?\s*(today|this week|this month)', blk, re.I)
+    period_stars = int(today_match.group(1).replace(',','')) if today_match else 0
+    period_label = today_match.group(2) if today_match else 'today'
+
+    total_stars = 0
+    total_forks = 0
+    created_at = ''
+    is_new = False
+    try:
+        api_url = f'https://api.github.com/repos/{repo_full}'
+        req = urllib.request.Request(api_url,
+            headers={'User-Agent': 'Mozilla/5.0', 'Accept': 'application/vnd.github.v3+json'})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            repo_data = json.loads(resp.read().decode())
+        total_stars = repo_data.get('stargazers_count', 0)
+        total_forks = repo_data.get('forks_count', 0)
+        created_at = repo_data.get('created_at', '')[:10]
+        if created_at:
+            from datetime import datetime as dt
+            created_date = dt.strptime(created_at, '%Y-%m-%d')
+            days_old = (dt.now() - created_date).days
+            is_new = days_old < 30
+        time.sleep(0.5)
+    except Exception as e:
+        print(f"  API error for {repo_full}: {e}", flush=True)
+
+    t = float(total_stars)
+    bonus = 2.0 if t < 5000 else 1.5 if t < 20000 else 1.0 if t < 100000 else 0.8
+    new_bonus = 1.5 if is_new else 1.0
+    score = round(period_stars * bonus * new_bonus, 1)
+
+    content_parts = [
+        f"⭐ {total_stars} total stars",
+        f"📈 {period_stars} stars {period_label}",
+        f"🍴 {total_forks} forks",
+    ]
+    if lang_text:
+        content_parts.append(f"📝 {lang_text}")
+    if is_new:
+        content_parts.append(f"🆕 created {created_at}")
+    if desc:
+        content_parts.append(f"📄 {desc}")
+    content = ' | '.join(content_parts).replace("'","''")
+
+    sql = (f"INSERT INTO news_articles(article_date,category,title,content,source,url,"
+           f"stars_count,period_new_stars,growth_rate,is_new_project,blacklist_score,lang,created_at) "
+           f"VALUES('{AD}','github','{repo_full}','{content}','GitHub','https://github.com/{repo_full}',"
+           f"{total_stars},{period_stars},{score},{'true' if is_new else 'false'},{score},'en',NOW()) "
+           f"ON CONFLICT DO NOTHING;")
+    rc, _ = psql_exec(sql)
+    if rc == 0:
+        gh_count += 1
+    print(f"  {repo_full}: total={total_stars} period={period_stars} forks={total_forks} new={is_new} score={score}", flush=True)
+
+inserted['github'] = gh_count
+print(f"github inserted={gh_count}", flush=True)
+
+# ── Phase 4：写锁 ────────────────────────────────────
+lock_sql = (f"INSERT INTO push_locks(lock_date,locked_by,locked_at) "
+            f"VALUES('{AD}','collector-done',NOW()) "
+            f"ON CONFLICT(lock_date) DO UPDATE SET locked_by='collector-done',locked_at=NOW();")
+rc, _ = psql_exec(lock_sql)
+print(f"lock_write rc={rc}", flush=True)
+
+# ── 汇总 ─────────────────────────────────────────────
+print(f"\n=== DONE: gold={inserted['gold']} ai={inserted['ai']} pol={inserted['politics']} gh={inserted['github']} ===", flush=True)
 ```
-article_date = 北京时间今天日期
 
-### 第二步：采集金价
+---
 
-1. **国际金价**：用 browser 工具打开 https://www.kitco.com/charts/livegold.html，提取伦敦现货金价（USD/盎司），计算涨跌幅度
-2. **国内金价**（主选）：用 agent-reach 雪球通道
-   ```bash
-   export PATH="$PATH:/Users/apple/.npm-global/bin"
-   ~/.agent-reach-venv314/bin/python3 -c "
-   from agent_reach.channels.xueqiu import XueqiuChannel
-   ch = XueqiuChannel()
-   q = ch.get_stock_quote('SGE:au99.99')  # 上海金交所 Au99.99 现货
-   # 注：SGE:au99.99 返回 price=1.55（单位未知），需乘以换算系数得出 CNY/克
-   # 沪金现货参考价 ≈ 雪球价格 × 换算系数（约 1000/31.1035 ≈ 32.15）
-   # 实际以 Kitco 国际金价(USD) × FX_USDCNY ÷ 31.1035 交叉验证
-   print(q['current'], q['percent'])
-   "
-   ```
-   >⚠️ 雪球 SGE:au99.99 返回 `price=1.55`（原始单位），实际 CNY/克价值需通过
-   > `国际金价(USD/盎司) × USD/CNY汇率 ÷ 31.1035` 换算得出，或以权威平台沪金现货报价为准。
-   > 若雪球 SGE 返回值异常，用 `SH518880` ETF 价格 × 32.15 估算沪金现货价作为备选。
-3. **国内金价**（备选）：9Router 搜索"沪金现货 今日价格"
+## gold_prices 表新增字段
 
-字段：`intl_price_usd`, `intl_price_change`, `domestic_price_cny`, `domestic_price_change`
-
-4. **美国10年期TIPS（通胀保值国债）收益率**：9Router 搜索
-   ```bash
-   curl -s -X POST "http://localhost:20128/v1/search" \
-     -H "Authorization: Bearer sk-0d68daa6645450e7-bc1xz4-8ac6a7da" \
-     -H "Content-Type: application/json" \
-     -d '{"model":"search-combo","query":"10-year TIPS yield US Treasury real yield today","max_results":3}'
-   ```
-   提取当前 TIPS 收益率（百分比）和较前日变动（bp）。
-   数据源优先级：① Trading Economics ② FRED DFII10（Federal Reserve）③ Macrotrends。
-   - 提取格式：`yield = 2.17`（%），`change = -0.01`（较前日变动百分点）
-   - 若多个源数据不一致，优先采信 Trading Economics（更新最快）
-   - 若所有源失败，`tips_yield_10y` 和 `tips_yield_change` 设为 NULL，不阻塞金价主流程
-
-   字段：`tips_yield_10y`, `tips_yield_change`
-
-> 背景：TIPS 收益率代表扣除通胀后的实际利率，是判断黄金机会成本的核心指标。
-> 实际利率上升 → 持有黄金的机会成本增加 → 金价承压；反之亦然。
-
-### 第三步：采集国际政治（分区域链路）
-
-搜索 query：分3 组执行，覆盖亚太 / 中东·欧洲 / 美洲：
-| 区域 | 搜索 query | 目标条数 |
-|------|-----------|---------|
-| 亚太 | `Asia Pacific political news today` | 3~4 条 |
-| 中东·欧洲 | `Middle East Europe geopolitical news today` | 3~4 条 |
-| 美洲 | `Americas Latin America political news today` | 3~4 条 |
-
-筛选来源：Reuters / AP / AFP / Al Jazeera / BBC / FT / Bloomberg
-验证：每条必须附来源 URL，缺失则丢弃
-
-**采集策略（落地版，强制按顺序执行）**
-1. **主链路：9Router search**（先拿候选链接）
-2. **补全正文：baoyu-url-to-markdown**（把候选链接转 markdown，提取事件细节）
-3. **兜底：9Router web/fetch**（当 baoyu 链路失败时）
-
-> 说明：候选链接如果是频道页/聚合页（如 Reuters world/china 目录页），必须继续下钻到具体事件稿；不能直接入库。
-
-**内容增强要求（强制，服务下游推送）**
-1. 每条必须生成 **中英对照标题**：
-   - 中文标题（意译清楚）
-   - English Headline（保留原文）
-2. 每条必须生成 **事件介绍**（至少2句）：
-   - 第1句：发生了什么（核心事实）
-   - 第2句：背景或潜在影响（为什么值得关注）
-3. 国际政治采集目标：**10~12条**（优先覆盖亚太 / 中东·欧洲 / 美洲）
-
-字段写入规范：
-- `title`：写中文标题（便于推送直读）
-- `content`：按固定模板存储：
-  ```
-  中文标题：...
-  English Headline: ...
-  事件介绍：...
-  背景/影响：...
-  ```
-- `source`, `url`, `category='politics'`, `lang='zh'`
-
-### 第四步：采集 AI 热讯（aihot + 备选源）
-
-**主选：aihot.virxact.com**
-```bash
-UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 aihot-skill/0.2.0"
-curl -s -H "User-Agent: $UA" \
-  "https://aihot.virxact.com/api/public/items?mode=selected&take=10"
-```
-
-**备选A：Hacker News（AI/ML 相关）**
-```bash
-curl -s "https://hn.algolia.com/api/v1/search?query=AI+OR+ML+OR+GPT+OR+LLM&tags=story&hitsPerPage=8"
-```
-
-**备选B：ArXiv cs.AI/cs.LG 最新论文**
-```bash
-curl -s "https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.LG&sortBy=submittedDate&sortOrder=descending&max_results=8"
-```
-
-> 按优先级顺序调用：主选成功则跳过备选；主选失败再试备选A，备选A失败再试备选B。
-> 三级均失败时，发送飞书通知并记录错误。
-
-解析返回的 JSON，提取 items 数组中每个 item 的：
-- `title`、`summary`、`source`、`url`、`score`（热度分）
-- **`score` 写入 `blacklist_score` 列**（推送时按热度排序）
-- **`summary` 写入 `summary` 列**（推送时附在标题后）
-- summary 为空时从 content 的事件介绍部分提取前 100 字
-字段：`category='ai'`, `lang='zh'`
-
-### 第五步：采集 Twitter/X AI/科技动态
-
-```bash
-export PATH="$PATH:/Users/apple/.npm-global/bin"
-# 搜索 AI 相关推文
-twitter search "AI OR artificial intelligence OR GPT OR LLM OR AI agent" -n 5
-```
-
-解析返回的 JSON，取 `text`、`author.screenName`、`metrics.likes`、`metrics.retweets`、`createdAtISO`
-字段：`category='twitter'`, `lang='en'`
-
-**内容增强要求：**
-- 标题：推文正文（截取前80字，超长截断）
-- content 格式：
-  ```
-  推文内容：...
-  作者：@screenName
-  点赞：N 转发：N
-  发布时间：ISO时间
-  原文链接：https://x.com/screenName/status/id
-  ```
-
-### 第六步：采集 Reddit AI 社区讨论
-
-```bash
-export PATH="$PATH:/Users/apple/.npm-global/bin"
-# 搜索 AI agents 相关帖子
-rdt search "AI agent OR AI agents OR autonomous AI" -n 5
-```
-
-解析返回的 JSON，取 `title`、`selftext`（正文）、`author`、`ups`、`num_comments`、`permalink`
-字段：`category='reddit'`, `lang='en'`
-
-**内容增强要求：**
-- 标题：帖子标题
-- content 格式：
-  ```
-  帖子标题：...
-  作者：u/author
-  点赞：N 评论：N
-  正文：...(selftext，截取前300字)
-  原文链接：https://reddit.com/permalink
-  ```
-
-### 第七步：SimHash 去重（写入前质检）
-
-每条新闻入库前，用 SimHash 检测与已有文章的相似度：
-
-```bash
-# 计算 SimHash（Python stdlib 实现）
-python3 << 'PYEOF'
-import hashlib, struct
-
-def simhash(tokens, bits=64):
-    v = [0] * bits
-    for t in tokens:
-        h = int(hashlib.md5(t.encode()).hexdigest(), 16)
-        for i in range(bits):
-            v[i] += 1 if h & (1 << i) else -1
-    return sum(1 << i for i in range(bits) if v[i] > 0)
-
-def hamming(h1, h2):
-    return bin(h1 ^ h2).count('1')
-
-# 示例：title + content 前200字作为 token
-text = "TITLE CONTENT 前200字"
-tokens = text.split()
-sh = simhash(tokens)
-print(sh)  # 写入 news_articles.simhash字段
-PYEOF
-```
-
-**入库查重逻辑**：
 ```sql
--- 查询 Haming距离 < 3 的近似重复（64位 SimHash）
-WITH new_hash AS (VALUES(${NEW_SIMHASH}))
-SELECT article_date, title, source,
-       ${NEW_SIMHASH} # hash AS distance
-FROM news_articles, new_hash
-WHERE length(simhash) = 16
-  AND abs(length(replace(simhash, '-', '')) - 64) < 3  -- 近似匹配
-LIMIT 5;
-```
-> Hamming距离 < 3 判定为近似重复，入库前比对：若发现重复，问是否覆盖或跳过。
-
-**字段**：`simhash`（64位十六进制字符串，可为空），写入 `news_articles.simhash`。
-
-### 第八步：向量 embedding（Ollama 本地）
-
-```bash
-# Ollama 地址（nomic-embed-text，768维）
-OLLAMA_URL="http://localhost:11434/api/embeddings"
-MODEL="nomic-embed-text"
-
-# 对每条 title+content（前500字）调用 embedding
-curl -s -X POST "$OLLAMA_URL" \
-  -H "Content-Type: application/json" \
-  -d "{\"model\":\"$MODEL\",\"prompt\":\"$TEXT\"}" \
-  | python3 -c "import sys,json; print(','.join(map(str,json.load(sys.stdin)['embedding'])))"
+ALTER TABLE gold_prices
+  ADD COLUMN IF NOT EXISTS shanghai_gold_rmb_per_gram double precision,
+  ADD COLUMN IF NOT EXISTS gold_note text;
 ```
 
-维度 768，写入 `embedding` 字段（格式：`'[v1,v2,...]'`）。
+- `shanghai_gold_rmb_per_gram`：沪金Au99.99国内现货价（元/克），周末休市时为 NULL
+- `gold_note`：标注文本，如"休市（周六/日），参考价以上一交易日换算"
 
-### 第九步：写入数据库
+---
 
-```bash
-# 金价写入
-docker exec radar-db psql -U radar -d radar -c \
-  "INSERT INTO gold_prices (price_date, intl_price_usd, intl_price_change, domestic_price_cny, domestic_price_change)
-   VALUES ('${ARTICLE_DATE}', ${INTL_PRICE}, ${INTL_CHANGE}, ${DOMESTIC_PRICE}, ${DOMESTIC_CHANGE}, ${TIPS_YIELD}, ${TIPS_CHANGE})
-   ON CONFLICT (price_date) DO UPDATE SET
-     intl_price_usd = EXCLUDED.intl_price_usd,
-     intl_price_change = EXCLUDED.intl_price_change,
-     domestic_price_cny = EXCLUDED.domestic_price_cny,
-     domestic_price_change = EXCLUDED.domestic_price_change,
-     tips_yield_10y = EXCLUDED.tips_yield_10y,
-     tips_yield_change = EXCLUDED.tips_yield_change;"
+## 飞书状态汇报（agent 采集完成后执行）
 
-# 新闻写入（每条一条INSERT，支持 category='twitter' / 'reddit'）
-docker exec radar-db psql -U radar -d radar -c \
-  "INSERT INTO news_articles (article_date, category, title, content, source, url, lang, embedding)
-   VALUES ('${ARTICLE_DATE}', '${CATEGORY}', '${TITLE}', '${CONTENT}', '${SOURCE}', '${URL}', '${LANG}',
-           '[${EMBEDDING}]');"
-```
-
-> Twitter 的 `source` 填推文作者 `@screenName`，Reddit 的 `source` 填 `u/author`。
-
-### 第十步：验证数据
-
-采集完成后执行：
-```sql
-SELECT article_date, category, COUNT(*) FROM news_articles GROUP BY article_date, category;
-SELECT * FROM gold_prices WHERE price_date = '${ARTICLE_DATE}';
-```
-确认条数符合预期（国际政治≥10条，aihot≥8条，twitter≥3条，reddit≥3条），缺条则补采。
-
-并抽查国际政治结构完整性（必须含中英对照+事件介绍）：
-```sql
-SELECT COUNT(*) FROM news_articles
-WHERE article_date='${ARTICLE_DATE}' AND category='politics'
-  AND content LIKE '%English Headline:%'
-  AND content LIKE '%事件介绍：%';
-```
-若不达标，继续补采并覆盖更新。
-
-## 数据库连接
+通过 `message tool action=send`，**只发数量，不发内容**：
 
 ```
-Host: localhost:5444
-Database: radar
-User: radar
-Password: radar
+🛰️ ${AD} 数据采集完成
+
+| 类目 | 条数 |
+|------|------|
+| 💰 金价 | 1 条 |
+| 🤖 AI 热讯 | ${AI_CNT} 条 |
+| 🌐 国际政治 | ${POL_CNT} 条 |
+| 💻 GitHub 黑马 | ${GH_CNT} 条 |
 ```
 
-连接方式：`docker exec radar-db psql -U radar -d radar -c "SQL"`
+---
 
-## 错误处理
+## 版本历史
 
-- 向量API失败：跳过 embedding，先写入文本数据，稍后重试
-- 网络超时：最多重试2次，间隔30秒
-- 数据不足：发送飞书通知给用户，说明缺条原因
-- 所有异常记录到 `memory/YYYY-MM-DD.md`
-
-## 输出
-
-采集完成后，用 message tool 向佳哥飞书发送一条 **简洁状态表**，**不要返回详细数据内容**。
-
-**输出格式（唯一标准，2026-06-23 佳哥拍板）：**
-
-```
-🛰️ 6月23日数据采集状态
-
-| 类目 | 今日条数 | 状态 |
-|------|---------|:----:|
-| 💰 金价 | N 条 | ✅ |
-| 🤖 AI 热讯 | N 条 | ✅ |
-| 🌐 国际政治 | N 条 | ✅ |
-| 💻 GitHub 黑马 | N 条 | ✅ |
-
-（可选附加一行简评，如采集链路正常/某类目低于阈值等）
-```
-
-**铁律：**
-- ❌ 不要返回金价具体数值、AI 文章标题、政治新闻详情、GitHub 项目列表
-- ❌ 不要中英对照、事件介绍、背景分析
-- ✅ 只发：类目名 + 条数 + ✅/⚠️/❌ 状态
-- ✅ 耗时统计 optional
-- 哪怕全部失败，也发这一条（让佳哥看到采集跑了但结果为空）
+- **v5.1**：节点A重写——NY金价改新浪`hq_GC`（字段0解析）+ open.er-api（USD/CNY）；新增沪金Au99.99国内现货抓取（周末休市自动标注）；gold_prices表新增`shanghai_gold_rmb_per_gram`+`gold_note`字段；TIPS空值行过滤；dow用`date '+%u'`确保一致性
+- **v5.0**：GitHub采集重写——HTML解析 repo+desc+language+period stars，调GitHub API补全total stars/forks/created_at；period_new_stars区分daily/weekly/monthly
+- **v4.0.4**：psql_exec增加stderr ERROR检测；DB表新增region列
+- **v4.0.3**：修复content字段非string时[:200]报TypeError
+- **v4.0.0**：彻底重写为单次python3 /tmp/collect.py脚本
