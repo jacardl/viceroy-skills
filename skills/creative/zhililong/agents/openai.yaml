@@ -1,4 +1,4 @@
 interface:
   display_name: "直隶按察使长文"
   short_description: "为直隶按察使公众号产出 4000-5500 字的中文长文（5 节结构 + renwei 风格 + 视频素材利用），输出 markdown + HTML 双格式"
-  default_prompt: "请基于提供的素材（视频链接 / 转写 / 文字稿 / 主题），按 zhililong 技能规范输出长文：5 节结构 + 1 反转 + 1 行动，每节 800-1100 字，renwei 风格（位置+代价+手迹），硬约束 11 项事后清单全过。markdown 落到 Final Report/transcripts/主题/ 目录，HTML 转码后供 zhili-publish 灌入草稿箱。"
+  default_prompt: "请基于提供的素材（视频链接 / 转写 / 文字稿 / 主题），按 zhililong 技能规范输出长文：5 节结构 + 1 反转 + 1 收尾（回环/反问/最后一帧/留白，慎用行动号召），每节 800-1100 字，renwei 风格（位置+代价+手迹），硬约束 11 项事后清单全过。markdown 落到 Final Report/transcripts/主题/ 目录，HTML 转码后供 zhili-publish 灌入草稿箱。收尾禁用句式：'今天回家观察一下 / 今天你就能观察一个东西 / 不妨从今天开始 / 试着做一件事'。"
