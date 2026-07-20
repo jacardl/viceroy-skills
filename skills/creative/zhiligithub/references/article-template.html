@@ -1,42 +1,64 @@
+<!--
+⚠️⚠️⚠️ 警告：本文件已被 zhiligithub 精简规则（2026-06-10）废弃 ⚠️⚠️⚠️
+═══════════════════════════════════════════════════════════════════════════
+原 article-template.html 包含的元素**已全部被精简规则砍掉**：
+  ❌ 顶部分类标签（GitHub / 黑马项目 span）
+  ❌ body 内 H1 标题
+  ❌ 「刘生 · 2026年X月」副标题
+  ❌ 「作者：卡兹克」页脚（用户硬约束：作者名一律「刘生」，**绝对不能出现「卡兹克」**）
+  ❌ 适合/不适合 ✅/❌ 标签盒
+  ❌ Pull Quote 视觉块
+
+**正确做法（2026-06-21 沉淀）**：
+  1. 写 markdown 草稿（精简规则版，6 段式 1500-2000 字）
+  2. python3 scripts/render_zhili_article.py <draft.md> <article.html>
+  3. python3 scripts/validate_zhili_article.py <article.html> --title "..."
+  4. 替换 <img src="PLACEHOLDER"> 为 mmbiz URL（publish_zhili.py image gate 拦截）
+  5. python3 scripts/publish_zhili.py "<title>" "刘生" "<digest>" "<html>"
+
+本文件保留下来仅作为「反面教材」参考——CSS 颜色/字体值可借鉴，但**结构
+元素**和**作者名**已全部过时，绝对不要复制此文件直接发布。
+═══════════════════════════════════════════════════════════════════════════
+-->
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f5f4ed;font-family:'Noto Serif SC',Georgia,serif">
 
-<!-- 直隶按察使 · 流式叙事模板 · 2026-05-30 样式A固化 -->
-<!-- CSS 规范：与 article_io2026.html 完全一致 -->
+<!-- ⚠️ 废弃结构：直隶按察使 · 流式叙事模板 · 2026-05-30 样式A固化 -->
+<!-- ⚠️ 废弃结构：CSS 规范仅参考颜色/字体值，不要复制结构 -->
 <div style="max-width:680px;margin:0 auto;padding:24px 16px 60px">
 
-  <!-- 分类标签 -->
+  <!-- ❌ 废弃：分类标签（精简规则要求 body 不放） -->
   <div style="margin-bottom:18px">
 <span style="display:inline-block;background:#1B365D;color:#fff;font-size:12px;padding:3px 10px;border-radius:2px;margin-right:6px">GitHub</span>
 <span style="display:inline-block;background:#c9553d;color:#fff;font-size:12px;padding:3px 10px;border-radius:2px">黑马项目</span>
   </div>
 
-  <!-- 大标题 -->
+  <!-- ❌ 废弃：body H1（WeChat 草稿 title 字段就是标题） -->
   <h1 style="font-size:28px;line-height:1.35;color:#1B365D;margin:0 0 8px;font-weight:700">文章大标题</h1>
 
-  <!-- 作者信息行 -->
+  <!-- ❌ 废弃：副标题行 -->
   <div style="font-size:13px;color:#7c6f64;margin-bottom:28px">作者 · 2026年5月20日</div>
 
-  <!-- 引言（可选） -->
+  <!-- ⚠️ Pull Quote（保留为可用工具，但默认不要用） -->
   <div style="border-left:4px solid #1B365D;padding:14px 18px;background:#f0efe8;margin-bottom:28px;font-size:16px;line-height:1.8;color:#333;font-style:italic">
 <p style="margin:0">「引言金句或核心洞察一句话。」</p>
 <p style="margin:8px 0 0;color:#7c6f64;font-size:14px">—— 出处</p>
   </div>
 
-  <!-- 导语 -->
+  <!-- 导语（保留） -->
   <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px">
 开篇背景描述，建立场景，让读者快速进入语境。
   </p>
 
-  <!-- 分隔线 -->
+  <!-- 分隔线（保留） -->
   <div style="text-align:center;color:#c9553d;margin-bottom:24px;font-size:18px;letter-spacing:6px">· · ·</div>
 
-  <!-- ========== 项目介绍 ========== -->
-  <h2 style="font-size:20px;color:#1B365D;margin:0 0 16px;font-weight:700">项目名称</h2>
+  <!-- ========== H2 章节（带 #00d4aa 左边框，样式A 签名） ========== -->
+  <h2 style="font-size:20px;font-weight:bold;color:#1B365D;border-left:4px solid #00d4aa;padding-left:12px;margin:28px 0 12px 0;">项目名称</h2>
 
-  <!-- GitHub 元信息卡片 -->
+  <!-- GitHub 元信息卡片（CSS 可参考，发布由 render_zhili_article.py 自动生成） -->
   <div style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;padding:14px 16px;background:#efeee5;border-radius:6px;border:1px solid #d4d1c5;">
     <span style="background:#1B365D;color:#f5f4ed;padding:3px 10px;font-size:13px;border-radius:3px;">⭐ <strong>17.9k</strong></span>
     <span style="background:#1B365D;color:#f5f4ed;padding:3px 10px;font-size:13px;border-radius:3px;">TypeScript</span>
@@ -44,20 +66,15 @@
     <span style="color:#6b665b;font-size:13px;padding:3px 0;">github.com/owner/repo</span>
   </div>
 
-  <!-- 配图 -->
+  <!-- 配图（CSS 可参考，发布前需替换为 mmbiz URL） -->
   <img src="mmbiz_url" style="width:100%;border-radius:6px;margin:16px 0;" />
   <p style="font-size:13px;color:#7c6f64;font-style:italic;margin:0 0 20px 0;">▲ 图注</p>
-
-  <!-- Pull Quote -->
-  <div style="border-left:4px solid #1B365D;padding:14px 18px;background:#f0efe8;margin-bottom:28px;font-size:16px;line-height:1.8;color:#333;font-style:italic">
-<p style="margin:0">「核心观点一句话。」</p>
-  </div>
 
   <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px">
 正文内容段落。<strong style="color:#1B365D;">深蓝色高亮（关键词/重点）</strong>，<strong style="color:#c9553d;">红色高亮（数据/核心）</strong>，<strong style="background:#fff3b0;">黄底高亮（警示/核心洞察）</strong>。
   </p>
 
-  <!-- 适合/不适合标签 -->
+  <!-- ❌ 废弃：适合/不适合标签盒（边界条件融进散文） -->
   <div style="margin:16px 0;padding:12px 16px;background:#f0f7f4;border-radius:4px;border-left:3px solid #2d6a4f;">
     <p style="font-size:14px;color:#1f1d18;margin:0 0 4px 0;"><strong style="color:#2d6a4f;">✅ 适合场景：</strong>具体说明</p>
   </div>
@@ -65,31 +82,18 @@
     <p style="font-size:14px;color:#1f1d18;margin:0 0 4px 0;"><strong style="color:#7c6f64;">❌ 不适合：</strong>具体说明</p>
   </div>
 
-  <!-- 分隔线 -->
   <div style="text-align:center;color:#c9553d;margin-bottom:24px;font-size:18px;letter-spacing:6px">· · ·</div>
 
-  <!-- ========== 技术亮点 ========== -->
-  <h2 style="font-size:20px;color:#1B365D;margin:0 0 16px;font-weight:700">技术亮点</h2>
+  <!-- ========== 后续章节 H2 沿用同样模板（border-left:4px solid #00d4aa） ========== -->
 
-  <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 8px;padding-left:16px;text-indent:-16px;">
-1. <strong style="color:#1B365D;">亮点标题：</strong>具体描述
-  </p>
-  <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 8px;padding-left:16px;text-indent:-16px;">
-2. <strong style="color:#1B365D;">亮点标题：</strong>具体描述
-  </p>
-  <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 8px;padding-left:16px;text-indent:-16px;">
-3. <strong style="color:#1B365D;">亮点标题：</strong>具体描述
-  </p>
-
-  <!-- 背景高亮重点 -->
+  <!-- ⚠️ 旧「核心洞察」块（已废弃，用普通段落代替） -->
   <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:16px 0;background:#fff3b0;padding:10px 14px;border-radius:4px;">
 <strong style="color:#c9553d;font-size:18px;">💡 核心洞察：</strong>核心洞察内容。
   </p>
 
-  <!-- 分隔线 -->
   <div style="text-align:center;color:#c9553d;margin-bottom:24px;font-size:18px;letter-spacing:6px">· · ·</div>
 
-  <!-- ========== 收尾 ========== -->
+  <!-- 收尾段落（直接用普通 <p>，不要 H2「六、总结」） -->
   <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px">
 <strong style="color:#c9553d;">一句话说清楚项目：</strong>收尾总结。
   </p>
@@ -97,19 +101,14 @@
   <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 14px">
 GitHub：<a href="https://github.com/owner/repo" style="color:#1a73e8;text-decoration:none;">github.com/owner/repo</a>
   </p>
-  <p style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 14px">
-如果你觉得这个项目有意思，欢迎 Star 支持开源 🧬
-  </p>
 
-  <!-- 数据来源 -->
+  <!-- 数据来源（保留，但不要「🧬 Star 号召」） -->
   <p style="font-size:13px;color:#7c6f64;margin:0 0 32px 0;padding-top:12px;border-top:1px solid #d4cfc4;">
 📌 数据来源：GitHub，2026-05-20 | 项目：owner/repo
   </p>
 
-  <!-- 作者信息 -->
-  <div style="margin-top:40px;padding-top:20px;border-top:1px solid #d4cfc4;font-size:13px;color:#7c6f64">
-<p style="margin:0">作者：卡兹克<br>来源：数字生命卡兹克</p>
-  </div>
+  <!-- ❌ 废弃：作者页脚（已删除「作者：卡兹克」原文） -->
+  <!-- ❌ 历史错误：原模板有 `<div>作者：卡兹克<br>来源：数字生命卡兹克</div>` —— 这违反用户硬约束（作者一律「刘生」），已于 2026-06-21 清理 -->
 
 </div>
 </body>

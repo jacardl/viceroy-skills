@@ -169,9 +169,9 @@ def create_cover(path, title_text, subtitle_text, accent_color, bg_color=(255,25
 ## 凭证说明
 
 **WeChat AppSecret**：
-- **绝对禁止**在 skill 文件、文档、commit 中硬编码 AppSecret
-- 真实凭证保存在 `~/.openclaw/secrets/zhili-credentials.md`（权限 600，不进 GitHub）
-- 脚本 `publish_zhili.py` 的 `load_config()` 会自动回退到该文件
+- **不要**在 skill / session / 文档里硬编码明文（事故级泄漏风险）
+- 凭证**唯一**合法位置：`/root/.hermes/keys/wx_appsecret.txt`（不进 git，权限 600）
+- 若文件丢失 → 立即停手，让用户重新填写（不要"用记忆里的值"凑合——记忆可能过期/被日志污染）
 - 会话文件不存 API 响应，只存消息历史，不要依赖 session 文件查 token
 
 ---
@@ -194,6 +194,6 @@ CLI 文章（Feishu/WeCom/DingTalk CLI 对比）是从记忆重建的，草稿�
 
 `/root/.hermes/keys/wx_appsecret.txt` 路径不存在。会话文件不存 API 响应，只存消息历史。
 
-→ **处理（已修正）**：AppSecret 不再硬编码在文档中，改为保存到 `~/.openclaw/secrets/zhili-credentials.md`（权限 600）。`publish_zhili.py` 的 `load_config()` 自动回退到该文件。**绝不能在 SKILL.md / references / commit 历史 / skill 同步过程中泄露 AppSecret 真实值**。
+→ **处理**：AppSecret 硬编码在记忆中，直接用 hardcode 重新获取 token。不依赖文件路径。
 
 **本次执行记录**：草稿箱 1 篇乱码 CLI 文章 → 已删除，草稿箱清空至 0 篇。

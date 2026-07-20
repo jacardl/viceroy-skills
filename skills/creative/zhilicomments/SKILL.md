@@ -1,5 +1,6 @@
 ---
 name: zhiliComments
+related_skills: [zhili-illustration]
 description: >
   微信公众号短评论发布技能，专为「直隶按察使」公众号的卡兹克风格评论方向定制。
   适用：一事一议的短观点、热评reaction、资讯点评（**1000-1500字**，2026-06-04 佳哥确认）。
@@ -10,13 +11,6 @@ description: >
   - 文章底部「作者：xxx」也填 `刘生`
   - 禁用字符串清单：`['卡兹克', 'khazix', 'zhiliGitHub', 'zhiliComments', '本文由', '一键三连', '扫码', 'wzglyay', '自动发布', 'jacardl']`
   - 完整检查方式见 zhiliGitHub SKILL.md 顶部「🚫 branding 检查铁律」段
-  
-  **执行前必读**：每次写 HTML 前必须按顺序执行以下三步，再开始写作：
-  1. 读取规范参考文件 `references/streambert-reference.html`，提取 CSS 检查清单（字体、层级、高亮、分隔线、blockquote、标签行、作者信息位置等）
-  2. 按规范生成 HTML，内联所有 CSS
-  3. 生成完毕后，对照第 1 步的检查清单逐项验证，合格后再推送草稿
-  ***
-
 ---
 
 # 直隶按察使 · 短评论发布技能
@@ -40,7 +34,7 @@ description: >
 |------|-----|
 | 背景色 | `#f5f4ed`（羊皮纸） |
 | 正文字体 | `Georgia, 'Noto Serif SC', serif` |
-| H2 标题 | `border-left: 4px solid #00d4aa`，青色左边框高亮（**样式A 标志性特征，与 zhiliGitHub 完全一致**） |
+| H2 标题 | `font-size:20px;color:#1B365D;font-weight:700;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0`（**注意：`font-size` 和 `color` 必须在同一 `style=` 字符串内连续出现**，preflight 检查精确字符串 `font-size:20px;color:#1B365D`） |
 | 强调色（数据/核心） | `#c9553d`（红棕色） |
 | 强调色（关键词/重点） | `#1B365D`（墨蓝） |
 | 警示/核心洞察背景 | `#fff3b0`（淡黄底） |
@@ -114,7 +108,7 @@ description: >
 
 **基础检查（任何不通过必须修复）**：
 
-- [ ] 禁用词零命中：`说白了`、`意味着什么`、`这意味着`、`本质上`、`换句话说`、`不可否认`、`综上所述`
+- [ ] 禁用词零命中：`说白了`、`意味着什么`、`这意味着`、`本质上`、`换句话说`、`不可否认`、`综上所述`、`头皮发麻`
 - [ ] 禁用标点零命中：冒号`：`、破折号`——`、双引号`""`
 - [ ] 空泛工具名零命中：没有「AI工具」「某个模型」等表述
 - [ ] 开头是否具体当下？第一句话是否让读者产生"然后呢"的冲动？
@@ -139,9 +133,13 @@ description: >
 
 ### 禁止出现（绝对禁区）
 
-- 禁用词：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`
+- 禁用词：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`头皮发麻`
 - 禁用标点：冒号`：`、破折号`——`、双引号`""`（用「」或直接不加）
 - 禁用开头：`在当今AI快速发展的时代`、`随着技术的不断进步`、`让我们来看看`
+- **佳哥语言风格三条（2026-07-02）**：详见 `references/zhili-style-notes.md`，写完逐条对照：
+  1. 不加无意义的「是」「的」「把」「选择」——直接说
+  2. 「这个」「那个」能删就删，不是信息就删
+  3. 开头不说情绪语言（不说「说个挺讽刺的事」「听到这个消息我愣了几秒」）
 - 禁止连续使用 bullet point 罗列观点（超过2个就要改散文叙述）
 - 禁止加粗小标题分隔板块（不用 `**小标题**`这种东西）
 
@@ -231,6 +229,8 @@ description: >
 
 > 📌 **格式规范**：HTML/CSS 格式规范见 `references/format.md`（含 Kami 羊皮纸视觉系统 + 增强版模板）
 > 📌 **API 踩坑**：WeChat API 实操经验见 `references/wechat-pitfalls.md`
+> 📌 **push.py title 污染风险**：详见 `references/push-py-title-tag.md`
+> 📌 **preflight 失败急救**：常见 6 类失败及修复见 `references/preflight-quick-fixes.md`（2026-07-12 实战沉淀）
 
 ## 发布流程
 
@@ -246,37 +246,16 @@ description: >
 
 详细内容见 `references/wechat-pitfalls.md` 的「内容源可访问性」章节。
 
-### 第二步：配图（可选）
+### 第二步：配图（调用 zhili-illustration）
 
-短评论可以无图，但如果配图：
+**写作技能统一配图流程**：HTML 完成后自动引入 `zhili-illustration` 技能生成正文配图。
 
-1. 用 PIL 生成信息图（900×383 或 900×900）：`/tmp/cover.jpg`
-2. 上传获取 `media_id`（必须用 urllib.request 构造 multipart）
 **本技能适用规格**（2026-06-27 确认）：
 - 配图数量：2 张（开头钩子 + 结尾情绪锚点），固定，不可选
 - 比例：4:3（900×675px）
 - IP 角色：问号人（极简线条符号人），单张内嵌 ~15%
 - 画风：手绘线稿·淡彩
 - **注入位置（实测）**：img_01 → 第一个 `<h2>` 之后的第一个 `</p>` 处；img_02 → HTML 最后一个 `</p>` 之后
-
-**push.py 自动集成（2026-06-28 实测落地）**：
-`scripts/push.py` 已内置 zhili-illustration 完整流程，无需手动触发：
-```
-preflight 过关
-    ↓
-extract_shot_list()        # 解析 HTML，生成 2 张 prompt 文件
-    ↓
-generate_illustrations()  # mmx-cli 经 run_mmx.py 生成图片（不需要 token）
-    ↓
-[获取 access_token]        # 拉取 token
-    ↓
-upload_illustrations()     # 上传 img_01 + img_02 到 media/uploadimg 得 mmbiz URL
-    ↓
-inject_into_html()         # 在开头钩子/结尾位置注入 <img src="mmbiz://...">
-    ↓
-封面上传 + 创建草稿
-```
-
 
 **push.py 自动集成（2026-06-28 实测落地）**：
 `scripts/push.py` 已内置 zhili-illustration 完整流程，无需手动触发：
@@ -316,9 +295,8 @@ python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-i
 
 关键踩坑见 `references/wechat-pitfalls.md`。
 
-> ⚠️ **封面图必须用 `type=image`**（2026-05-30 实测）。旧版记录 `type=thumb` 可用为错误信息。`type=thumb` 返回的 media_id 在 `draft/add` 时报 `40007 invalid media_id`，**必须用 `type=image`**。
+### 第三步：写 HTML（先读 preflight 再写，少走弯路）
 
-### 第三步：写 HTML
 > ⚠️ **写 HTML 前必须先读** `scripts/preflight.py` 第 95-114 行的 CSS 检查逻辑（exact string match），否则 preflight 会反复失败 3-4 次才能通过。
 >
 > ⚠️ **CSS precision 铁律（preflight 用子串匹配检查，下述必须完全一致）**：
@@ -345,6 +323,14 @@ python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-i
 ### 第四步：写完后必须做 Pre-flight 自检（推送前最后一道关）
 
 > ⚠️ **2026-06-10 实测踩坑**：纯中文 digest 25-30 字符就超 54 字节上限，触发 `45004`。禁用词（说白了）也容易在不自觉时滑入。这两步必须在 `draft/add` 之前由脚本跑过，光看清单不行。
+>
+> ⚠️ **中文标点铁律（2026-07-11 实坑）**：preflight 扫描仪统计中文冒号 `：` 和中文破折号 `——`，要求两者均为 0。任何自然书写的「：」或「——」都会导致 44/44 通不过。**写的时候就不许用**，不要写完再全局替换。常见踩坑点：「意思是：」「这意味着——」「不是否决，是解除——」全部要改。
+>
+> ⚠️ **push.py title 隐匿风险（2026-07-11 实坑）**：`push.py` 的 `TITLE` 变量默认是上一次运行的硬编码值。如果 HTML 里没有 `<title>` 标签，push.py 会用上一篇文章的标题静默创建草稿。**每篇 HTML 都必须在 `<body>` 前包含 `<title>文章标题</title>**。详见 `references/push-py-title-tag.md`。
+
+> ⚠️ **CJK 字数计算差异（2026-07-12 实坑）**：preflight.py 用 `re.findall(r"[\u4e00-\u9fff]", text)` 统计汉字（仅 U+4E00-U+9FFF 范围），**不是** `ord(c) > 127`。用 execute_code 估算字数时会比 preflight 多统计全角符号、日文假名等。判断是否达标应以 preflight 输出为准，自己估算只作快速参考。
+
+> ⚠️ **中文冒号 "：" 全扫描风险（2026-07-12 实坑）**：preflight 扫描**整个 HTML 文本**（含来源行、title 标签等），不止 body。常见触雷点：来源行写「来源：纽约时报」会触发中文冒号扫描。解法：用 ASCII 冒号 `:` 或「来源 - 纽约时报」替代。
 
 直接执行 `scripts/preflight.py`，把 HTML 路径传进去。脚本会一次性检查：
 
@@ -355,7 +341,7 @@ python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-i
 5. **HTML 结构**：H1/H2/p 数量、空行密度
 
 ```bash
-python3 ~/.hermes/skills/social-media/zhilicomments/scripts/preflight.py /tmp/article.html
+python3 ~/.hermes/skills/creative/zhilicomments/scripts/preflight.py /tmp/article.html
 ```
 
 核心 `calc_bytes()` 公式（直接抄）：
@@ -396,7 +382,6 @@ payload = json.dumps({
 }, ensure_ascii=False).encode('utf-8')  # Content-Type: application/json（无 charset）
 ```
 
-> ⚠️ **草稿创建前必须验证 HTML 中的图片URL**：如果文章有配图（cover.jpg / cover.png），必须确认 HTML 里使用的是本次实际上传的图片 media_id 对应的 mmbiz URL，而不是上一次残留的旧URL。验证方法：检查 HTML 中所有 `src="http://mmbiz.qpic.cn/` 是否与封面图的 url 一致。如果用了旧图，微信会报 `40007` 或显示异常。
 > ⚠️ **push.py digest 提取结构性冲突（2026-06-28 实战）**：`scripts/push.py` 第 155-159 行从 HTML 第一个 `<p>` 标签提取 digest 文本。但 zhilicomments HTML 的第一个 `<p>` 是「文 / 刘生」作者行，不是正文内容，导致草稿 digest 变成无意义的「文 / 刘生」。
 >
 > **解法**：在正文第一段 `<p>` 之前插入一个空 `<p>` 标签（只含 `style="display:none"` 或留空），让 push.py 取到的正好是正文第一句；或者在调用 push.py 之前手动检查生成的 digest 是否合理。不修的话草稿能发，但 digest 字段内容不对。
@@ -613,6 +598,6 @@ H2 本身就是最强的转场信号，再加一句「说完了 X」是冗余。
 - 正文配图可选，有则用深色信息图风格
 - 观点要有立场，不做理中客
 - 结尾不求 Star/项目地址，纯观点文
-- **禁用词（严禁出现）**：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`冒号`、`破折号`
+- **禁用词（严禁出现）**：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`冒号`、`破折号`、`头皮发麻`
 - 所有文字 **`text-align:left`**，无例外
 - **禁止连续 bullet list**，超过2个观点必须改散文叙述
