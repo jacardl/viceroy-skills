@@ -1,603 +1,207 @@
 ---
-name: zhiliComments
+name: zhilicomments
 related_skills: [zhili-illustration]
-description: >
+description: >-
   微信公众号短评论发布技能，专为「直隶按察使」公众号的卡兹克风格评论方向定制。
-  适用：一事一议的短观点、热评reaction、资讯点评（**1000-1500字**，2026-06-04 佳哥确认）。
+  适用：一事一议的短观点、热评 reaction、资讯点评（**1000-1500字**，2026-06-04 确认）。
   触发条件：用户说「评论」「热评」「观点」「点评」「说两句」。
-  
-  ⚠️ **branding 检查铁律（用户零容忍红线，2026-06-04 与 zhiliGitHub 对齐）**：
-  - 作者字段**固定填 `刘生`**（2 字符），**禁止**填 `卡兹克` / 留空 / 其他名字
-  - 文章底部「作者：xxx」也填 `刘生`
-  - 禁用字符串清单：`['卡兹克', 'khazix', 'zhiliGitHub', 'zhiliComments', '本文由', '一键三连', '扫码', 'wzglyay', '自动发布', 'jacardl']`
-  - 完整检查方式见 zhiliGitHub SKILL.md 顶部「🚫 branding 检查铁律」段
+  路由：长文项目介绍 → `creative/zhiligithub/`；日常复盘 → `openclaw-imports/zhili-publish/`。
 ---
 
 # 直隶按察使 · 短评论发布技能
 
-## 与 zhili-publish 的区别
+## 与兄弟技能的区别
 
-| | zhili-publish | zhilicomments |
-|--|---------------|---------------|
-| 字数 | 1500-2000字 | 1000-1500字 |
-| 结构 | Evolver 六段式 | 卡兹克轻量短评式 |
-| 配图 | 项目截图+封面 | 1-2张评论配图 |
-| 用途 | 项目介绍/教程 | 热评/观点/Reaction |
+| | zhiligithub | zhilicomments |
+|--|-------------|---------------|
+| 字数 | 1500-2000字 | **1000-1500字** |
+| 结构 | 六段式 | **不分章节，不用「一、二」** |
+| 配图 | 项目截图+封面 | 2 张评论配图 |
+| 用途 | 项目介绍/教程 | **热评/观点/Reaction** |
 
-## ✅ CSS 渲染规范：样式A（标准模板，2026-05-30 固化）
+> ⚠️ CSS / stop-slop / renwei / pre-submit 清单 → `zhili-shared/references/zhili-style.md`。
 
-> ⚠️ zhilicomments 与 zhiliGitHub 共用样式A，无需读取 `references/streambert-reference.html`。直接按以下规范生成 HTML 即可。
+---
 
-### 样式A 核心参数
-
-| 属性 | 值 |
-|------|-----|
-| 背景色 | `#f5f4ed`（羊皮纸） |
-| 正文字体 | `Georgia, 'Noto Serif SC', serif` |
-| H2 标题 | `font-size:20px;color:#1B365D;font-weight:700;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0`（**注意：`font-size` 和 `color` 必须在同一 `style=` 字符串内连续出现**，preflight 检查精确字符串 `font-size:20px;color:#1B365D`） |
-| 强调色（数据/核心） | `#c9553d`（红棕色） |
-| 强调色（关键词/重点） | `#1B365D`（墨蓝） |
-| 警示/核心洞察背景 | `#fff3b0`（淡黄底） |
-| 引言/摘要样式 | 左边框 `#1B365D` + `background:#f0efe8` + 斜体 |
-| 分隔线 | `· · ·` 居中，`color:#c9553d` |
-| 代码块 | `background:#1e1e1e`，白色文字 |
-| 适合/不适合标签 | 同 zhiliGitHub |
-| 正文段落 | `font-size:16px; line-height:1.85; color:#2c2c2c` |
-
-### 正文高亮规则（zhilicomments 特有写法）
-
-- **墨蓝高亮**（关键词/重点）：`<strong style="color:#1B365D;">`
-- **红棕高亮**（数据/核心）：`<strong style="color:#c9553d;">`
-- **黄底高亮**（警示/核心洞察）：`<strong style="background:#fff3b0;">`
-
-### ❌ 禁止事项
-
-- 禁止使用纯白色 `#ffffff` 背景
-- 禁止把 `#00d4aa` 用作主色调或文字色（**只允许用于 H2 左边框**，2026-06-04 与 zhiliGitHub 对齐）
-- 禁止删除 `font-family` 中的 `Georgia`
-- zhilicomments 正文不强制要求 mmbiz 图片（不同于 zhiliGitHub）
-
-## 内容格式（卡兹克短评式）
-
-> ⚠️ 核心原则：zhilicomments 的内容必须完全遵循卡兹克的写作风格，不是"类似"，是完全一致。字数 1000-1500字，比长文短，但灵魂和长文一样。
-
-### 写作要求（强制执行）
-
-**篇幅**：1000-1500字
-
-**结构**：不分章节，不用「一、」「二、」「三、」小标题。从头到尾一口气顺下来，靠节奏和口语化转场推进。
-
-**节奏感**：
-- 句子要短。15-20字一顿。大量的逗号制造口语停顿感。
-- 经常一句话独立成段，制造断裂和重点。
-- 段落极短，很多段落只有2-3句话。
-
-**口语化转场词**（自然穿插，不是每句都要用）：
-- 转场：说真的、怎么说呢、其实吧、回到这块、顺着上面的
-- 判断：我有时候觉得、反正我觉得、这话听着有点刺耳但
-- 情绪：给我整懵了、太离谱了、太特么离谱了
-- 拉近距离：很多朋友可能不知道、你想想看
-
-**观点表达**：
-- 亮出立场，不做理中客
-- 用「我觉得」「我认为」「我有时候觉得」而不是「人们普遍认为」
-- 承认自己的局限：「我也不是完全确定」「我自己有时候也会」
-- 对立面理解：先承认对方处境合理，再切入自己的角度
-
-**案例写法**：
-- 用人物画像法：从一个数据点出发，快速代入具体人的完整人生
-- 3-5句话让一个人物立体
-- 不要编造，用真实细节
-
-**收尾**：
-- 金句或反问
-- 不求 Star/转发/关注
-- 纯观点文，观点本身即是结束
-
-### 内容三段式（内化于心，不用外显）
-
-这三个部分内化在文章里，不是显性的章节结构：
-
-**第一部分（约200字）**：感性切入。从一个具体的、当下的事件或场景开始。不是宏大叙事，是"事情是这样的"的切入感。先建立情绪，让读者想知道"然后呢"。
-
-**第二部分（约700-1200字）**：核心观点轰炸。每一个观点都有具体场景/人物/对话支撑。不是罗列，是聊着聊着自然展开。偏离主线了用一句扣主线句拉回来。至少用3-5个口语化表达。
-
-**第三部分（约100字）**：金句或反问收尾。独立成段，一句话。短促有力。不需要号召行动，不需要"大家可以转发关注"，纯观点，纯态度。
-
-### 卡兹克风格检查清单（写完必须自检）
-
-**基础检查（任何不通过必须修复）**：
-
-- [ ] 禁用词零命中：`说白了`、`意味着什么`、`这意味着`、`本质上`、`换句话说`、`不可否认`、`综上所述`、`头皮发麻`
-- [ ] 禁用标点零命中：冒号`：`、破折号`——`、双引号`""`
-- [ ] 空泛工具名零命中：没有「AI工具」「某个模型」等表述
-- [ ] 开头是否具体当下？第一句话是否让读者产生"然后呢"的冲动？
-- [ ] 连续5句以上句式长度相近 = 节奏呆板（必须避免）
-
-**风格检查（至少满足5/7）**：
-
-- [ ] 一句话独立成段断裂效果（全文至少3次）
-- [ ] 口语化词组自然穿插（全文至少5个不同表达）
-- [ ] 疑问句作为节奏刹车（让读者停一秒）
-- [ ] 人物画像法：3-5句话让一个人物立体
-- [ ] 至少一处自嘲或承认不足
-- [ ] 对立面的理解：先承认对方处境合理，再切入自己角度
-- [ ] 结尾是金句或反问，不是号召行动
-
-**活人感终审（最关键）**：
-
-- [ ] 情绪表达是体感记忆（「我当时就愣住了」）而非知识性描述（「我感到震撼」）
-- [ ] 有没有「只有卡兹克才会写出来的角度」，还是换一个AI博主也能写差不多？
-- [ ] 语气是「有见识的普通人在认真聊」，不是「导师在教学生」
-- [ ] 从头到尾读，有没有哪个地方注意力断掉了？（如果有，那个地方需要修复）
-
-### 禁止出现（绝对禁区）
-
-- 禁用词：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`头皮发麻`
-- 禁用标点：冒号`：`、破折号`——`、双引号`""`（用「」或直接不加）
-- 禁用开头：`在当今AI快速发展的时代`、`随着技术的不断进步`、`让我们来看看`
-- **佳哥语言风格三条（2026-07-02）**：详见 `references/zhili-style-notes.md`，写完逐条对照：
-  1. 不加无意义的「是」「的」「把」「选择」——直接说
-  2. 「这个」「那个」能删就删，不是信息就删
-  3. 开头不说情绪语言（不说「说个挺讽刺的事」「听到这个消息我愣了几秒」）
-- 禁止连续使用 bullet point 罗列观点（超过2个就要改散文叙述）
-- 禁止加粗小标题分隔板块（不用 `**小标题**`这种东西）
-
-## ✍️ stop-slop 文风诊断（写完必查）
-
-> stop-slop 是一套 AI 文风去除术，源于 CrewAI 社区的 `hardikpandya/stop-slop` 项目（7k+ Stars）。核心思路：AI 写东西有套路，套路让人读起来像机器，这套检查表专门治这个。
->
-> **stop-slop 的框架**：Core Rules（8条铁律）→ Quick Checks（12问）→ Scoring（5维度50分，35分以下打回重写）
->
-> 对中文写作来说，框架完全通用，但词条需要本地化重建。
-
-### 中文 stop-slop 检查表（zhilicomments 版，每篇必查）
-
-**第一步：数一数有没有这些废话填充词**
-
-| # | 中文废话 | 替换建议 |
-|---|---------|---------|
-| 1 | 值得注意的是 | 直接删，后面直接说观点 |
-| 2 | 实际上、其实 | 直接删，事实不需要铺垫 |
-| 3 | 那么、那么就 | 很多是噪音，可删 |
-| 4 | 大家/我们都知道 | 谁？直接说 |
-| 5 | 从某种意义上来说 | 要说就说清楚 |
-| 6 | 归根结底 | 直接说结论 |
-| 7 | 不得不承认 | 直接删 |
-| 8 | 想必、应该（猜测语气） | 不确定就别用 |
-| 9 | 毫无疑问 | 直接删，显得心虚 |
-| 10 | 必须承认 | 直接删 |
-| 11 | 我想说的是 | 删，直接开口就说 |
-| 12 | 相信大家都知道 | 谁？不点名就说 |
-
-**出现3个以上，这篇文章就已经有 AI 味了。**
-
-**第二步：检查句式结构（5条）**
-
-- [ ] 没有「首先、其次、最后、总之」套路（三板斧）
-- [ ] 没有「一方面、另一方面」平衡结构（假辩证）
-- [ ] 没有「随着…的发展」宏大叙事开头
-- [ ] 没有无主语句（「已被广泛认可」「这一观点受到关注」）
-- [ ] 没有因果废话（「因为 X，所以 X，这说明」）
-
-**第三步：快速 12 问（英文原版，可跳过直接看中译）**
-
-| # | 问题 | 中文版 |
-|---|------|--------|
-| 1 | Any filler phrases? | 有废话填充词吗？ |
-| 2 | Any em-dashes? | 有破折号吗？（中文破折号可保留，这条忽略） |
-| 3 | Starting sentences with "It's..."? | 有「它是…」「这是…」开头吗？ |
-| 4 | Passive voice? | 有被动语态吗？（中文无此问题，跳过） |
-| 5 | Weasel words? | 有模糊词吗？（想必、应该、可能） |
-| 6 | Complex words where simple ones exist? | 能用一个字说清楚用了两个字吗？ |
-| 7 | Any AI-sounding buzzwords? | 有AI黑话吗？（颠覆、创新、引领、赋能） |
-| 8 | Sentence length variation? | 句长有变化吗？（连续10句一样长=呆板） |
-| 9 | Read it out loud? | 读出来顺口吗？（不顺口就要改） |
-| 10 | Generic examples? | 案例具体吗？（张三李四王五，要具体到人） |
-| 11 | Does the writing sound like a robot? | 读起来像机器吗？ |
-| 12 | Did you actually mean what you wrote? | 你真的想表达这个吗？ |
-
-**综合判断**：12问里超过4个「有问题」→ 打回修改。
-
-### stop-slop 评分（可选，不强制）
-
-| 维度 | 满分 | 得分 | 说明 |
-|------|------|------|------|
-| 直接性 | 10 | __/10 | 没有废话填充词，直接进入 |
-| 节奏感 | 10 | __/10 | 句长有变化，一句话独立成段 |
-| 信任感 | 10 | __/10 | 不吹不黑，承认局限 |
-| 真实感 | 10 | __/10 | 体感记忆，不是知识描述 |
-| 密度 | 10 | __/10 | 信息量大，没有废话段落 |
-| **总分** | **50** | **__/50** | **35分以下必须重写** |
-
-### stop-slop 中文适配的核心差异
-
-英文 stop-slop 说「No em-dashes」，但中文破折号用法完全不同——这条直接忽略。
-
-英文 stop-slop 里有大量商业黑话替换表（如 navigate → handle，leverage → use），中文对应的黑话池：
+## 完整工作流（5 步）
 
 ```
-突破瓶颈 → 解决
-赋能 → 帮助
-持续迭代 → 更新
-深度赋能 → 提高
-构建生态 → 攒人
-引领变革 → 搅局
-核心价值 → 好处
-解决方案 → 方法
+1. 获取内容（用户提供 / 截图分析 / 搜索补充）
+2. 写 HTML（含 2 张配图注入）
+3. preflight 自检：python3 scripts/preflight.py /tmp/article.html
+4. 封面生成 + 推送：python3 scripts/push.py --html /tmp/article.html
 ```
 
-> 📌 **格式规范**：HTML/CSS 格式规范见 `references/format.md`（含 Kami 羊皮纸视觉系统 + 增强版模板）
-> 📌 **API 踩坑**：WeChat API 实操经验见 `references/wechat-pitfalls.md`
-> 📌 **push.py title 污染风险**：详见 `references/push-py-title-tag.md`
-> 📌 **preflight 失败急救**：常见 6 类失败及修复见 `references/preflight-quick-fixes.md`（2026-07-12 实战沉淀）
+---
 
-## 发布流程
+## Step 1：获取内容
 
-```
-获取内容 → 生成/下载配图 → 写HTML → 创建草稿 → 完成
-```
-
-### 第一步：获取内容
+推荐优先级：用户复制粘贴 > mmx vision 截图分析 > 自行搜索补充 > 尝试网页抓取
 
 用户提供：评论对象（链接/标题/截图）+ 核心观点（一句话）+ 支撑素材（可选）
 
-**推荐获取优先级**：用户复制粘贴 > mmx vision 截图分析 > 自行搜索补充背景 > 尝试网页抓取
+---
 
-详细内容见 `references/wechat-pitfalls.md` 的「内容源可访问性」章节。
+## Step 2：写作要求
 
-### 第二步：配图（调用 zhili-illustration）
+### 篇幅
 
-**写作技能统一配图流程**：HTML 完成后自动引入 `zhili-illustration` 技能生成正文配图。
+**1000-1500 中文字符**（纯中文，不含 HTML 标签/代码块/URL）
 
-**本技能适用规格**（2026-06-27 确认）：
-- 配图数量：2 张（开头钩子 + 结尾情绪锚点），固定，不可选
-- 比例：4:3（900×675px）
-- IP 角色：问号人（极简线条符号人），单张内嵌 ~15%
-- 画风：手绘线稿·淡彩
-- **注入位置（实测）**：img_01 → 第一个 `<h2>` 之后的第一个 `</p>` 处；img_02 → HTML 最后一个 `</p>` 之后
+### 结构（不分章节）
 
-**push.py 自动集成（2026-06-28 实测落地）**：
-`scripts/push.py` 已内置 zhili-illustration 完整流程，无需手动触发：
+从头到尾一口气顺下来，**不用「一、二、三」小标题**，靠节奏和口语化转场推进。
+
+### 节奏感
+
+- 句子要短，15-20 字一顿
+- 大量逗号制造口语停顿感
+- 经常一句话独立成段，制造断裂和重点
+- 段落极短，很多段落只有 2-3 句话
+
+### 口语化转场词
+
+自然穿插，不是每句都要用：
+
+| 类型 | 词 |
+|------|-----|
+| 转场 | 说真的、怎么说呢、其实吧、回到这块 |
+| 判断 | 我有时候觉得、反正我觉得、这话听着有点刺耳但 |
+| 情绪 | 给我整懵了、太离谱了、太特么离谱了 |
+| 拉近距离 | 很多朋友可能不知道、你想想看 |
+
+### 观点表达
+
+- 亮出立场，不做理中客
+- 用「我觉得」「我认为」而不是「人们普遍认为」
+- 承认自己的局限：「我也不是完全确定」
+- 先承认对方处境合理，再切入自己的角度
+
+### 案例写法
+
+用人物画像法：从一个数据点出发，3-5 句话让一个人物立体。不要编造，用真实细节。
+
+### 收尾
+
+- 金句或反问
+- 不求 Star / 转发 / 关注
+- 纯观点文，观点本身即是结束
+
+### 卡兹克风格检查清单
+
+**基础检查（任何不通过必须修复）**：
+
+- [ ] 禁用词零命中：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`头皮发麻`
+- [ ] 禁用标点零命中：冒号`：`、破折号`——`、双引号`""`
+- [ ] 开头是否具体当下？第一句话是否让读者产生「然后呢」的冲动？
+- [ ] 连续 5 句以上句式长度相近 = 节奏呆板
+
+**活人感终审**：
+
+- [ ] 情绪表达是体感记忆（「我当时就愣住了」）而非知识性描述（「我感到震撼」）
+- [ ] 有没有「只有卡兹克才会写出来的角度」？
+- [ ] 语气是「有见识的普通人在认真聊」，不是「导师在教学生」
+
+### 内容三段式（内化于心，不用外显）
+
+**第一部分（约 200 字）**：感性切入。从一个具体的、当下的事件或场景开始，让读者想知道「然后呢」。
+
+**第二部分（约 700-1200 字）**：核心观点轰炸。每个观点都有具体场景/人物/对话支撑，不是罗列。至少用 3-5 个口语化表达。
+
+**第三部分（约 100 字）**：金句或反问收尾。短促有力，不需要号召行动。
+
+---
+
+## Step 3：HTML 写作规范
+
+> ⚠️ 写 HTML 前**必须先读** `scripts/preflight.py` 第 95-114 行的 CSS 检查逻辑（exact string match）。
+
+### CSS 精确值（直接复制，不要改）
+
+**H2**：
 ```
-preflight 过关
-    ↓
-extract_shot_list()        # 解析 HTML，生成 2 张 prompt 文件
-    ↓
-generate_illustrations()  # mmx-cli 经 run_mmx.py 生成图片（不需要 token）
-    ↓
-[获取 access_token]        # 拉取 token
-    ↓
-upload_illustrations()     # 上传 img_01 + img_02 到 media/uploadimg 得 mmbiz URL
-    ↓
-inject_into_html()         # 在开头钩子/结尾位置注入 <img src="mmbiz://...">
-    ↓
-封面上传 + 创建草稿
+font-weight:700;font-size:20px;color:#1B365D;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0
 ```
 
-**快速重推（不需要重新生成图）**：
-```bash
-python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-illustration
+**正文 P**：
+```
+font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px 0
 ```
 
-**封面图**（2026-06-28 改造：走 zhili-illustration）：
-- 比例：16:9，生成底图后 PIL 裁剪为 900×383（2.35:1）
-- 流程：`generate_cover()` → 调用 xiaohu-ip-studio 生成 16:9 深色科技风底图 → PIL 裁剪输出 `/tmp/zhili_cover.png`
-- 上传 type：**`type=image`**（不是 `thumb`）
-- 风格默认：深色背景（`#1B365D`）+ 标题文字 + 问号人 IP（如不需要问号人，直接改 `generate_cover()` 里的 `cover_prompt` 变量）
-- `push.py` 全自动执行，无需手动介入
+**body**：
+```
+background:#f5f4ed;font-family:'Noto Serif SC', Georgia, serif
+```
 
-**正文配图流程**（zhili-illustration 负责）：
-1. 读取 HTML，提取 shot list（每节一张）
-2. 生成图片（调用 `xiaohu-ip-studio` + `mmx-cli`）
-3. 按 `zhili-illustration/references/html-image-injection.md` 规范注入 HTML
-4. 上传微信素材获取 media_id，替换 HTML 中的路径
+### 排版规则
 
-关键踩坑见 `references/wechat-pitfalls.md`。
-
-### 第三步：写 HTML（先读 preflight 再写，少走弯路）
-
-> ⚠️ **写 HTML 前必须先读** `scripts/preflight.py` 第 95-114 行的 CSS 检查逻辑（exact string match），否则 preflight 会反复失败 3-4 次才能通过。
->
-> ⚠️ **CSS precision 铁律（preflight 用子串匹配检查，下述必须完全一致）**：
-> - `background:#f5f4ed`（不是 `background-color:`）
-> - `font-family:'Noto Serif SC', Georgia, serif`（逗号后有空格，Noto 在前）
-> - **H2 style 属性顺序铁律**：`font-weight:700` 必须写在 `font-size:20px` 前面，完整 H2 style 字符串为 `font-weight:700;font-size:20px;color:#1B365D;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0`（这样 `font-size:20px` 和 `color:#1B365D` 才在字符串里相邻，preflight 检查的就是这个相邻子串）
-> - H2 margin: `margin:0 0 16px`，P margin: `margin:0 0 28px`（注意：P 段距是 28px 不是 14px）
-> - 作者行颜色：`#7c6f64`（不是 `#6b665b`），font-family 要单独写
-> - 来源行：`font-family:monospace`
-> - H2 font-weight: `700`（不是 `bold`）
-> - 禁止 `background-color:`，一律用 `background:`
-> - 禁止中文冒号 `：` 和中文破折号 `——`
-> - 黄底高亮：`background:#fff3b0` 必须作为独立 `<strong>` 属性出现
-
-> ⚠️ **写 HTML 时优先复制** `references/format.md` 中的增强版 HTML 模板（含 Pull Quote、装饰线、标签卡片等完整样式）。
-
-排版规则：
-- block 元素必须单独一行，不能有换行符分隔
+- block 元素必须单独一行，块间无换行符
 - 禁止 ul/li，用 `•` 代替
-- 只用 `margin-bottom` 控制间距，不管 `margin-top`
 - 所有样式内联
-- 标题 ≥10字，卡兹克风格，观点鲜明，有情绪张力
+- 只用 `margin-bottom` 控制间距，不管 `margin-top`
 
-### 第四步：写完后必须做 Pre-flight 自检（推送前最后一道关）
+---
 
-> ⚠️ **2026-06-10 实测踩坑**：纯中文 digest 25-30 字符就超 54 字节上限，触发 `45004`。禁用词（说白了）也容易在不自觉时滑入。这两步必须在 `draft/add` 之前由脚本跑过，光看清单不行。
->
-> ⚠️ **中文标点铁律（2026-07-11 实坑）**：preflight 扫描仪统计中文冒号 `：` 和中文破折号 `——`，要求两者均为 0。任何自然书写的「：」或「——」都会导致 44/44 通不过。**写的时候就不许用**，不要写完再全局替换。常见踩坑点：「意思是：」「这意味着——」「不是否决，是解除——」全部要改。
->
-> ⚠️ **push.py title 隐匿风险（2026-07-11 实坑）**：`push.py` 的 `TITLE` 变量默认是上一次运行的硬编码值。如果 HTML 里没有 `<title>` 标签，push.py 会用上一篇文章的标题静默创建草稿。**每篇 HTML 都必须在 `<body>` 前包含 `<title>文章标题</title>**。详见 `references/push-py-title-tag.md`。
+## Step 4：Preflight 自检
 
-> ⚠️ **CJK 字数计算差异（2026-07-12 实坑）**：preflight.py 用 `re.findall(r"[\u4e00-\u9fff]", text)` 统计汉字（仅 U+4E00-U+9FFF 范围），**不是** `ord(c) > 127`。用 execute_code 估算字数时会比 preflight 多统计全角符号、日文假名等。判断是否达标应以 preflight 输出为准，自己估算只作快速参考。
-
-> ⚠️ **中文冒号 "：" 全扫描风险（2026-07-12 实坑）**：preflight 扫描**整个 HTML 文本**（含来源行、title 标签等），不止 body。常见触雷点：来源行写「来源：纽约时报」会触发中文冒号扫描。解法：用 ASCII 冒号 `:` 或「来源 - 纽约时报」替代。
-
-直接执行 `scripts/preflight.py`，把 HTML 路径传进去。脚本会一次性检查：
-
-1. **禁用词扫描**：所有 5 个禁用词命中即报错，列出所在段落
-2. **branding 扫描**：13 个禁用字符串清单命中即报错
-3. **digest 字节预检**：`calc_bytes()` 公式 `中文×3 + 英文×1`，> 54 字节自动截断并提示
-4. **CJK 字数核对**：必须落在 1000-1500 区间
-5. **HTML 结构**：H1/H2/p 数量、空行密度
+> ⚠️ preflight.py 是推送前**最后一道关**，必须执行。
 
 ```bash
 python3 ~/.hermes/skills/creative/zhilicomments/scripts/preflight.py /tmp/article.html
 ```
 
-核心 `calc_bytes()` 公式（直接抄）：
+检查项：
+1. **禁用词扫描**：5 个禁用词命中即报错
+2. **branding 扫描**：13 个禁用字符串命中即报错（`卡兹克` / `khazix` / `zhiliGitHub` / `zhiliComments` / `本文由` / etc.）
+3. **digest 字节预检**：calc_bytes 公式（中文×3 + 英文×1），> 54 字节自动截断
+4. **CJK 字数核对**：必须落在 1000-1500 区间
+5. **HTML 结构**：H1/H2/p 数量、空行密度
 
-```python
-def calc_bytes(s: str) -> int:
-    """WeChat 草稿 digest 字节计算：CJK = 3 bytes，ASCII = 1 byte"""
-    return sum(3 if ord(c) > 127 else 1 for c in s)
+### digest 字节控制
+
+- 纯中文 25-30 字符就到 54 字节上限
+- 中英混排省字节（如「Anthropic 昨晚发布 Claude Fable 5」54 字节正好够）
+
+### push.py title 隐匿风险
+
+> ⚠️ push.py 的 `TITLE` 变量默认是上一次运行的硬编码值。如果 HTML 里没有 `<title>` 标签，push.py 会用上一篇文章的标题静默创建草稿。
+
+每篇 HTML 都必须在 `<body>` 前包含 `<title>文章标题</title>`。
+
+---
+
+## Step 5：推送
+
+```bash
+cd /tmp && python3 ~/.hermes/skills/creative/zhilicomments/scripts/push.py \
+  --html /tmp/article.html --cover /tmp/cover.png
+
+# 快速重推（不重新生成图）
+python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.png --skip-illustration
 ```
 
-**关键经验（2026-06-10 实战）**：
-- 标题 byte 不受限，但 digest 必须严控 54 字节
-- 中英混排 digest 反而省字节（如"Anthropic 昨晚发布 Claude Fable 5"54 字节正好够）
-- 纯中文 digest 25-30 字符就到上限，绝对不能写长句
-- 一旦命中禁用词（尤其「说白了」最常滑入），必须 patch 后重跑 preflight 再推
+> ⚠️ 封面图比例 16:9，生成后 PIL 裁剪为 900×383。
+> ⚠️ 封面必须用 `type=image`（不是 `thumb`），否则报 40007。
 
-### 第五步：创建草稿
+---
 
-关键踩坑见 `references/wechat-pitfalls.md` 的 `urllib.request` 上传章节。
+## branding 检查铁律（零容忍红线）
 
-凭证从 `references/config.md` 读取：APPID、APPSECRET。
+- 作者字段**固定填 `刘生`**（2 字符），禁止 `卡兹克` / 留空 / 其他名字
+- 文章底部「作者：xxx」也填 `刘生`
+- **禁用字符串**：`卡兹克`、`khazix`、`zhiliGitHub`、`zhiliComments`、`本文由`、`一键三连`、`扫码`、`wzglyay`、`自动发布`、`jacardl`
 
-草稿创建关键参数：
-```python
-# ⚠️ 必须用 ensure_ascii=False，直接传 UTF-8 原文
-# ensure_ascii=True（默认）会将中文转为 \\uXXXX 字面量，微信预览渲染器直接显示为乱码
-# Content-Type 必须是 application/json，不带 charset=utf-8（否则微信 JSON 处理管线无法解码原始 UTF-8）
-payload = json.dumps({
-    "articles": [{
-        "title": "标题",
-        "author": "刘生",
-        "digest": "摘要",
-        "content": html_content,
-        "thumb_media_id": media_id,  # 必须用 type=image 上传（type=thumb 会报 40007）
-        "need_open_comment": 1,
-        "only_fans_can_comment": 0
-    }]
-}, ensure_ascii=False).encode('utf-8')  # Content-Type: application/json（无 charset）
-```
+---
 
-> ⚠️ **push.py digest 提取结构性冲突（2026-06-28 实战）**：`scripts/push.py` 第 155-159 行从 HTML 第一个 `<p>` 标签提取 digest 文本。但 zhilicomments HTML 的第一个 `<p>` 是「文 / 刘生」作者行，不是正文内容，导致草稿 digest 变成无意义的「文 / 刘生」。
->
-> **解法**：在正文第一段 `<p>` 之前插入一个空 `<p>` 标签（只含 `style="display:none"` 或留空），让 push.py 取到的正好是正文第一句；或者在调用 push.py 之前手动检查生成的 digest 是否合理。不修的话草稿能发，但 digest 字段内容不对。
+## 凭证配置
 
-## access_token 获取（2026-05-28 实测正确方式）
-## access_token 获取（2026-05-30 确认）
+凭证在 `references/config.md`（APPID / APPSECRET），不输出到对话。
 
-必须用 **stable_token POST**，不能用 GET `/cgi-bin/token`（后者返回的 token 在素材接口报 40001）。
+## 已知限制
 
-```python
-import urllib.request, json, os
-
-APPID = 'wx38a91c353554588a'
-with open(os.path.expanduser("~/.hermes/keys/wx_appsecret.txt")) as f:
-    app_secret = f.read().strip()
-
-req = urllib.request.Request(
-    "https://api.weixin.qq.com/cgi-bin/stable_token",
-    data=json.dumps({"grant_type":"client_credential","appid":APPID,"secret":app_secret}).encode(),
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
-with urllib.request.urlopen(req, timeout=10) as r:
-    access_token = json.loads(r.read())["access_token"]
-```
-
-## urllib.request 上传优于 subprocess curl
-
-WeChat 的 material/upload 接口对 curl subprocess 调用有静默失败问题（curl 返回空但 API 正常），建议始终用 urllib.request 构造 multipart/form-data：
-
-```python
-import urllib.request, json, ssl
-
-boundary = '----PythonFormBoundary123456'
-with open('/tmp/cover.jpg', 'rb') as f:
-    img_data = f.read()
-body = (
-    f'--{boundary}\r\n'
-    f'Content-Disposition: form-data; name="media"; filename="cover.jpg"\r\n'
-    f'Content-Type: image/jpeg\r\n\r\n'
-).encode('utf-8') + img_data + f'\r\n--{boundary}--\r\n'.encode('utf-8')
-
-url = f'https://api.weixin.qq.com/cgi-bin/material/add_material?access_token={access_token}&type=image'
-req = urllib.request.Request(url, data=body, method='POST')
-req.add_header('Content-Type', f'multipart/form-data; boundary={boundary}')
-ctx = ssl.create_default_context()
-ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
-with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
-    result = json.loads(resp.read())
-    media_id = result['media_id']
-```
-
-## 封面图规格
-
-- 尺寸：900×383（信息图比例）或 900×900（方图）
-- 风格：深色背景 + 高对比文字，观点鲜明
-- 可用 PIL 纯代码生成
-
-## 创意增强：观点提炼与角度深化
-
-写短评前，先用以下流程找到最独特的观点，再动笔。
-
-### 第一步：用「角度法」找到最有张力的切入点（ad-creative）
-
-拿到一个话题/事件，先用 ad-creative 的 8 大角度类型枚举所有可能方向：
-
-| 角度类型 | 适合哪种话题 |
-|---|---|
-| **痛点型** | 这件事让谁难受？怎么个难受法？ |
-| **结果型** | 这么做了/不这么做的结果差多少？ |
-| **社会证明型** | 谁在这么做？规模多大？ |
-| **好奇心型** | 反常识事实是什么？ |
-| **对比型** | 这个和通常的做法真正区别在哪？（**含与竞品对比，2026-06-10 实战**） |
-| **紧迫感型** | 再不关注就来不及了？ |
-| **身份认同型** | 什么样的人在乎这个？ |
-| **反主流型** | 普遍看法哪里错了？ |
-
-**操作方法**：枚举 3-5 个角度，每个角度用一句话写出核心，然后比较哪个最有情绪张力、最独特，选定后再动笔。
-
-**对比型话题的特殊写法（2026-06-10 实战沉淀）**：
-当用户给的素材明确提到「与其他模型/产品对比」时（比如 Claude Fable 5 vs GPT-5.5），核心不是把 A 和 B 的参数各列一遍，而是找一个**最刺痛读者的具体数据落差**，让它成为标题和结尾。
-
-具体套路：
-1. 找到 A 跑出来的某个**极小数字**（比如 36 小时）和 B 跑同样任务的**极大数字**（比如 4 天）
-2. 把这两个数字直接写进标题，省掉主语——读者自动脑补谁是谁
-3. 正文里把对比拆成 3-4 段，每段一个维度（速度、token 消耗、benchmark 排名、定价）
-4. **结尾反转**：能力差距只是一面，姿态差距才是真正分水岭（避免单纯吹捧 A）
-
-反例：把 A、B 各自的特性列一遍，像个对比表格的注脚。
-正例：「36 小时追平 GPT-5.5 跑了四天的活」——读者一眼看到数字落差，立刻想点开。
-
-### 第二步：用「悖论挖掘」提升观点深度（creative-thought-partner）
-
-选定角度后，用四大驱动检验是否足够深：
-
-**Driver 1 - 模式识别**：这件事，业界/大众通常怎么想？我选的切入点和他们的认知差在哪？
-
-**Driver 2 - 悖论挖掘（最重要）**：
-- 有没有「表面看是这样，实际上恰好相反」的核心洞察？
-- 大多数人觉得 A，我为什么觉得 B？
-- 有没有一个大多数人不愿承认但确实是事实的矛盾？
-
-**Driver 3 - 命名未命名**：能不能给这个洞察起一个让人一听就记住的名字？
-
-**Driver 4 - 对比创造**：如果有人完全相反地理解这件事，会失去什么？
-
-### 第三步：炼句强化标题和开头
-
-**标题炼句**（≥10字，卡兹克风格）：
-
-| ✅ 强标题 | ❌ 弱标题 |
-|---|---|
-| 反直觉（"为什么越骂越火"） | 平铺直叙 |
-| 具体场景（"程序员开始用AI摸鱼"） | 抽象概念（"AI改变工作方式"） |
-| 情绪张力（"这个事恶心到我了"） | 无情绪 |
-| 身份锁定（"做独立开发的才懂"） | 面向所有人 |
-| **极简主体**（"Anthropic Fable 5 屠榜"，6-10 字） | 长句复述（"Fable 5 屠榜那天，36 小时追平了 GPT-5.5 跑了四天的活"——内文已说过的就不要再放标题） |
-
-**开头写法**：第一句就要制造「然后呢」冲动。不要从「随着AI发展」这种宏大叙事开始，从一个具体的、当下的、能让读者立刻代入的场景切入。
-
-### 第四步：观点轰炸层的节奏控制
-
-- **疑问句刹车**：每隔 2-3 段抛出一个问题，让读者停一下
-- **先承认对立面**：对方处境合理，但……（然后反转）
-- **体感记忆**：「我当时就愣住了」比「让我感到震惊」有力 10 倍
-- **自嘲**：承认自己也会犯错，增加信任感
-
-### 第五步：精简规则（2026-06-10 用户实操反馈）
-
-> ⚠️ **这一节是真实的写作纪律，不是建议**。佳哥亲自下场改了我的初稿，把「能减的全减了」。下面每一条都是从他的改稿里提炼的硬规则。
-
-#### 5.1 标题：主体即标题，6-10 字封顶
-
-| ❌ 我之前的写法 | ✅ 用户的写法 |
-|---|---|
-| "Fable 5 屠榜那天，36 小时追平了 GPT-5.5 跑了四天的活"（30 字） | "Anthropic Fable 5 屠榜"（9 字） |
-| "Fable 5 上线，36 小时追平了 GPT-5.5 四天的活" | "Fable 5 屠榜"（6 字） |
-
-**铁律**：内文已经说过的数据，标题不重复。标题只负责「这是什么 + 态度」两件事。
-
-#### 5.2 Body 不放装饰元素（重要删减）
-
-**我的初稿** 有但 **用户的终稿** 没有：
-- ❌ 顶部分类标签行（`<span>直隶按察使</span> + <span>短评</span>`）
-- ❌ Body 内的 H1 标题（WeChat 草稿 `title` 字段就是标题）
-- ❌ 「刘生 · 2026年6月」副标题行
-- ❌ 「说完了 X 和 Y，最后说 Z」式的小节过渡句
-
-**终稿结构**：开篇直接进场景 → 中间 N 个 H2 章节（各自独立，不需要过渡）→ 数据来源 + 作者行结束。
-
-#### 5.3 章节之间的「过渡句」一律砍
-
-```
-❌ 我的初稿："说完了屠榜和价格，最后说一个让 Anthropic 自己也站出来的领域，科研。"
-✅ 终稿：直接进入下一节 H2（"Mythos 5 在科研领域，有点超纲"）
-```
-
-H2 本身就是最强的转场信号，再加一句「说完了 X」是冗余。
-
-#### 5.4 H2 标题的精简
-
-| 我的初稿 | 终稿 | 改法 |
-|---|---|---|
-| "36 小时对 4 天，这就是和 GPT-5.5 的差距" | "36 小时对 4 天，GPT-5.5 也被摩擦" | 把「差距」换成动词「摩擦」，情绪更锐 |
-| "Mythos 5 在科研那一块，有点超纲" | "Mythos 5 在科研领域，有点超纲" | "那一块" → "领域" |
-| "最后说句不太礼貌的" | "最后说句不太礼貌的话" | 句末加 "话"，语法更完整 |
-
-**H2 写法的两个倾向**：
-- 用动词结尾（摩擦 / 屠榜 / 砍半 / 划线），不用名词结尾
-- 6-14 字封顶，长的 H2 读者读起来累
-
-#### 5.5 Body 行的「微型删减」
-
-逐行对照发现 **7 处微型删减** 都是同一个原则——**能不说的就不说**：
-
-| 我的初稿 | 终稿 | 删的是什么 |
-|---|---|---|
-| "不是装文艺，是<strong>在告诉你，能力已经到了神话那个级别</strong>" | "是<strong>在说，模型能力已经到了神话级别</strong>" | 删「装文艺」的反向铺垫 + 「那个」虚词 |
-| "翻译成人话就是，AI 越强，需求越多，而不是强模型能把所有的活干完" | 同（差不多，但删了前面的"他这话"） | 删「他这话」指代 |
-| "是两条赛道的问题。一个在认真做护栏，一个在卷新功能。" | "是两条赛道的问题。" | 删展开解释的那一句 |
-| "说一个大家可能更在意的点" | "大家更专注的肯定是价格" | 删「说一个」铺垫 |
-| "Mythos Preview 价格的不到一半" | "Mythos Preview 价格的一半" | 删「的不到」 |
-| "23 日**开始**转入按额度计费" | "23 日转入按额度计费" | 删「开始」 |
-| "容量够的时候会重新拉回订阅套餐**里**" | "容量够的时候会重新拉回订阅套餐" | 删「里」 |
-| "OpenAI 看了应该会沉默**一阵**" | "OpenAI 看了应该会沉默" | 删「一阵」 |
-| "我给你翻译一下，这意味着…" | "翻译一下，这意味着…" | 删「我给你」自指 |
-
-**铁律**：写完一轮后，**回头再读一遍**，把每个「的不到 / 开始 / 里 / 一阵 / 装文艺 / 给你 / 说白了 / 这种 / 他这话」式的虚词和铺垫全部砍掉。这些词不传递信息，只占字数。
-
-#### 5.6 关键句的「重写」
-
-有些句子不是删的问题，是要换说法让记忆点更锐：
-
-| 我的初稿 | 终稿 | 为什么改 |
-|---|---|---|
-| "我做的是透明且能让大家用上的工具" | "我卖的不是 ppt，是透明且能让大家用上的工具" | 「不是 X」比「是 Y」更有力，加「ppt」具体化（用户一眼能共鸣） |
-
-**纪律**：核心金句要可被引用、可被截图、可被复述。用对仗 / 反差 / 具体名词（ppt / 黑盒 / 屠榜 / 摩擦），不用抽象动词（赋能 / 引领 / 突破）。
-
-#### 5.7 Pre-submit 自检清单（精简版，加在原有 12 问之前）
-
-写完 HTML 后，**必须**额外检查这 5 件事：
-
-- [ ] **标题 ≤ 10 个中文字**（WeChat 字段另说，body 标题如果放了就要短）
-- [ ] **body 没有 H1 标题行**（WeChat 草稿 title 字段已经有了）
-- [ ] **body 没有「刘生 · 2026年X月」副标题**（作者行在文末就够）
-- [ ] **body 没有顶部分类标签 span**（公众号列表页已经显示了）
-- [ ] **H2 之间没有「说完了 X 和 Y」式过渡句**（H2 本身就是过渡）
-
-这 5 条全是踩过的坑。一条没过就重写再发。
-
-## 注意事项
-
-- 正文配图可选，有则用深色信息图风格
-- 观点要有立场，不做理中客
-- 结尾不求 Star/项目地址，纯观点文
-- **禁用词（严禁出现）**：`说白了`、`意味着什么`、`本质上`、`换句话说`、`不可否认`、`冒号`、`破折号`、`头皮发麻`
-- 所有文字 **`text-align:left`**，无例外
-- **禁止连续 bullet list**，超过2个观点必须改散文叙述
+| 功能 | 状态 | 解决 |
+|------|------|------|
+| WeChat `uploadimg` 返回 40137 | PNG 上传失败 | 转 JPEG 再上传 |
+| 草稿图片显示 400 | mmbiz URL 缺少 `?from=appmsg` 后缀 | 用完整 mmbiz URL（157-163字符） |
+| `urllib.request` multipart 上传报 41005 | Python urllib 上传图片返回 41005 | 改用 subprocess + curl |
+| execute_code sandbox 破坏含中文 URL 的 HTML | sandbox 替换含敏感词的整行字符串 | 用 terminal Python 而非 execute_code |

@@ -413,17 +413,23 @@ def main():
         generate_illustrations(shots)
     else:
         print("\n[配图] 跳过（--skip-illustration）")
+        # 2026-07-08 fix: 检查 HTML 是否已有 mmbiz img 标签（有则说明 img 已预注入，不需要走 shot 提取/上传/注入流程）
+        existing_imgs = re.findall(r'<img[^>]+src="(http://mmbiz\.qpic\.cn[^"]+)"', html)
+        if existing_imgs:
+            print(f"      ℹ️  HTML 已有 {len(existing_imgs)} 张 mmbiz 图片，跳过 shot 提取和注入")
+            shots = []  # 强制清空，确保后续 upload_illustrations/inject_into_html 不执行
 
     # ============ Step 3: zhili-illustration 生成封面 ============
-    if not args.skip_cover:
-        print("\n[封面] 用 zhili-illustration 生成封面图...")
-        cover_path = generate_cover(html, args.title, DEFAULT_COVER_PATH)
-    else:
-        print(f"\n[封面] 跳过（--skip-cover，使用已有：{args.cover}）")
+    # Bugfix 2026-07-08：--skip-cover 时优先用 --cover 指定的已有文件，不调用 generate_cover
+    if args.skip_cover:
         if not os.path.exists(args.cover):
             print(f"❌ 封面不存在: {args.cover}")
             sys.exit(1)
+        print(f"\n[封面] 跳过（--skip-cover，使用已有：{args.cover}）")
         cover_path = args.cover
+    else:
+        print("\n[封面] 用 zhili-illustration 生成封面图...")
+        cover_path = generate_cover(html, args.title, args.cover)  # 生成到 --cover 指定路径，不走 DEFAULT_COVER_PATH
 
     # ============ Step 4: 获取 token ============
     print("\n[4/5] 获取 access_token...")

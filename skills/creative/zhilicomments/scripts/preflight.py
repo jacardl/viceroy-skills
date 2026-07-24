@@ -85,7 +85,7 @@ def main():
     h1 = len(re.findall(r"<h1", html))
     h2 = len(re.findall(r"<h2", html))
     p = len(re.findall(r"<p", html))
-    check("body 无 H1", h1 == 0, f"{h1} 个")
+    check("body 含 H1（文章标题）", h1 >= 1, f"{h1} 个")
     check(f"H2 ≥ 3（建议 4-5）", h2 >= 3, f"{h2} 个")
     check(f"P ≥ 20（短评 ≥20 段）", p >= 20, f"{p} 个")
 
@@ -120,7 +120,7 @@ def main():
     title = title_match.group(1) if title_match else ""
     title_cjk = re.findall(r"[\u4e00-\u9fff]", title)
     check(f"标题 ≤10 中文字", len(title_cjk) <= 10, f"{len(title_cjk)} 字「{title}」")
-    check("body 无 H1", "<h1" not in html)
+    check("body 含 H1", "<h1" in html)
     check("body 无「刘生 · 2026」副标题", "刘生 · 2026" not in text)
     check("body 无顶部分类标签（直隶按察使 / 短评）",
           "短评</span>" not in text and "直隶按察使</span>" not in text)
