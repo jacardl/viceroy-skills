@@ -31,9 +31,11 @@ grep -n "——" /tmp/draft.md
 # 不是X是Y 句式
 grep -n "不是.*是" /tmp/draft.md
 
-# AI 黑话：落地 / 完美 / 非常 / 极其 / 赋能 / 闭环
-grep -n "落地\|完美\|非常\|极其\|赋能\|闭环" /tmp/draft.md
+# AI 黑话 / 赞美形容词（完整列表，见 validate_zhili_article.py renwei 第 11 项）
+grep -n "落地\|完美\|非常\|极其\|赋能\|闭环\|强大\|卓越\|优雅\|惊艳\|出色\|优秀\|极致" /tmp/draft.md
 ```
+
+> ⚠️ 上面的 grep 包含了 validate renwei 第 11 项「AI 赞美形容词」的完整列表。首次扫描后若有任何命中，先清零再渲染，不要带任何一项进 validate 循环。
 
 **常见修复对照**：
 
@@ -47,17 +49,29 @@ grep -n "落地\|完美\|非常\|极其\|赋能\|闭环" /tmp/draft.md
 | AI 黑话 | 它现在还不完美 | 它现在还不够完善 |
 | AI 黑话 | 会非常明显 | 会很明显 |
 | AI 黑话 | 功能非常强大 | 功能很强 |
+| 意义拔高 | Blender 更是需要专门培训 | Blender 得专门培训才能上手 |
+| 意义拔高 | 这不仅是 X，更是 Y | 删「更」字或拆成两句 |
 
 **扫描后**：确认 4 项全部清零后再渲染草稿。任意一项有结果都需要修复。
+
+**标题字节预检（草稿阶段必须做，不要等 validate）**：
+```python
+title = "你的标题"
+byte_count = sum(3 if ord(c) > 127 else 1 for c in title)
+print(byte_count)  # 必须 ≤60
+```
+超了就先改草稿标题再渲染，否则 HTML 里改了还要重新跑 validate。
 
 ---
 
 ## 2. 渲染 + 验证
 
-```bash
-python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html
-python3 scripts/validate_zhili_article.py /tmp/article.html --title "标题"
-```
+**顺序不能颠倒**：
+1. 修复 draft.md 中的 renwei 错误
+2. **重新渲染** `python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html`
+3. 再 validate
+
+validate 读取的是渲染后的 HTML。如果只改了 draft.md 但没重新渲染，validate 看到的还是旧 HTML，会报假阳性。如果只改了 HTML 但 draft.md 没同步，下次重新渲染会把错误带回来。
 
 ---
 
@@ -86,8 +100,8 @@ render 输出 `图片占位=N`：
 → push.py 不用 `--skip-illustration`
 
 **路径 B（直接嵌入）**：markdown 纯文字无图片语法（输出 `图片占位=0`）
-→ 上传图片到微信 `media/uploadimg` 获取 mmbiz URL
-→ 手动注入 `<img src="mmbiz_url">` 到 HTML
+→ 这种输出完全正常，纯介绍文章（无 demo 截图、无 UI 界面）自然没有截图时会出现
+→ 上传封面图后直接推草稿，不需要手动注入配图
 → push.py 用 `--skip-illustration`
 
 **路径 B 完整注入步骤（2026-07-14 实测）**：
@@ -195,3 +209,9 @@ cd /tmp && python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
 | 用户说 MIT 但 API 返回 None | 文章 License 写错 | 写前先 curl GitHub API 核实 `license.spdx_id` |
 | 路径 B marker 在 HTML 中找不到 | 注入失败 | markdown 强渲染后 HTML 标签变化，用 `grep -o '关键词.*</p>'` 确认 marker 精确形式 |
 | 注入后 HTML 出现双重 p 标签 | 微信渲染异常 | marker 以 `</p>` 结尾时，inject 应直接拼接在 `</p>` 之后而非形成嵌套 p |
+| push.py 超时 120s | 自动生成+上传配图时超时 | 先用 `--skip-illustration` 推草稿，再单独处理配图 |
+| 「不是X是Y」正则假阳性 | validate 报 1 处命中但实际是正常句式 | 正则 `不是.{0,30}是` 会误杀「就是一个 Bun 服务器」「排除了截图，排除了代码」这类主系表和双重否定句；改写让「不是」和「是」不共处同一短句 |
+| 总结段落写了 `## 六、总结` H2 | validate 直接报错 | **硬约束：总结段落不写 H2**，内容直接在五之后用 `· · ·` 收尾 |
+| 「更是/还有/甚至」意义拔高 | validate renwei 11 项命中率 ≥1 | 「Blender 更是需要专门培训」→「Blender 得专门培训才能上手」；意义拔高检测是「更/还/甚至 + 形容词/名词」语境，删「更」字即可 |
+| 标题字节超限 | validate 报「标题字节 ≤60」但草稿阶段未检 | **草稿阶段必须预检标题字节**，不要等 validate 打回才改（改 HTML 要重新验 renwei）；公式：`sum(3 if ord(c)>127 else 1 for c in title)` |
+| sed 替换中文破折号失败 | `sed -i 's/——/，/g'` 跑了但 HTML 里还有破折号 | 用 `grep -n "——"` 确认位置后重复执行一次；有时替换需要两次才彻底 |

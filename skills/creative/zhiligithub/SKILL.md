@@ -79,7 +79,7 @@ description: >-
 
 1. **body 不放装饰元素**：无顶部分类标签、无 H1、无「刘生 · 2026年X月」副标题、无作者页脚
 2. **H2 之间无过渡句**：H2 本身就是转场信号，「说完了 X 和 Y」直接砍
-3. **「六、总结」H2 不要了**：总结内容在 `· · ·` 之后自然流入
+3. **「六、总结」H2 不要了**：总结内容在 `· · ·` 之后自然流入。**不要在 markdown 里写 `## 六、总结`**，直接跟在五的内容后面。validate 会拦截 `六、总结` 字样。
 4. **Pull Quote → 普通段落**：金句独立成段即可，不需要左边框+斜体+淡灰底三重强调
 5. **✅/❌ 标签盒不要**：边界条件融进最后一段散文
 
@@ -102,27 +102,48 @@ description: >-
 
 ## Step 3：renwei 自检
 
-> ⚠️ **必须扫描全文**（zhililong 从零写，每段都算"动过"，不是只扫动过的地方）。
+> 经验来源：OpenCut 和 Graphify 两篇文章的第一稿均含 3-5 处破折号、1-2 处「不是X是Y」、1-2 处 AI 黑话，导致渲染后 validate 失败 2-3 轮。
+> 在草稿阶段做一次快速扫描，提前修复，可以跳过渲染直接改草稿。
 
-完整清单 → `zhili-shared/references/zhili-style.md` 第 3 节。
+**必扫高频 violation（草稿阶段）**：
 
-**快速扫描命令**：
 ```bash
-# 破折号（出现率最高）
+# 破折号 —— （出现率最高）
 grep -n "——" /tmp/draft.md
 
 # 不是X是Y 句式
 grep -n "不是.*是" /tmp/draft.md
 
-# AI 黑话
-grep -n "落地\|完美\|非常\|极其\|赋能\|闭环" /tmp/draft.md
+# AI 黑话：落地 / 完美 / 非常 / 极其 / 赋能 / 闭环 / 持续 / 构建 / 迭代 / 颠覆
+grep -n "落地\|完美\|非常\|极其\|赋能\|闭环\|持续\|构建\|迭代\|颠覆" /tmp/draft.md
+
+# 意义拔高（更X/还X/甚至X 紧接形容词或名词）
+grep -n "更是\|还有\|甚至" /tmp/draft.md
 ```
 
-**命中率 ≥ 3 项 → 先打回重写，不要一边改一边扫**。
+**标题字节预检（草稿阶段）**：
+```python
+title = "你的标题"
+byte_count = sum(3 if ord(c) > 127 else 1 for c in title)
+print(byte_count)  # 必须 ≤60
+```
 
----
+**常见修复对照**：
 
-## Step 4：渲染 HTML
+| 违规 | 原文 | 改后 |
+|------|------|------|
+| 破折号（解释） | A——B | A，B |
+| 破折号（转折） | A——B | A。B |
+| 不是X是Y | 问题不是A，是B | 问题不在于A，而在于B |
+| 不是X是Y | 代码不是文本，代码是图 | 代码是图，不是文本 |
+| AI 黑话 | 一旦落地 | 一旦实现 |
+| AI 黑话 | 它现在还不完美 | 它现在还不够完善 |
+| AI 黑话 | 会非常明显 | 会很明显 |
+| AI 黑话 | 功能非常强大 | 功能很强 |
+| 意义拔高 | Blender 更是需要专门培训 | Blender 得专门培训才能上手 |
+| 意义拔高 | 这不仅是 X，更是 Y | 删「更」字或拆成两句 |
+
+**扫描后**：确认全部清零后再渲染草稿。任意一项有结果都需要修复。
 
 ```bash
 python3 /root/.hermes/skills/creative/zhiligithub/scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html
@@ -156,11 +177,10 @@ python3 /root/.hermes/skills/creative/zhiligithub/scripts/validate_zhili_article
 
 **路径 A（推荐）**：预生成封面图后推草稿
 ```bash
-# ① 用 zhili-illustration/mmx 生成封面 → PIL 裁剪 900×383
-# ② 上传封面（material/add_material?type=image）→ 拿 media_id
-# ③ 推草稿
+# ① 用 PIL 将封面裁剪为 900×383
+# ② 推草稿（跳过自动封面生成 + 跳过自动配图）
 cd /tmp && python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
-  --html /tmp/article.html --cover /tmp/cover.jpg --skip-illustration
+  --html /tmp/article.html --cover /tmp/cover.jpg --skip-illustration --skip-cover
 ```
 
 **路径 B（跳过封面）**：`--skip-cover`
@@ -208,6 +228,26 @@ cd /tmp && python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
 - [ ] `grep -n '\*\*' /tmp/article.html` → 空（无 Markdown 残留）
 - [ ] `grep -n '^$' /tmp/article.html` → 空（无纯空行）
 
+### Stop-slop 扫描（在草稿 markdown 上做，不在 HTML 上）
+
+> ⚠️ validate_zhili_article.py 检查的是渲染后 HTML，但 HTML 里中文标点已被 strip，所以破折号/冒号检测是给 markdown 用的。**filler words 的实际检测在草稿阶段**，render 后 HTML 无法复现。必须先清零再 render。
+
+```bash
+# 破折号（高频，render 后 HTML 检测不到）
+grep -n "——" /tmp/draft.md
+
+# filler words：值得注意的是 / 实际上 / 其实 / 那么 / 大家都知道 / 当然也不排除 / 在某种程度上 / 一定程度上 / 不难看出
+grep -n "那么\|实际上\|其实\|值得注意的是\|大家都知道" /tmp/draft.md
+
+# AI 黑话
+grep -n "落地\|完美\|非常\|极其\|赋能\|闭环\|颠覆" /tmp/draft.md
+
+# 不是X是Y 句式
+grep -n "不是.*是" /tmp/draft.md
+```
+
+命中率 ≥ 1 → 先清零再 render。不能在 render 后等 validate 报 HTML 里找不到再回去改草稿。
+
 ---
 
 ## 凭证配置
@@ -222,4 +262,5 @@ cd /tmp && python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
 | 部分分类 | ⚠️ category_id 不稳定 | 手动在后台选择 |
 | WeChat `uploadimg` 返回 40137 | PNG 上传失败 | 转 JPEG 再上传 |
 | `urllib.request` multipart 上传报 41005 | Python urllib 上传图片返回 41005 | 改用 subprocess + curl |
+| push.py 自动配图超时 | 生成+上传 2+ 张配图时 120s 内完不成 | 先 `--skip-illustration` 推草稿，再单独生成图补推 |
 | GitHub raw 超时 | `raw.githubusercontent.com` 超时 | 用 API + base64 解码 |
