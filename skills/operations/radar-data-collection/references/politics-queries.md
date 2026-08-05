@@ -25,8 +25,9 @@
 
 ## 内容结构（入库 content 字段）
 ```
-中文标题：xxx
-English Headline: xxx
-事件介绍：xxx
-背景/影响：xxx
+事件介绍：xxx（含具体事件，≥50字）
+背景/影响：xxx（影响分析和背景）
 ```
+- **中文标题**：直接是新闻标题，不要加前缀
+- content 必须是**纯中文**，不写 English Headline
+- 字段名是 `url`（不是 `source_url`）、`source`（不是 `source_name`）

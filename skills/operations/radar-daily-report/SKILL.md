@@ -6,127 +6,95 @@ metadata: { "openclaw": { "emoji": "📡" } }
 
 # 雷达每日报告推送
 
-每日 06:00 北京时间执行。发送 **4 条独立飞书消息**。
+执行入口：直接运行本 skill，由 cron `9055e9a4`（每日 06:00 CST）触发。
 
-DB 连接：`docker exec radar-db psql -U radar -d radar`
+## 执行脚本
 
-版式参考：`references/approved-template.md`
-
----
-
-## 执行步骤
-
-### 第 0 步：时区同步 + 判断报告类型
-
-```bash
-export TZ=Asia/Shanghai && date '+%Y-%m-%d %u %d' && cal -m $(date '+%m') | tail -1 | awk '{print NF}'
+```
+python3 ~/.openclaw/skills/operations/radar-daily-report/scripts/push.py
 ```
 
-- AD = 今天日期（YYYY-MM-DD）
-- DAY = 星期几（1=周一 ... 6=周六, 7=周日）
-- LAST_DAY = cal 判断本月最后一天
+脚本输出格式（stdout）：
+```
+===MSG1===
+<金价消息>
 
-报告类型：
-- LAST_DAY && DAY == 今天日期 → 月报（`?since=monthly`）
-- DAY == 6（周六）→ 周报（`?since=weekly`）
-- 其他 → 日报（无参数）
+===MSG2===
+<AI消息>
 
-### 第 1 步：查询今日数据量
+===MSG3===
+<国际政治消息>
 
-```bash
-export TZ=Asia/Shanghai && AD=$(date '+%Y-%m-%d') && \
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT COUNT(*) FROM gold_prices WHERE price_date='${AD}';" | tr -d ' \n' && echo '' && \
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT COUNT(*) FROM news_articles WHERE category='ai' AND article_date='${AD}';" | tr -d ' \n' && echo '' && \
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT COUNT(*) FROM news_articles WHERE category='politics' AND article_date='${AD}';" | tr -d ' \n' && echo '' && \
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT COUNT(*) FROM news_articles WHERE category='github' AND article_date='${AD}';" | tr -d ' \n'
+===MSG4===
+<GitHub消息>
+
+===META===
+date=YYYY-MM-DD dow=N report_type=daily|weekly|monthly ai=X po=X gh=X gold_ok=true|false
 ```
 
-全部为 0 → 查最近有数据的日期作为 USE_DATE，标题加 `⚠️ 半成品` 前缀。
+## 数据字段映射（push.py 读取规则）
 
-### 第 2 步：发送消息一 · 金价
+### gold_prices 表
 
-```bash
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT intl_price_usd, intl_price_change, domestic_price_cny, domestic_price_change,
-          tips_yield_10y, tips_yield_change
-   FROM gold_prices WHERE price_date='${USE_DATE}';"
+| DB 字段 | push.py 读取 | 显示 |
+|---------|-------------|------|
+| `intl_price_usd` | float | $X,XXX.XX /盎司 |
+| `intl_price_change` | float（**百分比%**） | ±X.XX% |
+| `domestic_price_cny` | float | ¥XXX.XX /克 |
+| `domestic_price_change` | float（**百分比%**） | ±X.XX% |
+| `tips_yield_10y` | float | X.XXX% |
+| `tips_yield_change` | float（基点差 pp） | ±X.XXXpp |
+| `gold_note` | text | 附在表格下方 |
+
+> ⚠️ `intl_price_change` / `domestic_price_change` 存的是**百分比值**，非绝对额。\
+> 由 collect.py 在入库时计算：**(今-昨)/昨 × 100%**
+
+### news_articles 表（所有 category）
+
+读取方式：`SELECT row_to_json(...)` — 按字段名访问，不依赖分隔符。
+
+| category | 读取字段 | 显示 |
+|----------|---------|------|
+| `ai` | title / **description** / source / url / blacklist_score | 序号 · 标题 · 热度分 · 来源 + 摘要（v4.1：description 是主显示，summary 备用） |
+| `politics` | content(=摘要) / source / url / **region** | 🔴亚太 / 🔵中东·欧洲 / 🟢美洲 三段（v4.1：region 写入由 collect.py step_politics 传递） |
+| `github` | title / **description** / source(=lang) / url / **stars_count** / **period_new_stars** / blacklist_score | 黑马分 · 今日+⭐ · 总⭐ + 中文简介（v4.1：description 改干净 desc，不含 ⭐ 统计数字） |
+
+> 字段变更记录（v4.1，2026-08-05）：
+> - `ai.description` 成为 push 主显示字段，summary 备用
+> - `politics.region` 由 collect.py 写入，DB 默认值 🟢 仅作兜底
+> - `github.description` 改干净中文 desc（v4 之前是 `* N today | total* N | lang | desc[:80]`，v4.1 改为纯 desc[:300]）
+> - `growth_rate` / `is_new_project`：采集时写入，push 预留字段
+
+## 消息发送
+
+解析脚本输出后，逐条发送飞书：
+- ===MSG1=== → message tool（金价）
+- ===MSG2=== → message tool（AI）
+- ===MSG3=== → message tool（国际政治）
+- ===MSG4=== → message tool（GitHub）
+
+## 存档
+
+```
+mkdir -p ~/.openclaw/workspace/daily-reports
+# 消息内容存档到 ~/.openclaw/workspace/daily-reports/YYYY-MM-DD.md
 ```
 
-版式：`references/approved-template.md` 第一节，**不用代码块**，Markdown 表格。
+## 异常处理铁律
 
-### 第 3 步：发送消息二 · AI 热讯
+- gold_ok=false → MSG1 显示「⚠️ 金价数据缺失」
+- ai=0 → MSG2 显示「⚠️ AI热讯数据缺失」
+- po=0 → MSG3 显示「⚠️ 国际政治数据缺失」
+- gh=0 → MSG4 显示「⚠️ GitHub数据缺失」
+- **禁止独立抓取补充数据 / 禁止 fallback 旧数据**
 
-```bash
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT title, LEFT(content, 400), source, url, COALESCE(summary, '')
-   FROM news_articles
-   WHERE article_date='${USE_DATE}' AND category='ai'
-   ORDER BY blacklist_score DESC NULLS LAST LIMIT 10;"
-```
+## 版式参考
 
-按热度分降序。每条附：热度分 + 来源 + 1句摘要。
+见 `references/approved-template.md`。
 
-### 第 4 步：发送消息三 · 国际政治
-
-```bash
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT LEFT(content, 800), source, url
-   FROM news_articles
-   WHERE article_date='${USE_DATE}' AND category='politics'
-   ORDER BY blacklist_score DESC NULLS LAST LIMIT 12;"
-```
-
-版式：`references/approved-template.md` 第三节
-
-**版式铁律（佳哥拍板）**：
+版式铁律（佳哥拍板，2026-06-17）：
 - ❌ 代码块 ❌ English Headline ❌ 中英对照
-- ✅ 每条「事件 / 背景 / 影响」三段
+- ✅ 每条政治「事件 / 背景 / 影响」三段
 - ✅ 🔴亚太 🔵中东·欧洲 🟢美洲 三区域
-
-### 第 5 步：发送消息四 · GitHub 黑马
-
-采集：agent-reach WebChannel（sessions_spawn 独立执行）
-黑马分 = 今日新增⭐ × 小项目加成：
-| 总⭐区间 | 加成 |
-|---------|------|
-| <5k | ×2.0 |
-| 5k~20k | ×1.5 |
-| 20k~100k | ×1.0 |
-| ≥100k | ×0.8 |
-
-版式：`references/approved-template.md` 第四节
-
-**铁律**：必须含 `owner/repo` 完整路径 + 今日新增⭐
-
-### 第 6 步：存档 + 回报
-
-```bash
-mkdir -p workspace/daily-reports && \
-cat > workspace/daily-reports/${USE_DATE}.md << 'REPORT'
-（4条消息完整内容）
-REPORT
-```
-
-输出完成统计：
-```
-📡 雷达日报推送完成
-- 消息一 金价：OK/FAIL
-- 消息二 AI热讯：OK/FAIL（N条）
-- 消息三 国际政治：OK/FAIL（N条）
-- 消息四 GitHub：OK/FAIL（N条）
-- 数据日期：YYYY-MM-DD
-```
-
----
-
-## 错误处理
-
-- 4 类全 0 → 查最近日期，标题加 `⚠️ 半成品`
-- 国际政治 < 10 条 → 标注数量，不阻塞
-- AI < 8 条 → 标注数量，不阻塞
-- 单条消息失败 → 重试 1 次
-- 所有异常记录 `memory/YYYY-MM-DD.md`
+- ✅ 金价用 Markdown 表格（**涨跌列为百分比%**）
+- ✅ GitHub 必须含今日新增⭐ + 总⭐ + 中文简介（取 description 字段）
