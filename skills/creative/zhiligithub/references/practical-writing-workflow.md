@@ -31,8 +31,8 @@ grep -n "——" /tmp/draft.md
 # 不是X是Y 句式
 grep -n "不是.*是" /tmp/draft.md
 
-# AI 黑话 / 赞美形容词（完整列表，见 validate_zhili_article.py renwei 第 11 项）
-grep -n "落地\|完美\|非常\|极其\|赋能\|闭环\|强大\|卓越\|优雅\|惊艳\|出色\|优秀\|极致" /tmp/draft.md
+# AI 黑话 / 赞美形容词（完整列表，见 zhili-style.md renwei 第 11 项 + AI黑话池）
+grep -n "落地\|完美\|非常\|极其\|赋能\|闭环\|颠覆\|强大\|卓越\|优雅\|惊艳\|出色\|优秀\|极致\|持续\|构建\|迭代" /tmp/draft.md
 ```
 
 > ⚠️ 上面的 grep 包含了 validate renwei 第 11 项「AI 赞美形容词」的完整列表。首次扫描后若有任何命中，先清零再渲染，不要带任何一项进 validate 循环。
@@ -54,7 +54,41 @@ grep -n "落地\|完美\|非常\|极其\|赋能\|闭环\|强大\|卓越\|优雅\
 
 **扫描后**：确认 4 项全部清零后再渲染草稿。任意一项有结果都需要修复。
 
-**标题字节预检（草稿阶段必须做，不要等 validate）**：
+**⚠️ 诊断技巧：区分「有命中」和「有多少个」**
+
+`grep -n` 只显示行号，当同一行出现多个匹配时会掩盖实际数量。正确做法是用 `grep -o` 提取每个匹配词，再 `sort | uniq -c` 计数：
+
+```bash
+# 误判：只看行号
+grep -n "落地\|完美\|非常" /tmp/draft.md
+# Line 89: ...非常迫切...
+# （可能误以为只有 1 处，实际「非常」只出现 1 次，这个结果是准的）
+# 但如果一行里有两个「完美」，grep -n 只显示一次
+
+# 准判：计数每个词
+grep -o "落地\|完美\|非常" /tmp/draft.md | sort | uniq -c
+#   1 非常
+#   2 完美
+# 清楚看到「完美」出现 2 次，需要逐行定位修复
+```
+
+每次 renwei 扫描后，优先跑计数版，确认每个词的实际出现次数。
+
+**⚠️ 多处破折号批量替换**
+
+草稿扩展时容易在多处引入新的 `——`，多次 sed 替换容易遗漏。用 Python 全文替换最可靠：
+
+```python
+with open('/tmp/draft.md') as f:
+    content = f.read()
+content = content.replace('——', '，')  # 解释类 → 逗号
+content = content.replace('——', '。')  # 转折类 → 句号（需要两次调用分别处理不同语境）
+# 更简洁：一次性全部替换为句号，再人工调整少数用逗号更合适的地方
+with open('/tmp/draft.md', 'w') as f:
+    f.write(content)
+```
+
+**标题字节预检（草稿阶段必须做，不要等 validate）**：`
 ```python
 title = "你的标题"
 byte_count = sum(3 if ord(c) > 127 else 1 for c in title)
@@ -72,6 +106,12 @@ print(byte_count)  # 必须 ≤60
 3. 再 validate
 
 validate 读取的是渲染后的 HTML。如果只改了 draft.md 但没重新渲染，validate 看到的还是旧 HTML，会报假阳性。如果只改了 HTML 但 draft.md 没同步，下次重新渲染会把错误带回来。
+
+**renwei 假阳性（HTML 特有）的处理原则**：「不是X是Y」等 renwei 项可能在 HTML 中出现而 markdown 中没有（渲染改变换行/上下文，导致 validate 的 30 字符窗口捕获了复合句）。处理流程：
+1. 在 HTML 中定位匹配（`python3 -c "import re; print([m.group() for m in re.finditer(r'不是.{0,30}是', open('/tmp/article.html').read())])"`)
+2. 改写 HTML 中的句子
+3. 同步修 markdown（防止重新渲染带回来）
+4. 重新渲染验证
 
 ---
 
@@ -203,7 +243,9 @@ cd /tmp && python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
 | H2 漏写左边框 | 视觉上无章节边界 | 加 `border-left:4px solid #00d4aa;padding-left:12px;` |
 | 代码块含真实 `\n` | 微信渲染多段 | 改用 `<br>` |
 | `**文字**` 未转 `<strong>` | 显示 `**文字**` 字面量 | Python 替换 |
-| 「不是X是Y」句式 | validate 打回命中率 ≥1 | **pattern**: `不是[^，。安置]{1,40}[，,][^是\n]{1,40}是`；**解法**: 改写句子结构，如"问题不是 A，而是 B" → "问题不在于 A，而在于 B" |
+| 「不是X是Y」句式 | validate 打回命中率 ≥1，但 markdown 扫描干净 | **两层都要修**：①修 markdown 防止重新渲染带回来；②修 HTML（`/tmp/article.html`）才能通过本次 validate。修复后重新渲染验证。 |
+| HTML 层「不是X是Y」假阳性 | validate 报 1 处命中但 markdown 无 | HTML 渲染改变换行位置，导致 validate 的 regex `不是.{0,30}是` 捕获了复合句。**解法**：改写句子使「不是」和「是」不共处 30 字符窗口内 |
+| renwei 干净但 validate 报「不是X是Y」 | validate renwei ≥1，markdown grep 无结果 | HTML 特有假阳性。处理：①在 HTML 中定位匹配；②改写 HTML 句子；③同步修 markdown；④重新渲染验证 |
 | 封面上传 40007 | thumb type 被拒 | 必须用 `type=image` |
 | 重推草稿标题仍错误 | 旧草稿未删 | 用 `--delete-first <draft_id>` 删除旧草稿 |
 | 用户说 MIT 但 API 返回 None | 文章 License 写错 | 写前先 curl GitHub API 核实 `license.spdx_id` |

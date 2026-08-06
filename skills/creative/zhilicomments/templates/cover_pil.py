@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-zhilicomments · 封面图生成模板（900x500）
+zhilicomments · 封面图生成模板
 
 用法：复制本文件 → 改顶部 4 个常量 → python3 cover.py
 产物：/tmp/zhili_cover.png（push.py 默认读取路径）
 
+目标尺寸：900×383 px（push.py 从 16:9 底图裁剪至此比例）
 风格：深墨蓝底 + 青色装饰条 + 白色大标题 + 红棕色副标题 + 黄底引言
-可按主题调整背景色（如黑/红），但 900x500 是 push.py 的最佳兼容尺寸。
 """
 from PIL import Image, ImageDraw, ImageFont
 import os
@@ -20,7 +20,7 @@ TAG = "直隶按察使 · 短评"        # 顶部小标
 SIG = "刘生  /  2026.06.22"     # 底部署名
 
 # ============ 视觉常量（按需调）============
-W, H = 900, 500
+W, H = 900, 383
 BG = '#1B365D'           # 深墨蓝底
 ACCENT = '#00d4aa'       # 青色装饰条
 TEXT_MAIN = '#f5f4ed'    # 浅米白
