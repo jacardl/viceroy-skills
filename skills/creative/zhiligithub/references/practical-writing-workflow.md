@@ -7,12 +7,11 @@
 
 ```
 0. 写完草稿后、渲染前：运行 renwei 预扫（见第 1 节）→ 修复草稿 → 渲染
-1. python3 scripts/render_zhili_article.py <draft.md> <article.html>
-2. python3 scripts/validate_zhili_article.py <article.html> --title "<title>"
+1. python3 scripts/render_zhili_article.py <draft.md> <article.html> --title "<文章标题>"
+2. python3 scripts/validate_zhili_article.py <article.html> --title "<文章标题>"
 3. （失败时）改稿重跑 1-2 步
 4. 图片：嵌入 mmbiz URL（见下方两种路径）
-5. 手动在 HTML <head> 内添加 <title>文章标题</title>
-6. cd /tmp && python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.jpg --skip-illustration
+5. cd /tmp && python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.jpg --skip-illustration
 ```
 
 ---
@@ -102,7 +101,7 @@ print(byte_count)  # 必须 ≤60
 
 **顺序不能颠倒**：
 1. 修复 draft.md 中的 renwei 错误
-2. **重新渲染** `python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html`
+2. **重新渲染** `python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html --title "<文章标题>"`
 3. 再 validate
 
 validate 读取的是渲染后的 HTML。如果只改了 draft.md 但没重新渲染，validate 看到的还是旧 HTML，会报假阳性。如果只改了 HTML 但 draft.md 没同步，下次重新渲染会把错误带回来。
@@ -145,6 +144,14 @@ render 输出 `图片占位=N`：
 → push.py 用 `--skip-illustration`
 
 **路径 B 完整注入步骤（2026-07-14 实测）**：
+
+① 下载 GitHub OG 图后**必须验证是真实图片**，不是 HTML 重定向页面：
+```bash
+curl -sL "https://opengraph.githubassets.com/1/{owner}/{repo}" -o /tmp/og.png
+file /tmp/og.png          # 必须是 PNG/JPEG/GIF，不是 HTML
+wc -c < /tmp/og.png      # 真实图片通常 > 10KB
+```
+GitHub OG 图下载有时会返回 HTML 错误页面（只有几 KB），直接上传到微信会失败。验证不过则改用 GitHub 项目页截图或官方文档截图。
 
 ① 上传图片获取 mmbiz URL（push.py 有 `get_access_token`）：
 ```python
@@ -204,15 +211,34 @@ with open('/tmp/article.html', 'w') as f:
 
 ---
 
-## 5. 手动添加 <title> 标签（必须，2026-07-08 实坑）
+## 5. 注入 <title> 标签（必须，2026-07-08 实坑，每篇都会忘）
 
-render 脚本**不生成** `<title>`，必须手动加：
+render 脚本**不生成** `<title>`，而且**每次重新渲染都会覆盖掉**之前注入的 `<title>`。这意味着：
 
-```html
-<head><meta charset="utf-8"><title>文章标题</title></head>
+- 你注入了 title，运行 push.py 之前改了一句话，重新渲染了 → title 没了
+- push.py 读不到 `<title>`，默认标题变成"GitHub 黑马项目"
+- 这件事在每个 agent 上每篇文章都会发生，是结构性遗忘点
+
+**正确的完整序列（每篇文章都会走至少两遍）**：
+
+```
+1. python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html --title "<文章标题>"
+2. python3 - << 'PYEOF'
+   with open('/tmp/article.html', 'r') as f: html = f.read()
+   import re
+   html = re.sub(r'<head><meta charset="utf-8">',
+       '<head><meta charset="utf-8"><title>你的标题</title>', html)
+   with open('/tmp/article.html', 'w') as f: f.write(html)
+   PYEOF
+3. python3 scripts/validate_zhili_article.py /tmp/article.html --title "<文章标题>"
+4. [如有失败：改 draft.md → 回到步骤 1]
+5. [上传图片，注入 mmbiz URL]
+6. cd /tmp && python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.jpg --skip-illustration
 ```
 
-缺少时 push.py 默认标题为"GitHub 黑马项目"。
+**不要依赖 `inject_title.py`**（已废弃，render 脚本自带 `--title` 参数）。
+
+缺少 `<title>` 时 push.py 默认标题为"GitHub 黑马项目"（而非任何合理标题），此时草稿在公众平台后台标题错误，需删掉重推。
 
 ---
 

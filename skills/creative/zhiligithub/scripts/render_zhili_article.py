@@ -176,10 +176,32 @@ def md_to_blocks(md: str):
     return blocks
 
 
-def render(md: str) -> str:
-    """主渲染函数。"""
+def extract_title_from_md(md: str) -> str:
+    """从 markdown 提取标题：优先 H1，其次第一个 H2，用于 <title> 和封面 prompt。"""
+    for line in md.split("\n")[:10]:
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip()
+    # 没有 H1 时用第一个 H2（降级）
+    for line in md.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("## "):
+            return stripped[3:].strip()
+    return ""
+
+
+def render(md: str, title: str = "") -> str:
+    """主渲染函数。
+
+    Args:
+        md: markdown 内容
+        title: 可选，外部传入的标题（优先使用）。不传时从 markdown 提取。
+    """
     meta = parse_meta_from_md(md)
     blocks = md_to_blocks(md)
+
+    # 标题：优先使用外部传入的 title，否则从 markdown 提取（H1 > 第一个 H2）
+    article_title = title if title else extract_title_from_md(md)
 
     out = []
     for b in blocks:
@@ -211,12 +233,13 @@ def render(md: str) -> str:
 
     return (
         "<!DOCTYPE html>\n"
-        '<html>\n'
-        '<head><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width,initial-scale=1"></head>\n'
-        '<body style="margin:0;padding:0;background-color:#f5f4ed;'
-        'font-family:Georgia,\'Times New Roman\',serif;">\n'
-        '<div style="max-width:680px;margin:0 auto;padding:24px 16px 60px">\n'
+        "<html>\n"
+        "<head><meta charset=\"utf-8\">"
+        f"<title>{article_title}</title>"
+        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n"
+        "<body style=\"margin:0;padding:0;background-color:#f5f4ed;"
+        "font-family:Georgia,'Times New Roman',serif;\">\n"
+        "<div style=\"max-width:680px;margin:0 auto;padding:24px 16px 60px\">\n"
         f"{body}\n"
         "</div>\n"
         "</body>\n"
@@ -228,11 +251,12 @@ def main():
     ap = argparse.ArgumentParser(description="直隶按察使 · zhiligithub markdown → HTML 渲染器")
     ap.add_argument("input", help="markdown 草稿文件路径")
     ap.add_argument("output", help="HTML 输出文件路径")
+    ap.add_argument("--title", required=True, help="文章标题（必须传入，嵌入 <title> 并用于封面生成）")
     args = ap.parse_args()
 
     with open(args.input, encoding="utf-8") as f:
         md = f.read()
-    html = render(md)
+    html = render(md, title=args.title)
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(html)
     # 简要统计

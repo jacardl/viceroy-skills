@@ -47,8 +47,8 @@ description: >-
 1. 候选评估（收到 Trending 候选时必走）→ 不通过直接放下
 2. 写 markdown 草稿（1500-2000字，六段式）
 3. renwei 自检（zhili-style.md 第3节）→ 修复草稿
-4. 渲染 HTML：python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html
-5. 验证：python3 scripts/validate_zhili_article.py --title "<标题>"
+4. 渲染 HTML：python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html --title "<文章标题>"
+5. 验证：python3 scripts/validate_zhili_article.py --title "<文章标题>"
 6. 配图 + 封面 → python3 scripts/push.py --html /tmp/article.html --cover /tmp/cover.jpg
 ```
 
@@ -100,7 +100,7 @@ description: >-
 
 **对策（三同步原则）**：
 1. **目标线上调**：改写模式时，markdown 草稿目标定在 **1700-1800 字**（比 1500-2000 下限高 200-300），确保 render+推送后仍落在范围内
-2. **扩充检查点**：每写完一节，立即用 `python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html` 实时看 render 报告的字数，不要等全文写完才发现不够
+2. **扩充检查点**：每写完一节，立即用 `python3 scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html --title "<文章标题>"` 实时看 render 报告的字数，不要等全文写完才发现不够
 3. **两轮扩充法**：第一次 render 字数 < 1500 时，不要逐句修补，直接在「三、架构设计」和「五、实战场景」各补一个完整技术细节段（100-150 字/段），效率最高
 
 > ⚠️ 不要依赖 agent 总结里报的「字数 X」，要以 render 脚本输出的 `[OK] 中文字数=N` 为准。两者经常不一致。
@@ -186,27 +186,21 @@ print(byte_count)  # 必须 ≤60
 **扫描后**：确认全部清零后再渲染草稿。任意一项有结果都需要修复。
 
 ```bash
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html
+python3 /root/.hermes/skills/creative/zhiligithub/scripts/render_zhili_article.py /tmp/draft.md /tmp/article.html --title "<文章标题>"
 ```
 
 > ⚠️ 章节标题用 `## 一、项目名称`，不能用 `# 一、项目名称`（render 识别 `## ` 前缀）。
 
-**渲染后必须手动注入 `<title>`**：
-```python
-with open('/tmp/article.html') as f:
-    html = f.read()
-html = html.replace('<head><meta charset="utf-8">',
-    '<head><meta charset="utf-8"><title>正确标题</title>')
-with open('/tmp/article.html', 'w') as f:
-    f.write(html)
-```
+render 脚本将 `<title>` 直接写入 HTML。**`--title` 参数必传**，否则脚本报错。
 
----
+> ⚠️ 旧方案（渲染后手动 `replace` 注入 `<title>`）已废弃：render 每次重新生成 HTML 都会覆盖之前注入的 title，导致 push.py 读到空标签后回退为「GitHub 黑马项目」。用 `--title` 参数一次搞定。
+
+> ⚠️ 章节标题用 `## 一、项目名称`，不能用 `# 一、项目名称`（render 识别 `## ` 前缀）。
 
 ## Step 5：验证
 
 ```bash
-python3 /root/.hermes/skills/creative/zhiligithub/scripts/validate_zhili_article.py /tmp/article.html --title "<标题>"
+python3 /root/.hermes/skills/creative/zhiligithub/scripts/validate_zhili_article.py /tmp/article.html --title "<文章标题>"
 ```
 
 ---
@@ -239,7 +233,7 @@ cd /tmp && python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
 ```
 
 > ⚠️ 必须从 `/tmp` 目录运行（脚本内部依赖相对路径）。
-> ⚠️ `html` 必须含 `<title>` 标签（push.py 从中读取标题）。
+> ⚠️ render 时加 `--title` 参数，push.py 从 HTML `<title>` 读取文章标题。
 
 ---
 
