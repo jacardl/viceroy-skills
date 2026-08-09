@@ -58,9 +58,9 @@ python3 ~/.openclaw/skills/operations/radar-data-collection/scripts/collect.py $
 - **写入字段**：`intl_price_usd`, `intl_price_change`, `domestic_price_cny`, `domestic_price_change`, `tips_yield_10y`, `tips_yield_change`, **`gold_note`**（v4.1 新增）
 - **异常**：金价全来源失败 → 跳过写入，不 fallback 旧数据
 
-### 国际政治（生产级三段链，**v4.1 政治 bug 修复**）
+### 国际政治（生产级三段链，**v4.1 政治 bug 修复** + **v4.2 description 中文改写**）
 1. **9Router search-combo**：12 个 query × 8 条候选，recency_days=2
-2. **9Router web/fetch**：逐条抓全文 markdown（超时 30s），提取正文 200-1500 字
+2. **9Router web/fetch**：逐条抓全文 markdown（超时 12s，max_tokens=3000），提取正文
 3. **agent-reach WebChannel**：BBC/FT/部分新闻站优先走 urllib 直抓（独立通道，不依赖 9Router）
 4. **兜底**：全部失败则降级为 content（≥30 字），**不**强依赖 snippet
 5. **时效过滤**：published_at 超过 48h 跳过
@@ -68,6 +68,12 @@ python3 ~/.openclaw/skills/operations/radar-data-collection/scripts/collect.py $
 7. **达标**：≥10 条；< 5 条 → 🚨 告警标注
 - **v4.1 修复**：政治 8-02/8-03/8-04/8-05 连续 4 天 0 条的根因是「snippet 全 null + `len<30` 过滤」；修复后**优先走 web/fetch 抓全文**，snippet 只作兜底
 - **region 字段（v4.1 新增）**：每个 query 标 region（🔴亚太/🔵中东·欧洲/🟢美洲），写入 DB 供 push.py 分区
+- **description 中文改写（v4.2 新增）**：
+ - 抓全文后调 9Router `cx/gpt-5.6-sol` chat（max_tokens=220, temperature=0.2, timeout=15s）改写 100-150 字中文描述
+ - prompt 模板：「保留核心事件/人物/时间/地点；多空头/争议点出双方立场；末尾用一句话写出对市场或地缘格局的可能影响」
+ - 超时/失败/chat 报"原文不足"→ fallback 到 `summary[:200]`（保证 0 阻断，不阻塞入库）
+ - fetch 抓回 markdown 导航骨架（"Skip to main content" / 菜单/footer）→ chat 改写会报"内容不足"→ fallback（**遗留问题，下版本加 noise filter**）
+- **写入字段**：`title` / `content`(=全文) / `summary`(=全文前 200) / **`description`**(=中文 desc) / source / url / region / blacklist_score
 
 ### AI 热讯
 - **主选**：aihot.virxact.com（精选模式，take=10）
@@ -77,8 +83,12 @@ python3 ~/.openclaw/skills/operations/radar-data-collection/scripts/collect.py $
 
 ### GitHub Trending
 - gh_collect.py 抓 GitHub Trending 页面 → 写入 DB
-- **v4.1 description 字段修复**：以前塞了 `* N today | total* N | lang | desc[:80]`，现在改为干净中文 desc（≤300字）
-- **写入字段**：title / description / stars_count / period_new_stars / blacklist_score / **is_new_project**（v4.1 新增）
+- **v4.3 content 字段停写 + description 中文改写**（2026-08-08）：
+ - 停写 `content` 字段（v4.1 之前塞的 `Language/Total Stars/Stars Today/Black Horse Score/New Project/Description` 拼接 metadata 文本，停写后与 push.py 字段一比一对应）
+ - `description` 改为中文：gh_collect.py 新增 `_gen_zh_desc(text)` helper，调 9Router `minimax-cn/MiniMax-M3` chat（max_tokens=220, temperature=0.2, timeout=15s）把英文 repo desc 改写为 80-150 字中文简介
+ - 已是中文时跳过 chat（节省配额），失败 fallback 英文原文前 200 字（0 阻断）
+- **v4.1 description 字段修复**：以前塞了 `* N today | total* N | lang | desc[:80]`，v4.1 改为纯 desc[:300]，v4.3 再升级为 chat 改写中文
+- **写入字段**（v4.3）：`title` / **`description`**(中文) / `source`(=lang) / `url` / `lang`(=en) / `blacklist_score` / `stars_count` / `period_new_stars` / `is_new_project`（❌ 不再写 `content`）
 - **达标**：≥10 条
 
 ## 采集完成后验证

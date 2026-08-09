@@ -228,7 +228,8 @@ def build_msg3():
         lines.append(f"**{emoji} {name}**")
         if items:
             for p in items:
-                content = p["summary"] or p["content"] or ""
+                # v4.2：政治主显示字段改为 description（中文），summary/content 兜底
+                content = p["description"] or p["summary"] or p["content"] or ""
                 lines.append(f"- {content[:200]}")
                 src = f"来源：{p['source']}" if p["source"] else "来源：Web"
                 if p["url"]:
