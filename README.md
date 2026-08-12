@@ -7,7 +7,7 @@
 我自己每天在用的一些 AI 技能和 Prompt，都开源在这里。
 
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](./LICENSE)
-[![Skills](https://img.shields.io/badge/Skills-74-10B981?style=for-the-badge)](#-skills)
+[![Skills](https://img.shields.io/badge/Skills-75-10B981?style=for-the-badge)](#-skills)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8B5CF6?style=for-the-badge)](https://agentskills.io)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-D97706?style=flat-square&logo=anthropic&logoColor=white)
@@ -83,12 +83,13 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 
 ---
 
-### 🎨 Creative（11个）
+### 🎨 Creative（12个）
 
 | Name | How to trigger |
 |------|----------------|
 | [**9router-image**](skills/creative/9router-image/SKILL.md) | 9Router 图片生成 |
 | [**guizang-ppt-skill**](skills/creative/guizang-ppt-skill/SKILL.md) | PPT 生成 |
+| [**human-writing**](skills/creative/human-writing/SKILL.md) | 通用中文创作与改稿 — 知乎、论坛、公众号、小说 |
 | [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | 用卡兹克的风格写一篇公众号文章 |
 | [**renwei-writing**](skills/creative/renwei-writing/SKILL.md) | 人为写作 |
 | [**xiaohu-ip-studio**](skills/creative/xiaohu-ip-studio/SKILL.md) | 小虎 IP 工作室 |
