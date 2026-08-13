@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """
-radar-daily-report 推送脚本 v4.1
+radar-daily-report 推送脚本 v4.4
 
 铁律：
   - 不 fallback 旧数据，数据缺失直接告警
   - 所有字段按 DB schema 硬编码，不走 LLM 补字段
   - 与 collect.py / gh_collect.py 字段含义严格对齐（LRN-20260805-001/002）
+
+变更记录（v4.4, 2026-08-13）：
+  - MSG2: description 优先（v4.1 铁律字段对齐，原代码只读 summary/content）
+  - MSG3: 政治新闻改"事件/背景/影响"三段式（佳哥拍板 2026-06-17 铁律）
+  - MSG4: 标题/分数分两行；desc/url 缺时显示（暂无简介）/（链接待补）兜底
+  - MSG1: gold_note fallback 标识"（无趋势点评）"
+  - 缺数据点诊断更友好，便于定位 collect.py / gh_collect.py 采集 bug
 
 输出：===MSG1=== ~ ===MSG4=== + ===META=== 五段到 stdout
 
@@ -131,11 +138,14 @@ def build_msg1():
         f"| 国内金价（CNY/克） | ¥{dom_cny:,.2f} | {pct(dom_chg)} |\n"
         f"| 美10年TIPS收益率 | {(f'{tips_y:.3f}%') if tips_y is not None else 'N/A'} | {pp_diff(tips_chg)} |"
     )
-    note = gold_note if gold_note else f"数据日期：{DATE_CST}"
+    if gold_note:
+        note = f"📊 {gold_note}"
+    else:
+        note = f"📊 数据日期：{DATE_CST}（无趋势点评）"
     body = (
         f"💰 雷达每日报告 · 金价速览（{DATE_CST} · {report_type}）\n\n"
         f"{table}\n\n"
-        f"📊 {note}"
+        f"{note}"
     )
     return True, body
 
@@ -173,11 +183,13 @@ def build_msg2():
     for i, p in enumerate(items, 1):
         score = int(p["blacklist_score"]) if p["blacklist_score"] else 0
         src = p["source"] or "Web"
-        # 优先用 summary（content 字段存的是 summary 的副本）
-        text = p["summary"] or p["content"] or ""
+        # v4.1 铁律：description 是主显示字段，summary/content 兜底
+        text = p["description"] or p["summary"] or p["content"] or ""
         lines.append(f"{i}. **{safe(p['title'])}** | 热度 {score} | {safe(src)}")
         if text:
             lines.append(f"   {text[:150]}")
+        else:
+            lines.append(f"   （暂无摘要）")
         if p["url"]:
             lines.append(f"   {p['url']}")
         lines.append("")
@@ -228,13 +240,24 @@ def build_msg3():
         lines.append(f"**{emoji} {name}**")
         if items:
             for p in items:
-                # v4.2：政治主显示字段改为 description（中文），summary/content 兜底
-                content = p["description"] or p["summary"] or p["content"] or ""
-                lines.append(f"- {content[:200]}")
-                src = f"来源：{p['source']}" if p["source"] else "来源：Web"
+                title    = safe(p["title"])
+                # v4.2：政治主显示字段改为 description（中文改写）
+                desc_zh  = safe(p["description"])
+                summary  = safe(p["summary"])
+                content  = safe(p["content"])
+                src      = p["source"] or "Web"
+                # 三段式：事件 / 背景 / 影响（铁律：佳哥拍板 2026-06-17）
+                lines.append(f"- **{title}**")
+                if desc_zh:
+                    lines.append(f"  - 事件：{desc_zh[:200]}")
+                if summary:
+                    lines.append(f"  - 背景：{summary[:200]}")
+                if content:
+                    lines.append(f"  - 影响：{content[:200]}")
                 if p["url"]:
-                    src += f" | {p['url']}"
-                lines.append(f"  {src}")
+                    lines.append(f"  - 来源：{src} | {p['url']}")
+                else:
+                    lines.append(f"  - 来源：{src}")
                 lines.append("")
         else:
             lines.append("暂无数据\n")
@@ -288,7 +311,7 @@ def build_msg4():
                     "region":          "🟢",
                 })
 
-    repos.sort(key=lambda x: x["blacklist_score"], reverse=True)
+    repos.sort(key=lambda x: (x["blacklist_score"] if x["blacklist_score"] is not None else -999), reverse=True)
     repos = repos[:10]
 
     header = f"💻 雷达每日报告 · GitHub 黑马（{DATE_CST}）\n"
@@ -307,13 +330,20 @@ def build_msg4():
 
         today_str  = fmt_stars(today)  if today  else "N/A"
         total_str  = fmt_stars(total) if total else "N/A"
-        star_line  = f"黑马分 {score} | 今日+{today_str}⭐ 总⭐{total_str}"
 
-        lines.append(f"{i}. **{title}**（{star_line}）")
+        # 标题单独成行（贴近 approved-template.md 样式）
+        lines.append(f"{i}. **{title}**")
+        lines.append(f"   黑马分 {score} | 今日+{today_str}⭐ 总⭐{total_str}")
+        if lang:
+            lines.append(f"   语言：{lang}")
         if desc:
             lines.append(f"   {desc[:120]}")
+        else:
+            lines.append(f"   （暂无简介）")
         if url:
             lines.append(f"   {url}")
+        else:
+            lines.append(f"   （链接待补）")
         lines.append("")
 
     return len(repos), "\n".join(lines).strip()
