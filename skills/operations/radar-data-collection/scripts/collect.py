@@ -443,7 +443,7 @@ def step_politics():
         for region, queries in RULE_POLITICS["queries"].items():
             for q in queries:
                 raw = http_post(NINE_ROUTER_SEARCH, {
-                    "model": "search-combo",
+                    "model": "tavily",
                     "query": q,
                     "max_results": RULE_POLITICS["max_per_query"],
                 }, timeout=30)  # 缩短到30s，超时即记录
