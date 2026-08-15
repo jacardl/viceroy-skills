@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """
-radar-daily-report 推送脚本 v4.4
+radar-daily-report 推送脚本 v4.5
 
 铁律：
   - 不 fallback 旧数据，数据缺失直接告警
   - 所有字段按 DB schema 硬编码，不走 LLM 补字段
   - 与 collect.py / gh_collect.py 字段含义严格对齐（LRN-20260805-001/002）
+
+变更记录（v4.5, 2026-08-15）：
+  - 配合 P0-2 → P1-1 策略切换：预检查不达标时 push.py 仍运行
+  - 新增 fmt_cny() / fmt_usd() 助手：None 字段不再触发 TypeError
+  - 缺国内金价时显示 "N/A（采集未完成）"（东财 API 关闭场景）
 
 变更记录（v4.4, 2026-08-13）：
   - MSG2: description 优先（v4.1 铁律字段对齐，原代码只读 summary/content）
@@ -83,6 +88,18 @@ def fmt_stars(n):
         return "N/A"
     return f"{n:,}"
 
+def fmt_cny(v):
+    """国内金价 CNY/克 格式化，None → N/A（采集未完成）。"""
+    if v is None:
+        return "N/A（采集未完成）"
+    return f"¥{v:,.2f}"
+
+def fmt_usd(v):
+    """国际金价 USD/盎司 格式化，None → N/A。"""
+    if v is None:
+        return "N/A"
+    return f"${v:,.2f}"
+
 # ═══════════════════════════════════════════════════════════
 # news_articles 解析（用 url 锚点定位）
 # DB 字段（全部）：
@@ -134,8 +151,8 @@ def build_msg1():
     table = (
         f"| 指标 | 价格 | 涨跌 |\n"
         f"|---|---|---|\n"
-        f"| 国际金价（USD/盎司） | ${intl_usd:,.2f} | {pct(intl_chg)} |\n"
-        f"| 国内金价（CNY/克） | ¥{dom_cny:,.2f} | {pct(dom_chg)} |\n"
+        f"| 国际金价（USD/盎司） | {fmt_usd(intl_usd)} | {pct(intl_chg)} |\n"
+        f"| 国内金价（CNY/克） | {fmt_cny(dom_cny)} | {pct(dom_chg)} |\n"
         f"| 美10年TIPS收益率 | {(f'{tips_y:.3f}%') if tips_y is not None else 'N/A'} | {pp_diff(tips_chg)} |"
     )
     if gold_note:
