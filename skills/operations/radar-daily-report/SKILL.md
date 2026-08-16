@@ -1,7 +1,7 @@
 ---
 name: radar-daily-report
 description: "从 radar DB 读取今日数据，发送金价+AI+政治+GitHub 四条飞书消息"
-metadata: { "openclaw": { "emoji": "📡" } }
+metadata: { }
 ---
 
 # 雷达每日报告推送
@@ -11,7 +11,7 @@ metadata: { "openclaw": { "emoji": "📡" } }
 ## 执行脚本
 
 ```
-python3 ~/.openclaw/skills/operations/radar-daily-report/scripts/push.py
+python3 ~/.shared-agent-skills/operations/radar-daily-report/scripts/push.py
 ```
 
 脚本输出格式（stdout）：
@@ -86,8 +86,8 @@ date=YYYY-MM-DD dow=N report_type=daily|weekly|monthly ai=X po=X gh=X gold_ok=tr
 ## 存档
 
 ```
-mkdir -p ~/.openclaw/workspace/daily-reports
-# 消息内容存档到 ~/.openclaw/workspace/daily-reports/YYYY-MM-DD.md
+mkdir -p ~/.shared-agent-skills/operations/radar-daily-report/archives
+# 消息内容存档到 ~/.shared-agent-skills/operations/radar-daily-report/archives/YYYY-MM-DD.md
 ```
 
 ## 异常处理铁律
