@@ -131,26 +131,26 @@ def lock_set(tag):
 # 网络 helpers（确定性，无 LLM）
 # ═══════════════════════════════════════════════════════════
 
-import urllib.request as ureq
+import urllib.request
 from urllib.error import URLError, HTTPError
 
 def http_post(url, payload, timeout=60):
     body = json.dumps(payload).encode("utf-8")
-    req = ureq.Request(url, data=body,
+    req = urllib.request.Request(url, data=body,
         headers={"Content-Type": "application/json",
                  "Authorization": f"Bearer {NINE_ROUTER_KEY}"},
         method="POST")
     try:
-        with ureq.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.read().decode("utf-8", errors="replace")
     except Exception as e:
         print(f"  WARN http_post {url[-30:]}: {e}")
         return None
 
 def http_get(url, headers=None, timeout=30):
-    req = ureq.Request(url, headers=headers or {})
+    req = urllib.request.Request(url, headers=headers or {})
     try:
-        with ureq.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.read().decode("utf-8", errors="replace")
     except Exception as e:
         print(f"  WARN http_get {url[-30:]}: {e}")
