@@ -264,7 +264,9 @@ def build_msg3():
                 content  = safe(p["content"])
                 src      = p["source"] or "Web"
                 # 三段式：事件 / 背景 / 影响（铁律：佳哥拍板 2026-06-17）
-                lines.append(f"- **{title}**")
+                # 标题行用 desc_zh（中文事件）替代英文 title（铁律：❌ English Headline）
+                title_zh = desc_zh[:60] if desc_zh else title
+                lines.append(f"- **{title_zh}**")
                 if desc_zh:
                     lines.append(f"  - 事件：{desc_zh[:200]}")
                 if summary:
@@ -349,7 +351,9 @@ def build_msg4():
         total_str  = fmt_stars(total) if total else "N/A"
 
         # 标题单独成行（贴近 approved-template.md 样式）
-        lines.append(f"{i}. **{title}**")
+        # 仅保留 owner/repo，去掉 "— English desc" 尾巴（铁律：❌ English Headline）
+        title_short = title.split(' — ')[0].split(' -- ')[0].strip()
+        lines.append(f"{i}. **{title_short}**")
         lines.append(f"   黑马分 {score} | 今日+{today_str}⭐ 总⭐{total_str}")
         if lang:
             lines.append(f"   语言：{lang}")
