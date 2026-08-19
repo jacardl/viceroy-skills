@@ -202,7 +202,10 @@ def build_msg2():
         src = p["source"] or "Web"
         # v4.1 铁律：description 是主显示字段，summary/content 兜底
         text = p["description"] or p["summary"] or p["content"] or ""
-        lines.append(f"{i}. **{safe(p['title'])}** | 热度 {score} | {safe(src)}")
+        # v4.7 铁律：❌ English Headline — 标题行用中文 desc 替代英文 title
+        desc_zh = p["description"] or ""
+        title_zh = desc_zh[:60] if desc_zh else safe(p["title"])
+        lines.append(f"{i}. **{title_zh}** | 热度 {score} | {safe(src)}")
         if text:
             lines.append(f"   {text[:150]}")
         else:
