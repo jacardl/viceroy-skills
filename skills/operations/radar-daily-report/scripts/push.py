@@ -12,6 +12,11 @@ radar-daily-report 推送脚本 v4.5
   - 新增 fmt_cny() / fmt_usd() 助手：None 字段不再触发 TypeError
   - 缺国内金价时显示 "N/A（采集未完成）"（东财 API 关闭场景）
 
+变更记录（v4.8, 2026-08-19）：
+  - build_msg3 增加 is_bad_desc() 过滤：summary/content 是 raw URL HTML 实体时不显示
+  - 配套 fill_ai_zh.py 扩展：--category=ai|politics|github|all 批量改 description 坏数据
+    （空 / URL HTML / 全英文 → 用 9Router ds/deepseek-chat 改写为中文 ≤80 字）
+
 变更记录（v4.4, 2026-08-13）：
   - MSG2: description 优先（v4.1 铁律字段对齐，原代码只读 summary/content）
   - MSG3: 政治新闻改"事件/背景/影响"三段式（佳哥拍板 2026-06-17 铁律）
@@ -99,6 +104,21 @@ def fmt_usd(v):
     if v is None:
         return "N/A"
     return f"${v:,.2f}"
+
+def is_bad_desc(s: str) -> bool:
+    """坏数据：空 / URL HTML 实体（&lt;a href=...） / 全英文无中文 / raw http URL。
+    push.py 用此过滤掉 collect.py 偶发写入的坏 description/summary/content。"""
+    if not s or not s.strip():
+        return True
+    d = s.strip()
+    if d.startswith("&lt;") or d.startswith("<a ") or d.startswith("<A "):
+        return True
+    if d.lower().startswith("http://") or d.lower().startswith("https://"):
+        return True
+    # 全英文无中文 → 视为坏（无 fallback 价值）
+    if not any('\u4e00' <= c <= '\u9fff' for c in d):
+        return True
+    return False
 
 # ═══════════════════════════════════════════════════════════
 # news_articles 解析（用 url 锚点定位）
@@ -266,6 +286,11 @@ def build_msg3():
                 summary  = safe(p["summary"])
                 content  = safe(p["content"])
                 src      = p["source"] or "Web"
+                # v4.8：坏数据过滤 — collect.py 偶发把 raw URL/HTML 写入 summary/content
+                if is_bad_desc(summary):
+                    summary = ""
+                if is_bad_desc(content):
+                    content = ""
                 # 三段式：事件 / 背景 / 影响（铁律：佳哥拍板 2026-06-17）
                 # 标题行用 desc_zh（中文事件）替代英文 title（铁律：❌ English Headline）
                 title_zh = desc_zh[:60] if desc_zh else title
