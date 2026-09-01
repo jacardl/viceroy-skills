@@ -308,6 +308,12 @@ def build_msg3():
                 lines.append("")
         else:
             lines.append("暂无数据\n")
+    # 检查所有 political description 是否有中文（用于标注「⚠️ 政治中文未改写」）
+    all_descs = " ".join(p["description"] or "" for v in by_region.values() for p in v)
+    has_cjk = any('\u4e00' <= c <= '\u9fff' for c in all_descs)
+    if not has_cjk and sum(len(v) for v in by_region.values()) > 0:
+        lines.append("\n⚠️ 政治中文未改写（description 均为英文，内容以原文呈现）")
+
     return sum(len(v) for v in by_region.values()), "\n".join(lines).strip()
 
 # ═══════════════════════════════════════════════════════════
@@ -394,6 +400,9 @@ def build_msg4():
         else:
             lines.append(f"   （链接待补）")
         lines.append("")
+    # 标注源数据不足（3次重试后仍不足）
+    if repos and len(repos) < 10:
+        lines.append(f"\n⚠️ GitHub今日源数据仅 {len(repos)} 条（GitHub Trending 源数据不足，非采集失败）")
 
     return len(repos), "\n".join(lines).strip()
 

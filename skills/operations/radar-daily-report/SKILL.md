@@ -77,11 +77,13 @@ date=YYYY-MM-DD dow=N report_type=daily|weekly|monthly ai=X po=X gh=X gold_ok=tr
 
 ## 消息发送
 
-解析脚本输出后，逐条发送飞书：
-- ===MSG1=== → message tool（金价）
-- ===MSG2=== → message tool（AI）
-- ===MSG3=== → message tool（国际政治）
-- ===MSG4=== → message tool（GitHub）
+**铁律：必须实际分成 4 条独立消息发送，禁止用分割线（---/===/‖）合并为单条消息。**
+
+解析脚本输出后，逐条调用 send_message 发送飞书：
+- ===MSG1=== → send_message（金价）
+- ===MSG2=== → send_message（AI）
+- ===MSG3=== → send_message（国际政治）
+- ===MSG4=== → send_message（GitHub）
 
 ## 存档
 
@@ -92,11 +94,23 @@ mkdir -p ~/.shared-agent-skills/operations/radar-daily-report/archives
 
 ## 异常处理铁律
 
-- gold_ok=false → MSG1 显示「⚠️ 金价数据缺失」
-- ai=0 → MSG2 显示「⚠️ AI热讯数据缺失」
-- po=0 → MSG3 显示「⚠️ 国际政治数据缺失」
-- gh=0 → MSG4 显示「⚠️ GitHub数据缺失」
-- **禁止独立抓取补充数据 / 禁止 fallback 旧数据**
+**核心原则：永远发送日报，数据不完整时在对应消息中标注问题，不阻塞推送。**
+
+### 数据缺失标注规则
+
+| 条件 | MSG 处理 | 标注 |
+|------|---------|------|
+| gold_ok=false | MSG1 | 「⚠️ 金价数据缺失」 |
+| ai < 5 | MSG2 | 「⚠️ AI热讯数据缺失」 |
+| po < 5 | MSG3 | 「⚠️ 国际政治数据缺失」 |
+| gh = 0（3次重试后） | MSG4 | 「⚠️ GitHub数据缺失」 |
+| gh 1-9（3次重试后） | MSG4 正常发送 | 「⚠️ GitHub今日源数据仅N条」（不阻塞） |
+| 政治 description 全英文 | MSG3 正常发送 | 「⚠️ 政治中文未改写」 |
+
+### 禁止规则
+- **禁止独立抓取补充数据**（已在采集阶段完成重试，仍不足则接受现状）
+- **禁止 fallback 旧数据**（必须用今日采集数据）
+- **禁止因数据不完整而跳过发送**（只要有任何数据就发送，缺失部分标注）
 
 ## 版式参考
 

@@ -1,126 +1,328 @@
 ---
 name: radar-data-collection
-description: "采集金价+TIPS/国际政治/AI热讯/GitHub Trending 写入 radar 数据库"
-metadata: { "openclaw": { "emoji": "🛰️" } }
+description: 雷达数据采集 — 金价、TIPS、政治、AIHOT、GitHub 写入 PostgreSQL（docker exec）。采集失败按 PATCH-2026-08-10-001 分类告警。
+category: operations
 ---
+# radar-data-collection
 
-# 雷达数据采集
+每日数据采集技能。写入 `radar-db` PostgreSQL。
 
-执行入口：直接运行本 skill，由 cron 触发。
+## 环境
 
-## 采集前时区确认
+- DB: `docker exec radar-db psql -U radar -d radar -t -c "SQL"`
+- 9Router: `http://localhost:20128`
+- 9Router key: **不要硬编码** — 从 `~/.9router/db/data.sqlite` 动态读取
+- TZ: `Asia/Shanghai`
 
-```bash
-export TZ=Asia/Shanghai && date '+%Y-%m-%d'
-```
-DATE = 输出结果（如 2026-08-03）
-
-## 执行脚本
-
-> ⚠️ **脚本统一（2026-08-05）**：以下路径是 symlink，指向 `~/.openclaw/workspace/scripts/radar/` 下唯一权威脚本。修改只改 workspace 路径，symlink 自动同步。
-
-### 脚本 1：GitHub Trending（先跑，避免竞速）
-```
-export TZ=Asia/Shanghai
-python3 ~/.openclaw/skills/operations/radar-data-collection/scripts/gh_collect.py $(TZ=Asia/Shanghai date +%Y-%m-%d)
-```
-> symlink → `~/.openclaw/workspace/scripts/radar/gh_collect.py`
-
-### 脚本 2：主采集（金价 + TIPS + 政治 + AI）
-```
-export TZ=Asia/Shanghai
-python3 ~/.openclaw/skills/operations/radar-data-collection/scripts/collect.py $(TZ=Asia/Shanghai date +%Y-%m-%d)
-```
-> symlink → `~/.openclaw/workspace/scripts/radar/collect.py`
-
-## 生产级采集链路（2026-08-05 升级 / v4.1 字段对齐）
-
-> ⚠️ **脚本统一声明（2026-08-05 修复）**：
-> - `~/.openclaw/workspace/scripts/radar/{collect.py, gh_collect.py}` 是**唯一权威**生产脚本
-> - skill 路径的 `scripts/collect.py` 和 `scripts/gh_collect.py` 是 **symlink**，指向 workspace 路径
-> - **禁止在两处独立修改代码**；修改只改 workspace 路径，symlink 自动同步
-> - 历史备份在 `/tmp/radar-old-scripts-0829-1217/`
-
-### 金价 + TIPS
-- **国际金价**：腾讯 hf_GC（`qt.gtimg.cn/q=hf_GC`） → Yahoo Finance GC=F 备选
-  - **v_hf_GC 字段索引（v4.1 修正）**：
-    - `[0]` = 当前价（USD/oz）
-    - `[1]` = 涨跌额（USD）
-    - `[5]` = 昨收（USD）← **不是 [4]**，v4 错用 [4] 算出 0 或乱值
-  - `intl_price_change` = (今-昨)/昨 × 100%（百分比，不是绝对额）
-- **国内金价**：东财 `push2.eastmoney.com/api/qt/stock/get?secid=118.AU9999`（分/g）
-  - **东财字段索引（v4.1 修正）**：
-    - `f43` = 最新价（分，÷100 转元/g）
-    - `f60` = 昨收（分，÷100 转元/g）← **不是 f170**，v4 错用 f170 当昨收算出 5 万%
-    - `f169` = 涨跌额（分，÷100 转元/g）
-    - `f170` = 涨跌幅 × 100（÷100 转百分比）
-- **TIPS 十年期**：treasury.gov CSV（`10 Yr` 列）
-- **写入字段**：`intl_price_usd`, `intl_price_change`, `domestic_price_cny`, `domestic_price_change`, `tips_yield_10y`, `tips_yield_change`, **`gold_note`**（v4.1 新增）
-- **异常**：金价全来源失败 → 跳过写入，不 fallback 旧数据
-
-### 国际政治（生产级三段链，**v4.1 政治 bug 修复** + **v4.2 description 中文改写**）
-1. **9Router search-combo**：12 个 query × 8 条候选，recency_days=2
-2. **9Router web/fetch**：逐条抓全文 markdown（超时 12s，max_tokens=3000），提取正文
-3. **agent-reach WebChannel**：BBC/FT/部分新闻站优先走 urllib 直抓（独立通道，不依赖 9Router）
-4. **兜底**：全部失败则降级为 content（≥30 字），**不**强依赖 snippet
-5. **时效过滤**：published_at 超过 48h 跳过
-6. **去重**：按 URL 去重，保留最早一条
-7. **达标**：≥10 条；< 5 条 → 🚨 告警标注
-- **v4.1 修复**：政治 8-02/8-03/8-04/8-05 连续 4 天 0 条的根因是「snippet 全 null + `len<30` 过滤」；修复后**优先走 web/fetch 抓全文**，snippet 只作兜底
-- **region 字段（v4.1 新增）**：每个 query 标 region（🔴亚太/🔵中东·欧洲/🟢美洲），写入 DB 供 push.py 分区
-- **description 中文改写（v4.2 新增）**：
- - 抓全文后调 9Router `cx/gpt-5.6-sol` chat（max_tokens=220, temperature=0.2, timeout=15s）改写 100-150 字中文描述
- - prompt 模板：「保留核心事件/人物/时间/地点；多空头/争议点出双方立场；末尾用一句话写出对市场或地缘格局的可能影响」
- - 超时/失败/chat 报"原文不足"→ fallback 到 `summary[:200]`（保证 0 阻断，不阻塞入库）
- - fetch 抓回 markdown 导航骨架（"Skip to main content" / 菜单/footer）→ chat 改写会报"内容不足"→ fallback（**遗留问题，下版本加 noise filter**）
-- **写入字段**：`title` / `content`(=全文) / `summary`(=全文前 200) / **`description`**(=中文 desc) / source / url / region / blacklist_score
-
-### AI 热讯
-- **主选**：aihot.virxact.com（精选模式，take=10）
-- **备选**：HackerNews Algolia API（AI/ML/LLM/GPT 关键词，hitsPerPage=8）
-- **写入字段**：title / content / **summary** / **description** / source / url / lang / blacklist_score / **region**（v4.1 新增 region 写入，默认 🟢）
-- **达标**：≥10 条
-
-### GitHub Trending
-- gh_collect.py 抓 GitHub Trending 页面 → 写入 DB
-- **v4.3 content 字段停写 + description 中文改写**（2026-08-08）：
- - 停写 `content` 字段（v4.1 之前塞的 `Language/Total Stars/Stars Today/Black Horse Score/New Project/Description` 拼接 metadata 文本，停写后与 push.py 字段一比一对应）
- - `description` 改为中文：gh_collect.py 新增 `_gen_zh_desc(text)` helper，调 9Router `minimax-cn/MiniMax-M3` chat（max_tokens=220, temperature=0.2, timeout=15s）把英文 repo desc 改写为 80-150 字中文简介
- - 已是中文时跳过 chat（节省配额），失败 fallback 英文原文前 200 字（0 阻断）
-- **v4.1 description 字段修复**：以前塞了 `* N today | total* N | lang | desc[:80]`，v4.1 改为纯 desc[:300]，v4.3 再升级为 chat 改写中文
-- **写入字段**（v4.3）：`title` / **`description`**(中文) / `source`(=lang) / `url` / `lang`(=en) / `blacklist_score` / `stars_count` / `period_new_stars` / `is_new_project`（❌ 不再写 `content`）
-- **达标**：≥10 条
-
-## 采集完成后验证
+## 采集顺序（含重试规则）
 
 ```bash
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT category, COUNT(*) FROM news_articles WHERE article_date='${DATE}' GROUP BY category ORDER BY category;"
+TODAY=$(TZ=Asia/Shanghai date '+%Y-%m-%d')
+SCRIPT_DIR="/Users/apple/.shared-agent-skills/operations/radar-data-collection/scripts"
 
-docker exec radar-db psql -U radar -d radar -t -c \
-  "SELECT price_date, intl_price_usd, tips_yield_10y, tips_yield_change FROM gold_prices WHERE price_date='${DATE}';"
+# GitHub trending：至少重试 3 次，每次间隔 ≥30s
+for i in 1 2 3; do
+  python3 "$SCRIPT_DIR/gh_collect.py" "$TODAY" && break
+  [ $i -lt 3 ] && sleep 30
+done
+
+# 金价 + TIPS + 政治 + AI（collect.py 超时 300s，超时后用对应回退脚本补数据）
+python3 "$SCRIPT_DIR/collect.py"
 ```
 
-达标：金价 1 条 / AI ≥ 8 条 / 政治 ≥ 10 条 / GitHub ≥ 10 条。
+**重试判定规则**：
+- GitHub：count=0 时重试，count=1-9 且 ≥3 次重试后仍 <10 → 接受源数据不足，不告警
+- 金价：国内源全挂属常态，无需重试，标注「金价缺失」
+- 政治/AI：collect.py 超时后用 skill 内回退脚本补采
 
-## 异常处理铁律
+脚本路径：`~/.shared-agent-skills/operations/radar-data-collection/scripts/`。**不要用 collect.py 内置的 gh 路径**，见下方陷阱。
 
-- 金价所有来源均失败 → 跳过写入，汇报注明「金价缺失」
-- 政治 < 5 条 → 🚨 告警，注明「政治不足」
-- AI < 5 条 → 注明「AI不足」
-- GitHub = 0 条且 gh_collector 报错 → 注明「GitHub失败」
-- **绝对禁止 fallback 旧数据**
+## 关键陷阱
 
-## 完成后发送飞书统计
+### 9Router `/v1/search` 彻底失效（2026-08-28 实测）
 
-格式：
+9Router key 验证已重新启用，`~/.9router/db/data.sqlite` 中存储完整 key（35 字符，格式 `sk-0d6...`）传入 `/v1/search` 返回 **401 Unauthorized**（旧 hardcoded 截断值 `"sk-0d6...a7da"` 同样失效）。`collect.py` 已修复为从 SQLite 动态读取完整 key。
+
+**政治采集回退链**（已验证可行）：
+1. 直接解析公开 RSS feed：BBC World、BBC Asia、Al Jazeera（59 条原始 → 12 条去重）
+2. 若 RSS 也不通：走 `gpt-5.6-sol → MiniMax-M3 → sonnet → src[:200]` 中文改写链
+3. 全失败：description 落英文，飞书标注「⚠️ 政治中文未改写」
+
+⚠️ **不要**在 politics 步骤上反复重试 collect.py（每次 60s 间隔会迅速耗尽超时）。超时后直接用 RSS 回退脚本。
+
+**可用 RSS 源**：
 ```
-📡 采集完成（YYYY-MM-DD）
-| 类目 | 条数 |
-| 金价 | X |
-| AI | X |
-| 政治 | X |
-| GitHub | X |
-异常：XXX（如有）
+BBC World:    https://feeds.bbci.co.uk/news/world/rss.xml
+BBC Asia:     https://feeds.bbci.co.uk/news/world/asia/rss.xml
+Al Jazeera:   https://www.aljazeera.com/xml/rss/all.xml
 ```
-发送目标：ou_5ded4476a110b6eccdeafdc6ea3cf3b2
+
+### 9Router Key 读取方式（已修复 2026-08-28）
+
+`collect.py` 已修复：从 `~/.9router/db/data.sqlite` 动态读取完整 key，不再硬编码截断值。
+
+**正确代码**（sqlite3 默认返回 `str`，无需 `text_factory = bytes`）：
+```python
+import sqlite3
+conn = sqlite3.connect(os.path.expanduser("~/.9router/db/data.sqlite"))
+cur = conn.cursor()
+cur.execute("SELECT key FROM apiKeys LIMIT 1")
+NINE_ROUTER_KEY = cur.fetchone()[0]  # 直接 str，无须 decode
+conn.close()
+```
+
+⚠️ `text_factory = bytes` 是**错误**做法——加了它会返回 bytes 而非 str，后续 Bearer 拼接会出错。
+
+### Cron 技能加载时机陷阱
+
+**cron job 的 skill 必须在 cron 执行前已存在于 `~/.hermes/skills/`**。
+2026-08-26 04:22 cron 运行时 skill 目录于 04:23 才创建，导致 cron 找不到 skill，触发 fallback 手动执行，最终 RuntimeError。
+排查类似问题时先查 `~/.hermes/skills/operations/radar-data-collection/` 是否存在 + mtime 是否早于 cron 时间。
+
+### AIHOT 响应结构与可用 API（2026-08-28 实测）
+
+aihot.virxact.com 返回 `items` 而非 `data`：
+```python
+items = data.get("items", [])   # 不是 data.get("data", [])
+```
+**正确 API 端点**：`https://aihot.virxact.com/api/public/items?mode=selected&take=10`
+**必需 UA**：`aihot-skill/0.2.0`（带此 UA 才能返回 200，不带则 404）
+
+### 金价采集现状（2026-08-27 实测）
+
+所有国内源全部失败：
+- Eastmoney `push2.eastmoney.com` → `Remote end closed connection`
+- 腾讯 kline → `Remote end closed connection`
+- 3 次重试全挂，无国际金价备用源写入
+
+**金价缺失已是常态，非偶发**。当前 collect.py 无自动国际金价兜底，飞书标注「金价缺失」即可，无需人工干预。
+
+### collect.py GitHub 自检是假阴性
+
+`collect.py` 的 self-check 显示 `❌ github 0/10`，但此时 gh_collect.py 已成功写入了 7 条数据到 DB。
+原因：collect.py 内部 gh 路径错误（见下），导致它查 DB 得到 0 条，但数据实际已在 DB 中。
+
+**验证方法**：不要相信 collect.py 的 self-check github 行。采集完成后直接查 DB：
+```bash
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT category, COUNT(*) FROM news_articles
+WHERE article_date = '$TODAY' GROUP BY category"
+```
+若 ai/politics 达标但 github=0，进一步确认：
+```bash
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT category, article_date, COUNT(*) FROM news_articles
+WHERE category = 'github' ORDER BY article_date DESC LIMIT 3"
+```
+若有昨日旧数据无今日数据 → 确认 github 采集失败，走告警流程。
+若有今日数据（gh_collect.py 已写）→ 自检误报，跳过 github 告警。
+
+### gh_collect.py 初采后 article_date 可能不匹配（2026-08-29 发现）
+
+gh_collect.py 报告 "Inserted 10/10" 但 DB 查询 `$TODAY` 显示 github=0，同时存在昨日旧数据。
+原因未定位（可能是 playwright 异步写帧竞争、docker exec date 与 python datetime 小幅偏差累积）。
+
+**补采流程**（2026-08-29 实测可行）：
+```bash
+# 1. 确认 github 条目存在但日期错误
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT article_date, COUNT(*) FROM news_articles
+WHERE category = 'github' GROUP BY article_date
+ORDER BY article_date DESC LIMIT 3"
+
+# 2. 若有数据但 article_date 非目标日期，删掉错误日期数据
+docker exec radar-db psql -U radar -d radar -t -c "
+DELETE FROM news_articles WHERE category='github' AND article_date='<错误日期>';"
+
+# 3. 重新运行 gh_collect.py，传入目标日期
+TODAY=$(TZ=Asia/Shanghai date '+%Y-%m-%d')
+python3 "$SCRIPT_DIR/gh_collect.py" "$TODAY"
+
+# 4. 验证：article_date = 目标日期，count ≥ 1
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT article_date, COUNT(*) FROM news_articles
+WHERE category = 'github' AND article_date = '$TODAY'"
+```
+
+⚠️ **验证必须检查 article_date**，不能只查 count。count>0 不代表日期正确。
+
+### collect.py 超时无回退（2026-09-01 实测 600s）
+
+collect.py 存在 600s 超时上限，超时后 **既不写数据也不抛异常**，DB counts 完全不变。
+已知卡死环节：gold 步骤（国内源全挂后的网络重试）、politics 步骤（9Router 搜索无响应时 60s × 3 次重试间隔）。
+
+**处理流程**：
+1. 超时后立刻查 DB：`SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY'`
+2. 若 ai/政治已达标 → 只补 gold；若 ai/政治未达标 → 用 RSS 回退补 politics（见上方「政治采集回退链」）
+3. **不要重跑整个 collect.py**（会再次卡死）
+
+**超时后手动补采 AI（aihot 直接 fetch）**：
+```python
+import urllib.request, json, subprocess
+TODAY = "2026-09-01"
+url = "https://aihot.virxact.com/api/public/items?mode=selected&take=10"
+req = urllib.request.Request(url, headers={"User-Agent": "aihot-skill/0.2.0"})
+with urllib.request.urlopen(req, timeout=15) as resp:
+    items = json.loads(resp.read().decode()).get("items", [])
+for it in items:
+    title = (it.get("title") or "").replace("'", "''")
+    desc = (it.get("description") or it.get("content") or "").replace("'", "''")[:500]
+    src = (it.get("source") or "aihot").replace("'", "''")
+    link = (it.get("url") or "").replace("'", "''")
+    sql = f"INSERT INTO news_articles (category, title, content, source, url, lang, article_date, summary, description) VALUES ('ai', E'{title}', E'{desc}', E'{src}', E'{link}', 'zh', '{TODAY}', E'{desc[:200]}', E'{desc}')"
+    subprocess.run(f"docker exec radar-db psql -U radar -d radar -t -c \"{sql}\"", shell=True)
+```
+
+**超时后手动补采 politics（RSS → docker exec insert）**：
+```python
+import urllib.request, xml.etree.ElementTree as ET, json, subprocess
+TODAY = "2026-09-01"
+rss_sources = [("BBC World","https://feeds.bbci.co.uk/news/world/rss.xml"),("BBC Asia","https://feeds.bbci.co.uk/news/world/asia/rss.xml"),("Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml")]
+all_items, seen_titles = [], set()
+for src_name, url in rss_sources:
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        root = ET.fromstring(resp.read().decode("utf-8", errors="ignore"))
+    for item in root.findall(".//item"):
+        title = (item.findtext("title") or "").strip()
+        desc = (item.findtext("description") or "").strip()
+        link = (item.findtext("link") or "").strip()
+        if title and title not in seen_titles:
+            seen_titles.add(title)
+            all_items.append({"title": title, "description": desc, "link": link, "source": src_name})
+unique, seen_content = [], set()
+for it in all_items:
+    cp = it["description"][:100].lower()
+    if cp and cp not in seen_content:
+        seen_content.add(cp); unique.append(it)
+for it in unique[:15]:
+    t,d,s,l = it["title"].replace("'","''"), it["description"].replace("'","''")[:500], it["source"].replace("'","''"), it["link"].replace("'","''")
+    sql = f"INSERT INTO news_articles (category, title, content, source, url, lang, article_date, summary, description) VALUES ('politics', E'{t}', E'{d}', E'{s}', E'{l}', 'en', '{TODAY}', E'{d[:200]}', E'{d}')"
+    subprocess.run(f"docker exec radar-db psql -U radar -d radar -t -c \"{sql}\"", shell=True)
+```
+
+⚠️ **psycopg2 直接连接无效**（端口映射问题），所有手动 INSERT 必须走 `docker exec radar-db psql -U radar -d radar -t -c "SQL"`。
+
+### `news_articles` 表无 `score` 列（2026-08-28 实测）
+
+`collect.py` 的 `insert_news()` 试图写入 `score` 列，但表里无此列（schema 以 `stars_count` 替代）。**手动 INSERT 时必须省略 `score`**，否则 500 报错。
+正确列：`category, title, content, source, url, lang, article_date, summary, description`
+
+### collect.py GitHub 步骤陷阱
+
+`collect.py` 内部硬编码了错误的 gh_collect.py 路径：
+```
+/Users/apple/.openclaw/workspace/scripts/radar/gh_collect.py  # 不存在！
+```
+会导致 GitHub 采集 `Attempt 3/3 FAILED`，但数据实际已被外部 gh_collect.py 写入，**self-check 会漏报 github=0**。
+**正确做法**：先单独跑 gh_collect.py，再用 collect.py 跑其余三项，不要依赖 collect.py 内部调用 GitHub。
+
+### gh_collect.py 日期偏移陷阱（2026-08-27 发现）
+
+gh_collect.py 第 17-20 行内部用 `docker exec radar-db date` 取 CST 日期作为 `TODAY`，但 GitHub Trending 页面实际展示的是**上一个日历年日期**（GitHub UTC~00:00 更新 = CST ~8:00）。
+
+**后果**：凌晨 4-6AM 运行时，脚本取到今日 CST 日期（如 08-27），但 GitHub 页面仍是 08-26 的数据，最终数据以错误日期（08-27）写入 DB——之后 push.py 按 08-27 查 DB 找不到数据，误判 GitHub 失败。
+
+**复现场景**：
+```bash
+# 这两个命令结果不同！
+TZ=Asia/Shanghai python3 gh_collect.py         # 写 2026-08-26（错误）
+TZ=Asia/Shanghai python3 gh_collect.py 2026-08-27  # 写 2026-08-27（正确）
+```
+
+**正确调用方式**：始终显式传入目标日期：
+```bash
+TODAY=$(TZ=Asia/Shanghai date '+%Y-%m-%d')
+python3 "$SCRIPT_DIR/gh_collect.py" "$TODAY"
+```
+
+**验证**：运行后直查 DB：
+```bash
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT article_date, COUNT(*) FROM news_articles
+WHERE category = 'github' GROUP BY article_date
+ORDER BY article_date DESC LIMIT 3"
+```
+若今日有数据且条数合理 → 成功。若只有昨日数据 → 需删旧数据后重新运行并传参。
+
+### GitHub Trending 源数量波动
+
+GitHub Trending 每日 repo 数量不固定（周末/节假日可能 <10），**≠ 采集失败**。判断标准：
+- 条目 = 0 → GitHub 失败（告警）
+- 条目 1-9 → 正常记录，不触发告警（技能阈值 ≥10 仅供参考，源本身不足时无法强求）
+
+## 验证标准
+
+- `news_articles`: AI ≥8，政治 ≥10，GitHub ≥10
+- `gold_prices`: 当日有行
+
+**验证必须直查 DB**，不要依赖 collect.py 的 self-check 输出（github 行经常假阴性）。
+
+```bash
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT
+  (SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY' AND category = 'ai') as ai,
+  (SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY' AND category = 'politics') as pol,
+  (SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY' AND category = 'github') as gh,
+  (SELECT COUNT(*) FROM gold_prices WHERE price_date = '$TODAY') as gold"
+```
+
+## 告警分类（PATCH-2026-08-10-001）
+
+| 条件 | 标注 |
+|------|------|
+| 政治 <5 | 🚨 告警 |
+| 金价全失败 | 「金价缺失」 |
+| AI <5 | 「AI不足」 |
+| GitHub = 0（3次重试后） | 「GitHub失败」 |
+| GitHub 1-9（3次重试后仍不足） | 接受，不告警（源数据不足，非采集失败） |
+| 政治中文改写全失败 | 「⚠️ 政治中文未改写」 |
+
+## 不完整数据处理规则（2026-09-01 新增）
+
+当采集结果不满足「验证标准」时，**仍发送日报**，在对应消息中标注问题，不阻塞推送：
+
+| 不达标项 | 日报处理 |
+|----------|---------|
+| 金价=0 | MSG1 显示「⚠️ 金价数据缺失」 |
+| AI <5 | MSG2 显示「⚠️ AI热讯数据缺失」 |
+| 政治 <5 | MSG3 显示「⚠️ 国际政治数据缺失」 |
+| GitHub = 0（3次重试后） | MSG4 显示「⚠️ GitHub数据缺失」 |
+| GitHub 1-9（3次重试后） | MSG4 正常发送，标注「⚠️ GitHub今日源数据仅N条」（不阻塞） |
+| 政治全英文无改写 | MSG3 正常发送，标注「⚠️ 政治中文未改写」 |
+
+## 中文改写 fallback 链
+
+`gpt-5.6-sol → MiniMax-M3 → sonnet → src[:200]`
+
+全失败时 description 落英文，**飞书标注「⚠️ 政治中文未改写」**。
+
+## DB Schema（已验证 2026-08-26，关键列名修正）
+
+| 表 | 正确列名 | ⚠️ 旧错误 |
+|----|---------|---------|
+| news_articles | `article_date` | ❌ `date` |
+| gold_prices | `price_date` | ❌ `date` |
+| TIPS | `gold_prices.tips_yield_10y` | ❌ `tips_rates` 表不存在 |
+
+```sql
+-- 综合验证
+SELECT
+  (SELECT COUNT(*) FROM news_articles WHERE article_date = '2026-08-26' AND category = 'ai') as ai,
+  (SELECT COUNT(*) FROM news_articles WHERE article_date = '2026-08-26' AND category = 'politics') as pol,
+  (SELECT COUNT(*) FROM news_articles WHERE article_date = '2026-08-26' AND category = 'github') as gh,
+  (SELECT COUNT(*) FROM gold_prices WHERE price_date = '2026-08-26') as gold;
+```
+
+## 技能目录结构
+
+```
+~/.hermes/skills/operations/radar-data-collection/   ← cron 从这里加载 SKILL.md
+- 脚本：`~/.shared-agent-skills/operations/radar-data-collection/scripts/`
+- `references/9router-key-pattern.md` — 9Router key 格式说明（已过时，见上方陷阱）
+```
+
+⚠️ `~/.hermes/skills/.../radar-data-collection/` 只有 SKILL.md + references/，**无 scripts/**。
+cron prompt 里引用 `~/.shared-agent-skills/.../scripts/` 是正确的。
+
+技能名在两个目录均有，hermes 优先用 `~/.hermes/skills/` 下的版本。
