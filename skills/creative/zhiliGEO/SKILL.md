@@ -34,13 +34,25 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
 
 ### 1. 开头钩子（150–300字）
 
-用真实故事开场。首选格式：**朋友的求助 / 客户的困惑 / 一次让你愣住的对话**。
+开头有五种形态，每次写新文章前先决定用哪一种，**不要每次都选同一种**：
 
+1. **数据反常开场**：一个让你意外的数字，引导读者追问为什么
+2. **认知矛盾开场**：一个和常识相反的事实，让读者产生「等等，真的是这样？」的疑惑
+3. **行业事件开场**：最近发生的真实事件，从具体新闻切入
+4. **直接设问开场**：用一个精准的问题把读者拉进思考，不绕弯子
+5. **类比推进开场**：用一个强比喻先建立感知框架，再展开
+
+**写法要求**：
 - 场景要具体（行业、产品、具体数字）
-- 语气是"我跟你说一件让我头皮发麻的事"
+- 语气是「我告诉你一件让我自己都重新想了一遍的事」
 - 结尾落在一个具体的痛点上，这个问题整篇文章会回答
+- 每次只选一种开头形态，**不要叠加**（比如既讲故事又甩数据又反常识全上）
 
-**禁忌**：不要用"近年来""随着 AI 的发展"这类空洞开头。
+**禁忌**：
+- ❌ 不要每次都用「朋友求助」「客户困惑」——这个套路已经用滥了
+- ❌ 不要用「事情是这样的」这种模板句
+- ❌ 不要用「近年来」「随着 AI 的发展」这类空洞开头
+- ❌ 开头不要堆两个以上的数据点，读者还没进入语境
 
 ### 2. 核心数据锚点（200–400字）
 
@@ -139,7 +151,7 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
 <h1 style="font-size:24px; font-weight:bold; margin-bottom:8px; color:#1a1a1a;">【标题】</h1>
 
 <!-- 开头钩子 -->
-<p>事情是这样的。……</p>
+<p>【开头内容，不要套用「事情是这样的」模板】</p>
 
 <p style="text-align:center; color:#888; margin:30px 0;">· · ·</p>
 
@@ -167,11 +179,24 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
 
 ## 发布流程
 
-1. 写完 HTML 后，自检：
-   - 作者 =「刘生」（不是「卡兹克」或「zhiliGEO」）
-   - 无 emoji、无 bullet point、无企业全名
-   - 分隔符 `· · ·` 出现不超过 3 次
-   - 标题 16–24 字
-2. **配图：调用 `zhili-illustration` 技能**（读取 HTML → 提取 shot list → xiaohu-ip-studio 生成图片 → 注入 HTML → 上传微信素材获取 media_id）
-3. 调用 zhili-publish 技能推送草稿箱
-4. 飞书汇报：标题 + 字数 + 封面图建议
+> ⚠️ `render_zhili_article.py` 需要 **两个位置参数**（输入路径 输出路径），不是管道单参数。`push.py` 用 `--html` / `--cover` flag 传参，不接受位置参数。
+>
+> ⚠️ `render_zhili_article.py` 调用时必须带 `--title "文章标题"`，否则报错只说"arguments are required"而不提 `--title`，容易卡住。
+
+1. 写完 Markdown 后，渲染 HTML：
+   ```bash
+   python3 /root/.hermes/skills/creative/zhiligithub/scripts/render_zhili_article.py --title "【标题】" /path/to/draft.md /path/to/output.html
+   ```
+2. 生成封面：
+   ```bash
+   python3 /root/.hermes/skills/creative/zhiligithub/scripts/cover_pil.py /path/to/draft.md /path/to/cover.png
+   ```
+3. 推送草稿箱：
+   ```bash
+   python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
+     --html /path/to/output.html \
+     --cover /path/to/cover.png \
+     --skip-illustration
+   ```
+4. 自检清单：作者 =「刘生」| 无 emoji | 无 bullet point | 无企业全名 | 分隔符 ≤ 3 | 标题 16–24 字
+5. 飞书汇报：标题 + 字数 + 草稿 ID
