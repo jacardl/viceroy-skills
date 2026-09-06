@@ -32,6 +32,8 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
 
 每篇文章必须包含以下六个模块，顺序固定：
 
+> ⚠️ **章节标题必须用 `## ` 开头**（如 `## 一、信源路径`），禁止写纯中文数字 `一、` 开头。因为 `render_zhili_article.py` 只识别 `## ` 格式作为 H2，不识别 `一、`。违反则 H2 数量为 0，样式A的 `#00d4aa` 左边框全部丢失。
+
 ### 1. 开头钩子（150–300字）
 
 开头有五种形态，每次写新文章前先决定用哪一种，**不要每次都选同一种**：
@@ -136,36 +138,52 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
 | 副标题 | 可选，补充角度或悬念 |
 | 标题风格 | 悬念感 > 概括感（"用户不搜了，AI 替你选了" > "GEO 与 SEO 的区别"）|
 
-## HTML 模板
+## 参考文件
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>【标题】</title>
-</head>
-<body style="background:#f5f4ed; font-family:Georgia,'Noto Serif SC',serif; max-width:680px; margin:0 auto; padding:40px 20px; color:#1a1a1a; line-height:1.8; font-size:17px;">
-<p style="font-size:13px; color:#888; margin-bottom:30px;">文 / 刘生</p>
+| 文件 | 用途 |
+|------|------|
+| `references/geo-article-sample.md` | GEO 系列第一篇原文，含全文骨架、写法要点、金句位置 |
+| `references/style-guide.md` | 六模块结构与开头钩子规范 |
+| `references/geo-knowledge.md` | GEO 核心概念（信源路径 / 算法权重 / AIBE / Prompt Map 等） |
+| `references/renderer-pitfalls.md` | `render_zhili_article.py` 已知限制（H2 格式/图片接口/超时处理） |
 
-<h1 style="font-size:24px; font-weight:bold; margin-bottom:8px; color:#1a1a1a;">【标题】</h1>
+## 渲染标准（样式A）
 
-<!-- 开头钩子 -->
-<p>【开头内容，不要套用「事情是这样的」模板】</p>
+> ⚠️ **不要手写 HTML**。所有 HTML 必须通过 `render_zhili_article.py` 脚本生成，以确保样式A标准一致。
 
-<p style="text-align:center; color:#888; margin:30px 0;">· · ·</p>
+**样式A CSS（不可修改）：**
 
-<!-- 正文展开 -->
+| 元素 | 样式 |
+|------|------|
+| 正文背景 | `#f5f4ed` |
+| 正文字体 | `Georgia, 'Times New Roman', serif` |
+| H2 标题 | `border-left: 4px solid #00d4aa` + `#1B365D` 色 + 左边框是标志性特征 |
+| 强调色 | `#c9553d` |
+| 段落行高 | `line-height: 1.85` |
+| 段落字重 | `16px` |
+| 分隔符 | `· · ·`（居中墨点，`color: #c9553d`） |
 
-<p style="text-align:right; color:#888; font-size:13px; margin-top:40px;"> 题图：AI 生成</p>
-</body>
-</html>
+**渲染脚本用法：**
+
+```bash
+# 1. 渲染 HTML（自动应用样式A）
+python3 scripts/render_zhili_article.py --title "文章标题" draft.md output.html
+
+# 2. 验证 HTML（4 重验证）
+python3 scripts/validate_zhili_article.py output.html --title "文章标题"
+
+# 3. 生成封面
+python3 scripts/cover_pil.py draft.md cover.png
+
+# 4. 推送草稿
+python3 scripts/push.py --html output.html --cover cover.png
 ```
 
-**注意**：
-- `background:#f5f4ed` 是固定背景色
-- 不要加 `charset=utf-8` 到 Content-Type（WeChat 自己推断 UTF-8）
-- 结语段不加任何 CTA 或关注引导
+**推送后自检清单：**
+- 作者 =「刘生」| 无 emoji | 无 bullet point | 无企业全名 | 分隔符 ≤ 3 | 标题 16–24 字
+- H2 全部带 `border-left: 4px solid #00d4aa` 左边框
+- 正文冒号 `：` 全为 0（中文冒号是验证器红线）
+- 破折号 `——` 全为 0
 
 ## 选题库（GEO 系列可写方向）
 
@@ -179,24 +197,46 @@ description: 写直隶按察使公众号 GEO 垂直系列文章。当用户说�
 
 ## 发布流程
 
-> ⚠️ `render_zhili_article.py` 需要 **两个位置参数**（输入路径 输出路径），不是管道单参数。`push.py` 用 `--html` / `--cover` flag 传参，不接受位置参数。
->
-> ⚠️ `render_zhili_article.py` 调用时必须带 `--title "文章标题"`，否则报错只说"arguments are required"而不提 `--title`，容易卡住。
+### WeChat 草稿推送 · 标准步骤
 
-1. 写完 Markdown 后，渲染 HTML：
+> ⚠️ `render_zhili_article.py` 需要 **两个位置参数**（输入路径 输出路径），不是管道单参数。`push.py` 用 `--html` / `--cover` flag 传参。
+
+**标准步骤：**
+
+1. 渲染 HTML：
    ```bash
-   python3 /root/.hermes/skills/creative/zhiligithub/scripts/render_zhili_article.py --title "【标题】" /path/to/draft.md /path/to/output.html
+   python3 scripts/render_zhili_article.py --title "文章标题" draft.md output.html
    ```
-2. 生成封面：
+2. 验证 HTML：
    ```bash
-   python3 /root/.hermes/skills/creative/zhiligithub/scripts/cover_pil.py /path/to/draft.md /path/to/cover.png
+   python3 scripts/validate_zhili_article.py output.html --title "文章标题"
    ```
-3. 推送草稿箱：
+3. 生成封面：
    ```bash
-   python3 /root/.hermes/skills/creative/zhiligithub/scripts/push.py \
-     --html /path/to/output.html \
-     --cover /path/to/cover.png \
-     --skip-illustration
+   python3 scripts/cover_pil.py draft.md cover.png
    ```
-4. 自检清单：作者 =「刘生」| 无 emoji | 无 bullet point | 无企业全名 | 分隔符 ≤ 3 | 标题 16–24 字
+4. 推送草稿：
+   ```bash
+   python3 scripts/push.py --html output.html --cover cover.png
+   ```
 5. 飞书汇报：标题 + 字数 + 草稿 ID
+
+### WeChat 草稿推送 · API 关键陷阱（2026-09-06 实坑）
+
+**封面图 media_id 类型决定草稿是否成功创建：**
+
+| 接口 | type 参数 | 返回字段 | 能否用于 `draft/add` |
+|------|-----------|---------|---------------------|
+| `media/upload` | `thumb` | `thumb_media_id` | ❌ 导致 40007 invalid media_id |
+| `material/add_material` | `image` | `media_id` | ✅ 可用于 `thumb_media_id` 字段 |
+
+**推送草稿的标准步骤**：
+
+1. 用 `material/add_material?access_token=...&type=image` 上传封面图 → 获得 `media_id`
+2. 用 `media/uploadimg` 上传正文配图 → 获得 CDN URL（`http://mmbiz.qpic.cn/...`）
+3. 将 CDN URL 直接写入 HTML 的 `img src`
+4. `draft/add` 的 `thumb_media_id` 填第 1 步获得的 `media_id`，不是 `thumb_media_id`
+
+**错误原因**：微信内部 `thumb_media_id` 字段只认 `material/add_material` 的返回值，不认 `media/upload` 的 `thumb_media_id`。两者格式完全不同。
+
+以上 API 细节由 `push.py` 内部处理，外部只需按标准步骤执行即可。
