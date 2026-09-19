@@ -8,7 +8,7 @@ displayNames:
 
 # GEO 周报生产与发布
 
-> v1.17。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。2 板块分类（GEO 技术科普 + GEO 行业动态），不再细分 8 行业。
+> v1.18。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。5 章节分类（GEO 服务商动态 / 品牌方实战 / 工具平台更新 / 行业研究与数据 / 国际市场）。
 
 ## Inputs to collect
 
@@ -123,13 +123,15 @@ uv run python3 -m geo_report.cli publish-weekly \
 - **WeChat 凭据缺失**（APP_SECRET / 封面图）→ 阻塞流程，问用户补
 - **style A 改动请求**（用户要求改样式）→ 是 spec 变更，先改 spec 再改模板
 
-## v1.17 待办
+## v1.18 待办
 
-- [ ] `classify.classify_industry` 改造：板块从 9 行业简化到 2 个
-- [ ] `weekly.html.j2` 改造：模板只渲染 2 板块
-- [ ] `SPEC_ITEM_PIPELINE.md` §1.11 更新：板块分类规则文档化
-- [ ] `SPEC_REPORT_TEMPLATE.md` 更新：模板结构文档化
-- [ ] `classify.GEO_TECH_SCIENCE_KEYWORDS` + `GEO_SERVICE_PROVIDER_KEYWORDS` 重新整理
+- [ ] `classify.classify_industry` 改造：分类逻辑改成 5 角色（替换 v1.17 2 板块）
+- [ ] `weekly.html.j2` 改造：模板渲染 5 章节，移除 8 行业 IND_ORDER
+- [ ] `classify.SECTION_KEYWORDS` 维护：5 个章节的关键词表
+- [ ] `SPEC_ITEM_PIPELINE.md` §1.11 更新：分类规则文档化
+- [ ] `SPEC_REPORT_TEMPLATE.md` 更新：模板 5 章节结构
+
+详细见 [references/sections.md](references/sections.md)。
 
 详细见 [references/sections.md](references/sections.md)。
 
@@ -167,6 +169,6 @@ $ node ~/.minimax/skills/zhiligeoreport/scripts/validate-weekly.js \
 [OK] 字节 120006 ≤ 65536
 [OK] 中文字 18055 ≥ 18000
 [OK] 无 <style> 块
-[OK] 板块数 8 合理  ⚠️ v1.17 待改造为 2 板块
+[OK] 板块数 8 合理  ⚠️ v1.18 待改造为 5 章节
 [OK] 条目数 59
 ```

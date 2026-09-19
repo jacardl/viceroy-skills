@@ -70,7 +70,7 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 ## 12. 验证门禁 4 项（`scripts/13_render_only.py` 自动跑）
 
 1. **相关性**：title 或 summary 必须含 `GEO|AI 搜索|AI search|AI research|生成式引擎`
-2. **板块分类合法性**：`it.industry` 必须 ∈ {`geo_tech_science`, `geo_industry_dynamics`}（v1.17 后）
+2. **板块分类合法性**：`it.industry` 必须 ∈ {`geo_service_provider`, `brand_practice`, `tool_platform`, `industry_research`, `international_market`}（v1.18 后）
 3. **中文翻译**：title 不含中文时，`title_zh` 和 `summary_zh` 都必须含中文字符（**不是非空**）
 4. **时效性**：`published_at` 距今天 ≤ 7 日
 

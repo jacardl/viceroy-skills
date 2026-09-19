@@ -10,7 +10,7 @@
 // 检查项（按 v1.17 标准）：
 //   1. 中文字数 ≥ 1500（单篇拆分后）；≥ 18000（总产物）
 //   2. 不含 <style> 块（已 inline 化）
-//   3. 板块数 ∈ {2, 3}（按 parts）
+//   3. 板块数 ∈ {1..5}（v1.18 后 5 角色分类）
 //   4. 每个板块至少 1 个 <div class="item">
 //   5. <title> 后缀 ∈ {（上）, （中）, （下）, （上）, （下2）}
 //   6. 字节 ≤ 64KB
@@ -77,8 +77,8 @@ function validate(path) {
   console.log(`板块数: ${secCount}`);
   if (secCount === 0) {
     pass = fail('无板块（section-h2 不存在）');
-  } else if (!isPart && (secCount < 1 || secCount > 8)) {
-    pass = fail(`总产物板块数 ${secCount} 不合理`);
+  } else if (!isPart && (secCount < 1 || secCount > 5)) {
+    pass = fail(`总产物板块数 ${secCount} 不合理（v1.18 期望 5 章节）`);
   } else {
     ok(`板块数 ${secCount}`);
   }
