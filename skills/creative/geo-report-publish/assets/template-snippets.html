@@ -1,0 +1,35 @@
+<!--
+zhili-publish 样式 A 周报模板片段（zhili-publish · GEO 周报）
+完整模板：src/geo_report/report/templates/weekly.html.j2
+完整样式 A：../references/style-a.md
+-->
+
+<!-- TOC 模板 -->
+<nav class="toc">
+  <p class="toc-title">目录</p>
+  <ol class="toc-list">
+    {% for sec in sections %}{% if sec.items %}
+    <li><a href="#sec-{{ loop.index }}">{{ sec.industry_label }}（{{ sec.items|length }} 条）</a></li>
+    {% endif %}{% endfor %}
+  </ol>
+</nav>
+
+<!-- Item 模板 -->
+<div class="item">
+    <span class="item-cat">【{{ it.category }}】</span>
+    <span class="item-title">{{ it.title }}</span>
+    {% if it.title_zh %}<p class="title-zh">{{ it.title_zh }}</p>{% endif %}
+    {% if it.summary %}<p class="item-summary">{{ it.summary }}</p>{% endif %}
+    <p class="meta">
+      {% if it.published_at %}<span class="meta-date">{{ it.published_at[:10] }}</span>{% endif %}
+      {% if it.source_url %}
+        {% if it.source_url.startswith('obsidian://') %}
+          <span class="meta-internal">📚 来自内参</span>
+        {% else %}
+          <a class="meta-link" href="{{ it.source_url }}" target="_blank" rel="noopener">阅读原文 →</a>
+        {% endif %}
+      {% endif %}
+      {% if it.source_url_extra %}<a class="meta-link" href="{{ it.source_url_extra }}" target="_blank" rel="noopener"> · 相关来源 →</a>{% endif %}
+    </p>
+  </div>
+  {% endfor %}
