@@ -36,7 +36,7 @@ function ok(msg) {
 function validate(path) {
   const html = readFileSync(path, 'utf-8');
   const bytes = Buffer.byteLength(html, 'utf-8');
-  const isPart = /_inline_part\d/.test(path);
+  const isPart = /_inline_part(\d|2[ab])|zhili_part\d/.test(path);
   const minChars = isPart ? MIN_CHARS_PART : MIN_CHARS_FULL;
   let pass = true;
 
