@@ -88,7 +88,7 @@ Examples:
 | Name | How to trigger |
 |------|----------------|
 | [**9router-image**](skills/creative/9router-image/SKILL.md) | 9Router image generation |
-| [**geo-report-publish**](skills/creative/geo-report-publish/SKILL.md) | Produce GEO weekly report + push to WeChat draft box (end-to-end) |
+| [**zhiligeoreport**](skills/creative/zhiligeoreport/SKILL.md) | Produce GEO weekly report + push to WeChat draft box (end-to-end) |
 | [**guizang-ppt-skill**](skills/creative/guizang-ppt-skill/SKILL.md) | PPT generation |
 | [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | Write a WeChat article in 卡兹克's style |
 | [**renwei-writing**](skills/creative/renwei-writing/SKILL.md) | Renwei writing |
