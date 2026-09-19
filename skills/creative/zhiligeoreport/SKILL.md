@@ -1,5 +1,5 @@
 ---
-name: geo-report-publish
+name: zhiligeoreport
 description: |
   端到端生产并发布 GEO 周报到「直隶按察使」公众号草稿箱：从抓信源 → 强 GEO 筛选 → 双语翻译 → 2 板块分类 → 4 项验证门禁 → 渲染 HTML → 样式 A inline 化 → 按字节拆篇 → 推 WeChat 草稿箱。Auto-loaded when user mentions 跑周报 / 写周报 / 生成 GEO 周报 / 本周 GEO 资讯 / 出周报 / 推草稿箱 / publish weekly / geo-report run. Do not use for 单条 GEO 资讯查询（直接查 DB）or 正式发布公众号（仅做草稿，正式发布由用户在微信公众平台后台完成）。
 displayNames:
@@ -62,7 +62,7 @@ uv run python3 -m geo_report.cli publish-weekly \
 
 **Step 6 — 产物自检**（可选，`scripts/validate-weekly.js`）
 - 校验 inline HTML 字节 / 中文字数 / 板块数 / 条目数 / 标题后缀
-- 单独跑：`node ~/.minimax/skills/geo-report-publish/scripts/validate-weekly.js data/reports/liusheng_geo_<DATE>_inline.html`
+- 单独跑：`node ~/.minimax/skills/zhiligeoreport/scripts/validate-weekly.js data/reports/liusheng_geo_<DATE>_inline.html`
 
 **Step 7 — 草稿箱验证**（用户在微信公众平台后台）
 - 打开 https://mp.weixin.qq.com → 草稿箱
@@ -160,7 +160,7 @@ $ uv run python3 -m geo_report.cli publish-weekly --skip-push --parts 3
 ### Example 3: 单独校验产物
 
 ```bash
-$ node ~/.minimax/skills/geo-report-publish/scripts/validate-weekly.js \
+$ node ~/.minimax/skills/zhiligeoreport/scripts/validate-weekly.js \
     data/reports/liusheng_geo_2026-09-19_inline.html
 
 === 校验 .../liusheng_geo_2026-09-19_inline.html ===

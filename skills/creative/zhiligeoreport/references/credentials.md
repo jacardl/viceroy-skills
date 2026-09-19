@@ -51,5 +51,5 @@
 ## 项目路径
 
 - 项目根：`/Users/apple/Downloads/User/geo-report/`
-- skill 目录：`~/.minimax/skills/geo-report-publish/`
+- skill 目录：`~/.minimax/skills/zhiligeoreport/`
 - 推送依赖：`~/.hermes/skills/zhiligithub/scripts/push.py`
