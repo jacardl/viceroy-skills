@@ -88,6 +88,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | Name | How to trigger |
 |------|----------------|
 | [**9router-image**](skills/creative/9router-image/SKILL.md) | 9Router 图片生成 |
+| [**geo-report-publish**](skills/creative/geo-report-publish/SKILL.md) | GEO 周报生产 + 推公众号草稿箱（端到端） |
 | [**guizang-ppt-skill**](skills/creative/guizang-ppt-skill/SKILL.md) | PPT 生成 |
 | [**human-writing**](skills/creative/human-writing/SKILL.md) | 通用中文创作与改稿 — 知乎、论坛、公众号、小说 |
 | [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | 用卡兹克的风格写一篇公众号文章 |
