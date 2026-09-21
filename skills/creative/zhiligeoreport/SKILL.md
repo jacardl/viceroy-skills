@@ -8,7 +8,7 @@ displayNames:
 
 # GEO 周报生产与发布
 
-> v1.22。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。5 章节分类（GEO 服务商动态 / 品牌方实战 / 工具平台更新 / 行业研究与数据 / 国际市场）。
+> v1.23。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。5 章节分类（GEO 服务商动态 / 品牌方实战 / 工具平台更新 / 行业研究与数据 / 国际市场）。草稿标题统一为 `YYYY-MM-DD 刘生 GEO 资讯`。
 > **v1.21 关键变更**：
 > - **标题前 label 动态提取**：`extract_title_label(title, max_n=2)` 从标题抽品牌名/行业词（如「阿里·搜索」「腾讯·阿里」「医药·医疗」「报告·趋势」），不再直接显示章节名
 > - `Item.label` 字段新增，模板 `{{ it.label or it.category }}` 兜底
@@ -105,7 +105,7 @@ uv run python3 -m geo_report.cli publish-weekly \
 
 ### WeChat 草稿属性
 
-- 标题：`刘生 GEO 周报`（单篇默认；多篇备选才加上/中/下后缀）
+- 标题：`<YYYY-MM-DD> 刘生 GEO 资讯`（单篇默认；多篇备选才加上/中/下后缀）
 - 作者：刘生
 - digest：首段中文前 40 字
 - thumb_media_id：`/tmp/zhili_cover.jpg`（900×383，墨蓝 #1B365D）
@@ -137,6 +137,12 @@ uv run python3 -m geo_report.cli publish-weekly \
 - **板块分类错位**（用户明显感知）→ 触发 v1.17 待办里的代码改造
 - **WeChat 凭据缺失**（APP_SECRET / 封面图）→ 阻塞流程，问用户补
 - **style A 改动请求**（用户要求改样式）→ 是 spec 变更，先改 spec 再改模板
+
+## v1.23 已落地
+
+- [x] `src/geo_report/report/html.py`：新增 `build_report_title(date_label)`，统一生成 `<YYYY-MM-DD> 刘生 GEO 资讯`
+- [x] `scripts/13_render_only.py` / `src/geo_report/cli.py`：HTML `<title>`、正文 H1、WeChat 草稿标题来源统一为报告日期标题
+- [x] `scripts/15_split_zhili.py`：保留基础标题，多篇模式只追加 `（上）/（中）/（下）`
 
 ## v1.22 已落地
 

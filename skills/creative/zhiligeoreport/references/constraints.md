@@ -1,4 +1,4 @@
-# 关键约束（v1.22）
+# 关键约束（v1.23）
 
 > 写代码时违反会进验证门禁违规清单 + 自动从 section 剔除。
 
@@ -74,7 +74,7 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 ## 12. HTML 模板约束
 
 - 模板：`src/geo_report/report/templates/weekly.html.j2`
-- 标题：「刘生 GEO 周报」
+- 标题：`<YYYY-MM-DD> 刘生 GEO 资讯`（HTML `<title>`、正文 H1、WeChat 草稿标题统一；日期为报告生成日北京时间）
 - 内参标注：「📚 来自内参」
 - toc 和 section 都过滤空 section（`{% if sec.items %}`）
 - 包含完整 zhili-publish 样式 A
