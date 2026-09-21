@@ -26,9 +26,9 @@
 | 文件 | 用途 |
 |---|---|
 | `src/geo_report/cli.py` | `cmd_publish_weekly`（render + inline + split + push 一行命令） |
-| `src/geo_report/classify.py` | `is_strongly_geo` / `classify_industry` / `INDUSTRY_KEYWORDS`（v1.17 待改 2 板块） |
+| `src/geo_report/classify.py` | `is_strongly_geo` / `classify_industry` / `SECTION_KEYWORDS`（v1.18.1 5 角色章节） |
 | `src/geo_report/translate.py` | `translate_zh_batch` / `summarize_full_article` |
-| `src/geo_report/report/templates/weekly.html.j2` | HTML 模板（v1.17 待改 2 板块） |
+| `src/geo_report/report/templates/weekly.html.j2` | HTML 模板（v1.18.1 5 角色章节） |
 | `scripts/13_render_only.py` | 渲染 + 4 项验证门禁 |
 | `scripts/15_split_zhili.py` | 按字节拆篇 |
 | `scripts/16_inline_css.py` | 样式 A inline 化 |

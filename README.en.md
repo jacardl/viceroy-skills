@@ -88,7 +88,7 @@ Examples:
 | Name | How to trigger |
 |------|----------------|
 | [**9router-image**](skills/creative/9router-image/SKILL.md) | 9Router image generation |
-| [**zhiligeoreport**](skills/creative/zhiligeoreport/SKILL.md) | Produce GEO weekly report + push to WeChat draft box (end-to-end) |
+| [**zhiligeoreport**](skills/creative/zhiligeoreport/SKILL.md) | End-to-end GEO weekly report production: fetch sources, apply strict GEO filtering, summarize full articles in Chinese, enforce a 7-day freshness window, render one HTML article, and push it to the Zhili WeChat draft box |
 | [**guizang-ppt-skill**](skills/creative/guizang-ppt-skill/SKILL.md) | PPT generation |
 | [**khazix-writer**](skills/creative/khazix-writer/SKILL.md) | Write a WeChat article in 卡兹克's style |
 | [**renwei-writing**](skills/creative/renwei-writing/SKILL.md) | Renwei writing |

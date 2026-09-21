@@ -3,13 +3,36 @@
 ## 端到端
 
 ```bash
-# 一行命令：render + inline + split + push
+# 一行命令：render + inline + split + push（v1.20 默认单篇发布）
+uv run python3 -m geo_report.cli publish-weekly \
+  --parts 1 --per-section-cap 12 --cover /tmp/zhili_cover.jpg
+
+# 备选：3 篇拆分（历史模式）
 uv run python3 -m geo_report.cli publish-weekly \
   --parts 3 --per-section-cap 12 --cover /tmp/zhili_cover.jpg
 
 # 只渲染不推（--skip-push）
 uv run python3 -m geo_report.cli publish-weekly \
-  --parts 3 --per-section-cap 12 --skip-push
+  --parts 1 --per-section-cap 12 --skip-push
+```
+
+## 分步
+
+```bash
+cd /Users/apple/Downloads/User/geo-report
+
+# v1.22 验证：编译关键入口
+python3 -m py_compile \
+  src/geo_report/collector/obsidian_vault.py \
+  src/geo_report/collector/industry_search.py \
+  scripts/13_render_only.py \
+  src/geo_report/cli.py
+
+# v1.22 验证：obsidian 创建时间扫描（不是 mtime）
+uv run python3 - <<'PY'
+from src.geo_report.collector.obsidian_vault import run
+print(run(days=7))
+PY
 ```
 
 ## 分步
@@ -26,13 +49,13 @@ uv run python3 scripts/13_render_only.py
 # Step 3: inline 化（WeChat 兼容）
 uv run python3 scripts/16_inline_css.py data/reports/liusheng_geo_<DATE>.html
 
-# Step 4: 按字节拆篇（≤64KB/篇）
+# Step 4: 按字节拆篇（≤64KB/篇，v1.20 支持 --parts 1）
 uv run python3 scripts/15_split_zhili.py \
   data/reports/liusheng_geo_<DATE>_inline.html \
-  --parts 3 --per-section-cap 12
+  --parts 1 --per-section-cap 12
 
-# Step 5: 推草稿箱（3 篇）
-for f in /tmp/zhili_part{1,2,3}.html; do
+# Step 5: 推草稿箱（单篇 / 多篇都用同一个 push.py）
+for f in /tmp/zhili_part*.html; do
   python3 /Users/apple/.hermes/skills/zhiligithub/scripts/push.py \
     --html "$f" --cover /tmp/zhili_cover.jpg \
     --skip-illustration --skip-cover

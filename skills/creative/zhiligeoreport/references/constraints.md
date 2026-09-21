@@ -1,12 +1,17 @@
-# 关键约束（v1.15 / v1.16 / v1.17 累积）
+# 关键约束（v1.22）
+
+> 写代码时违反会进验证门禁违规清单 + 自动从 section 剔除。
 
 > 写代码时违反会进验证门禁违规清单 + 自动从 section 剔除。
 
 ## 1. 严格 7 日窗口
 
-- `published_at` 优先；无则用 `fetched_at` 兜底
-- obsidian 源强制走 `published_at`（文件 mtime），不用 `fetched_at` 兜底
-- 防 `ON CONFLICT DO UPDATE` 刷新 fetched_at 让老 obsidian 文件复活
+- 所有源必须 `published_at IS NOT NULL AND published_at >= cutoff`，不再用 `fetched_at` 兜底
+- 普通 RSS / JSON / HTML / wechat_oa 源没有可靠 `published_at` 时，不能入周报
+- 外部搜索源必须二次抓原文页发布时间；无发布时间或过期计入 `stale_or_undated` 并跳过
+- obsidian 源必须额外满足 `meta_json.created_at >= cutoff`，缺 `created_at` 的历史行不能入周报
+- obsidian 创建时间来源优先级：macOS `st_birthtime` → frontmatter `created` / `date` → 文件名日期；`mtime` 只记录，不作为依据
+- 防 `ON CONFLICT DO UPDATE` 刷新 fetched_at、iCloud 同步刷新 mtime 让老内容复活
 - 不允许：把超过 7 日的 stale 条目混进周报
 - 不允许：把公众号一次性历史采集条目（如 `enabled=false` 的小布 GEO 智库）算进"过去 7 天"
 
@@ -30,35 +35,43 @@ Haleon / 芬必得 / Bayer / Roche / Pfizer / Sanofi / GSK / J&J / Novartis / Me
 
 brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeholder / todo / 待定 / 仅供参考
 
-## 6. 双语翻译（`translate_zh_batch`）
+## 6. GEO 厂商营销稿剔除（`has_geo_vendor_marketing`）
+
+- 剔除：GEO 服务商/厂商/公司榜单、推荐、排名、排行、盘点、评测、TOP 榜
+- 剔除：选型、怎么选、选择指南、哪家好、哪家靠谱、找靠谱 GEO、价格、报价、费用、套餐、合作参考
+- 剔除：以「GEO 公司」「GEO 优化公司」「GEO 优化服务」「GEO 服务商」为落地页标题的厂商获客页
+- 剔除：智能营销、智能获客、外贸获客、精准获客、广告投放、解决方案、服务方案、一站式服务、实力领跑、全域增长等销售导向软广
+- 保留：真实品牌方实践、可复用经验、最佳实践、方法指南、趋势、行业分享、研究数据、白皮书、benchmark、中性服务商新闻
+
+## 7. 双语翻译（`translate_zh_batch`）
 
 - GT 的 `sl=auto`（**不是 en**），自动检测波兰/捷克/荷兰/法语
 - GT 翻译后若 `title_zh` 不含中文字符 → 自动回退到 `translate_zh` 走 minimax LLM 兜底
-- 抓 article 成功但 LLM 总结失败 → 兜底调用 `translate_zh`（minimax + GT 双层），保证 summary 永远是中文
+- 抓 article 成功但 LLM 总结失败 → 兜底调用 `translate_zh`（minimax + GT 双层）；仍失败则返回空摘要并由门禁剔除
 - 标题上限 40 字（截到 80 字兜底），正文上限 500 字（截到 500 字兜底）
 - 并发默认 concurrency=8（`httpx.AsyncClient`）
 - 限速：minimax 走 OpenAI 配额；GT 匿名端点限速约 100 req/min
 
-## 7. obsidian 强制 LLM 总结（≤500 字）
+## 8. obsidian 强制 LLM 总结（≤500 字）
 
 - 剥 YAML frontmatter（`---\n...\n---\n`）再喂 LLM
-- LLM 失败兜底：`_strip_body_commentary` + 截前 500 字
+- LLM 失败：摘要置空，由门禁剔除；禁止截原文作为可发布摘要
 
-## 8. 每信源 max 5 条（PER_SOURCE_CAP=5）
+## 9. 每信源 max 5 条（PER_SOURCE_CAP=5）
 
 - search 聚合源（`source_type='search'`）不参与 cap
 
-## 9. source 内近标题去重（v1.13.3）
+## 10. source 内近标题去重（v1.13.3）
 
 - `(source_id, date, title[:24])` 去重
 - 同一 source 同日同一主题只占 1 个 cap 槽位
 
-## 10. 每板块最多 N 条（PER_INDUSTRY_CAP）
+## 11. 每板块最多 N 条（PER_INDUSTRY_CAP）
 
 - 按 `geo_score` 降序截断
 - 防 search 源把单 section 占满
 
-## 11. HTML 模板约束
+## 12. HTML 模板约束
 
 - 模板：`src/geo_report/report/templates/weekly.html.j2`
 - 标题：「刘生 GEO 周报」
@@ -67,14 +80,36 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 - 包含完整 zhili-publish 样式 A
 - 目录/正文都用零换行内联 style（WeChat 渲染友好）
 
-## 12. 验证门禁 4 项（`scripts/13_render_only.py` 自动跑）
+## 13. 验证门禁 4 项（`scripts/13_render_only.py` 自动跑）
 
 1. **相关性**：title 或 summary 必须含 `GEO|AI 搜索|AI search|AI research|生成式引擎`
 2. **板块分类合法性**：`it.industry` 必须 ∈ {`geo_service_provider`, `brand_practice`, `tool_platform`, `industry_research`, `international_market`}（v1.18 后）
 3. **中文翻译**：title 不含中文时，`title_zh` 和 `summary_zh` 都必须含中文字符（**不是非空**）
-4. **时效性**：`published_at` 距今天 ≤ 7 日
+4. **摘要质量**：可发布摘要必须含中文、长度达标，且不能是原文直接截断
+5. **编码质量**：标题和摘要不得含 U+FFFD 解码失败字符
+6. **营销稿质量**：不得命中 GEO 厂商榜单/推荐/排名/选型/报价/获客/方案/自夸模式
+7. **时效性**：`published_at` 距今天 ≤ 7 日
 
-## 13. inline CSS 化约束（WeChat 兼容）
+## 14. 生产级质量门槛（v1.19 新增）
+
+> 用户硬性要求：宁可减少数量也不接受低质量。
+
+- `title` 字符长度 ≥ 10（强 GEO 阶段直接剔除）
+- `body` 字符长度 ≥ 300（SEO meta / 转载片段拒收）
+- `title` 或 `body[:500]` 中文占比 ≥ 30%（机翻广告拒收）
+- 上述任一不达 → 强 GEO 阶段直接剔除，不再进 Item 列表
+- 之前 6 项门禁仍生效：相关性 / 章节合法性 / 中文翻译 / 摘要质量 / 营销稿 / 时效
+
+## 15. 内参优先排序（v1.19 新增）
+
+- `obsidian_vault.SUBDIRS["raw/wechat"]` 标记 `internal_brief=True`，`ingest_raw.meta_json.internal_brief=true`
+- `ingest_raw.meta_json.created_at` / `created_at_source` 记录内参创建时间证据
+- `source_weight`：`internal_brief 3.0` / `obsidian 2.0` / `wechat_oa 1.5` / `其余 1.0`
+- `geo_score *= source_weight` 后按降序截断
+- obsidian 内参板块上限 25，非内参板块保持 12
+- obsidian 转载文件首行是裸 URL（mp.weixin.qq.com）→ 跳过，继续向下取 `# ` 标题
+
+## 16. inline CSS 化约束（WeChat 兼容）
 
 - WeChat 不解析 `<style>` 块 + 类选择器
 - 所有 CSS 必须 inline 到 `style="..."` 属性
@@ -82,10 +117,11 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 - 块之间零换行（避免微信把换行识别为段落分隔符）
 - inline 化后总字节 +30%（每个元素 style 属性内联）
 
-## 14. 拆篇约束
+## 17. 拆篇约束
 
 - WeChat 草稿 content 上限 64KB，建议 ≤ 60KB 更稳
-- per-section-cap 默认 12
-- parts=2：上 = GEO 技术科普 + 医药 + 本地服务；下 = 其他
-- parts=3：上 = GEO 技术科普 + 医药 + 本地服务；中 = 消费品 + 高客单；下 = 电商 + B2B SaaS
+- per-section-cap 默认 8；发布时可手动用 12
+- parts=1：默认单篇，所有板块合并，必须 ≤64KB（建议 ≤60KB）
+- parts=2：上 = GEO 服务商动态 + 国际市场；下 = 品牌方实战 + 工具平台更新 + 行业研究与数据
+- parts=3：上 = GEO 服务商动态 + 国际市场；中 = 品牌方实战 + 工具平台更新；下 = 行业研究与数据
 - 标题后缀：(上)/(中)/(下)，每个 26 字节（实际 API 接受 64 字节）
