@@ -1,4 +1,4 @@
-# 关键约束（v1.23）
+# 关键约束（v1.24）
 
 > 写代码时违反会进验证门禁违规清单 + 自动从 section 剔除。
 
@@ -75,6 +75,8 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 
 - 模板：`src/geo_report/report/templates/weekly.html.j2`
 - 标题：`<YYYY-MM-DD> 刘生 GEO 资讯`（HTML `<title>`、正文 H1、WeChat 草稿标题统一；日期为报告生成日北京时间）
+- 拆篇后仍必须保留正文头部 kicker、H1、source meta、intro；单篇正文 H1 必须等于 HTML `<title>`
+- WeChat 推送版不得保留本地锚点 TOC 链接（如 `href="#sec-2"`），否则 `draft/add` 可能报 `45166 invalid content`
 - 内参标注：「📚 来自内参」
 - toc 和 section 都过滤空 section（`{% if sec.items %}`）
 - 包含完整 zhili-publish 样式 A
@@ -125,3 +127,5 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 - parts=2：上 = GEO 服务商动态 + 国际市场；下 = 品牌方实战 + 工具平台更新 + 行业研究与数据
 - parts=3：上 = GEO 服务商动态 + 国际市场；中 = 品牌方实战 + 工具平台更新；下 = 行业研究与数据
 - 标题后缀：(上)/(中)/(下)，每个 26 字节（实际 API 接受 64 字节）
+- 拆篇输出必须保留正文头部；不得把文章从第一个 `<h2>` 开始截断
+- 推送版必须移除本地锚点目录链接（`href="#sec-*"`），保留 H2 的 `id` 可接受

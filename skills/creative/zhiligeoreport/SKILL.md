@@ -8,7 +8,7 @@ displayNames:
 
 # GEO 周报生产与发布
 
-> v1.23。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。5 章节分类（GEO 服务商动态 / 品牌方实战 / 工具平台更新 / 行业研究与数据 / 国际市场）。草稿标题统一为 `YYYY-MM-DD 刘生 GEO 资讯`。
+> v1.24。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。5 章节分类（GEO 服务商动态 / 品牌方实战 / 工具平台更新 / 行业研究与数据 / 国际市场）。草稿标题统一为 `YYYY-MM-DD 刘生 GEO 资讯`，拆篇后保留正文 H1，推送版移除本地锚点 TOC。
 > **v1.21 关键变更**：
 > - **标题前 label 动态提取**：`extract_title_label(title, max_n=2)` 从标题抽品牌名/行业词（如「阿里·搜索」「腾讯·阿里」「医药·医疗」「报告·趋势」），不再直接显示章节名
 > - `Item.label` 字段新增，模板 `{{ it.label or it.category }}` 兜底
@@ -68,6 +68,7 @@ uv run python3 -m geo_report.cli publish-weekly \
 - ≤64KB/篇（WeChat 草稿 content 上限），建议 ≤60KB 更稳
 - parts=1：所有板块合并为单篇；parts=3 仅作备选：上 = GEO 服务商动态 + 国际市场；中 = 品牌方实战 + 工具平台更新；下 = 行业研究与数据
 - 标题后缀：(上)/(中)/(下)，每个 26 字节
+- 拆篇输出必须保留正文头部的 kicker、H1、source meta、intro；推送版必须移除本地锚点目录链接（`href="#sec-*"`），否则 WeChat `draft/add` 可能报 `45166 invalid content`
 - 重要 bug 修复：h2 切分用 `re.finditer` 自然顺序，不再用 200 字节窗口查 class=（inline 后超窗口）
 - 详细见 [references/constraints.md §14](references/constraints.md)
 
@@ -137,6 +138,11 @@ uv run python3 -m geo_report.cli publish-weekly \
 - **板块分类错位**（用户明显感知）→ 触发 v1.17 待办里的代码改造
 - **WeChat 凭据缺失**（APP_SECRET / 封面图）→ 阻塞流程，问用户补
 - **style A 改动请求**（用户要求改样式）→ 是 spec 变更，先改 spec 再改模板
+
+## v1.24 已落地
+
+- [x] `scripts/15_split_zhili.py`：拆篇输出保留正文头部 kicker、H1、source meta、intro，单篇正文 H1 与 HTML `<title>` 一致
+- [x] `scripts/15_split_zhili.py`：推送版移除本地锚点 TOC，避免 WeChat `draft/add` 报 `45166 invalid content`
 
 ## v1.23 已落地
 
