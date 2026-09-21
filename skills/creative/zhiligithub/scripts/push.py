@@ -25,6 +25,7 @@ Usage:
     python3 push.py --delete-first <draft_id>
 """
 import argparse
+import base64
 import json
 import os
 import re
@@ -48,10 +49,75 @@ DEFAULT_COVER_PATH = "/tmp/zhili_cover.png"
 ILLUSTRATION_IP = "问号人"
 ILLUSTRATION_STYLE = "手绘线稿·淡彩"
 ILLUSTRATION_DIR = "/tmp/zhili_illustrations"
-RUN_MMX = os.path.expanduser("~/.hermes/skills/creative/xiaohu-ip-studio/scripts/run_mmx.py")
+IMAGE_GATEWAY = "http://127.0.0.1:20128/v1/images/generations"
+IMAGE_MODEL = os.environ.get("ZHILI_IMAGE_MODEL", "cx/gpt-5.5-image")
+HERMES_CONFIG = os.path.expanduser("~/.hermes/config.yaml")
 
 # zhiligithub 长文最多 5 张配图（每个 H2 小节一张）
 MAX_SHOTS = 5
+
+
+def _load_9router_key() -> str:
+    """从 ~/.hermes/config.yaml 读取 9Router 网关 key，不打印、不外泄。"""
+    try:
+        import yaml
+        with open(HERMES_CONFIG, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        return (((data.get("providers") or {}).get("9router") or {}).get("api_key") or "").strip()
+    except Exception:
+        return ""
+
+
+def _prompt_text(prompt_file: str) -> str:
+    with open(prompt_file, "r", encoding="utf-8") as f:
+        text = f.read()
+    # 9Router 生图 prompt 用英文短句更稳；保留中文标题语义。
+    return (
+        "Editorial illustration for Zhili Ancha Shi WeChat article. "
+        "No text, no labels, no emoji. Hand-drawn line art, light watercolor, "
+        "dark blue tech atmosphere, simple question-mark character mascot. "
+        + text[:1200]
+    )
+
+
+def _generate_image(prompt_file: str, out_path: str, size: str = "1792x1024") -> bool:
+    """用本地 9Router 图片网关生成图片，成功写入 out_path。"""
+    key = _load_9router_key()
+    if not key:
+        print("❌ 生图失败：~/.hermes/config.yaml 缺少 providers.9router.api_key")
+        return False
+    payload = {
+        "model": IMAGE_MODEL,
+        "prompt": _prompt_text(prompt_file),
+        "n": 1,
+        "size": size,
+    }
+    req = urllib.request.Request(
+        IMAGE_GATEWAY,
+        data=json.dumps(payload).encode("utf-8"),
+        method="POST",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {key}",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=180) as r:
+            data = json.loads(r.read())
+        item = (data.get("data") or [{}])[0]
+        b64 = item.get("b64_json") or ""
+        if not b64 and item.get("url", "").startswith("data:image"):
+            b64 = item["url"].split(",", 1)[1]
+        if not b64:
+            print(f"❌ 生图失败：返回无 b64_json/url，keys={list(item.keys())}")
+            return False
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, "wb") as f:
+            f.write(base64.b64decode(b64))
+        return os.path.exists(out_path) and os.path.getsize(out_path) > 0
+    except Exception as e:
+        print(f"❌ 生图失败：{e}")
+        return False
 
 
 def _build_prompt_file(html: str, h2_title: str, section_content: str, idx: int) -> str:
@@ -114,36 +180,16 @@ def extract_shot_list(html: str) -> list:
 
 
 def generate_illustrations(shots: list) -> list:
-    """调用 run_mmx.py 生成每张配图。"""
+    """用 9Router 本地网关生成每张配图。"""
     os.makedirs(ILLUSTRATION_DIR, exist_ok=True)
 
-    # 先生第 1 张确认风格
-    if shots:
-        print(f"\n[配图] 生成第 1 张基准图（{shots[0]['out_path']}）...")
-        cmd = [
-            sys.executable, RUN_MMX,
-            "--prompt-file", shots[0]["prompt_file"],
-            "--out", shots[0]["out_path"],
-        ]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if r.returncode != 0:
-            print(f"⚠️  run_mmx 第 1 张失败: {r.stderr[:300]}")
-        else:
-            print(f"      ✓ 第 1 张生成成功")
-
-    # 批量生成其余图片
-    for shot in shots[1:]:
-        print(f"[配图] 生成 {shot['name']}（{shot['out_path']}）...")
-        cmd = [
-            sys.executable, RUN_MMX,
-            "--prompt-file", shot["prompt_file"],
-            "--out", shot["out_path"],
-        ]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if r.returncode != 0:
-            print(f"      ⚠️  {shot['name']} 失败: {r.stderr[:200]}")
-        else:
+    for idx, shot in enumerate(shots):
+        label = "第 1 张基准图" if idx == 0 else shot["name"]
+        print(f"\n[配图] 生成 {label}（{shot['out_path']}）...")
+        if _generate_image(shot["prompt_file"], shot["out_path"], size="1792x1024"):
             print(f"      ✓ {shot['name']} 生成成功")
+        else:
+            print(f"      ⚠️  {shot['name']} 失败")
 
     return shots
 
@@ -271,10 +317,8 @@ def generate_cover(html: str, title: str, out_path: str = COVER_PATH) -> str:
 
     tmp_16x9 = "/tmp/cover_16x9.png"
     print(f"[封面] 生成 16:9 底图（{tmp_16x9}）...")
-    cmd = [sys.executable, RUN_MMX, "--prompt-file", cover_prompt_file, "--out", tmp_16x9]
-    r = subprocess.run(cmd, capture_output=True, text=True)
-    if r.returncode != 0:
-        print(f"❌ 封面生成失败，已中断: {r.stderr[:300]}")
+    if not _generate_image(cover_prompt_file, tmp_16x9, size="1792x1024"):
+        print("❌ 封面生成失败，已中断")
         sys.exit(1)
 
     # PIL 裁剪：16:9 → 2.35:1（从中间裁宽边）
