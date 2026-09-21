@@ -131,11 +131,12 @@ with open("article-final.html", "w", encoding="utf-8") as f:
 凭证由 `zhili-publish/scripts/publish_zhili.py` 的 `load_config()` 管理，
 无需传入 APPID/APPSECRET。技能内部通过 `sys.path.insert` 复用。
 
-## 封面图（单独处理）
+## 封面图
 
-封面图不走本技能。用 `zhiliGitHub`/`zhililong` 的封面图流程：
-`zhiliGitHub/scripts/cover_pil.py`（PIL 渐变）或 `mmx image generate` 生成后
-单独用 `material/add_material` 上传。
+封面图也使用本技能的视觉规范：无文字、问号人 IP、统一画风、按公众号封面比例裁切。
+`zhiliGitHub` / `zhiligeoreport` 可在各自 `push.py` 中复用本规范生成 16:9 底图，再裁切为 900×383 并用 `material/add_material` 上传。
+
+要求：封面生成失败必须中断发布，不允许继续上传不存在或旧封面。
 
 ## 已知限制
 

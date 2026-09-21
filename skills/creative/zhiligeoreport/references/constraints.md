@@ -1,4 +1,4 @@
-# 关键约束（v1.24）
+# 关键约束（v1.25）
 
 > 写代码时违反会进验证门禁违规清单 + 自动从 section 剔除。
 
@@ -9,7 +9,7 @@
 - 所有源必须 `published_at IS NOT NULL AND published_at >= cutoff`，不再用 `fetched_at` 兜底
 - 普通 RSS / JSON / HTML / wechat_oa 源没有可靠 `published_at` 时，不能入周报
 - 外部搜索源必须二次抓原文页发布时间；无发布时间或过期计入 `stale_or_undated` 并跳过
-- obsidian 源必须额外满足 `meta_json.created_at >= cutoff`，缺 `created_at` 的历史行不能入周报
+- obsidian 源必须额外满足 `sources.name = obsidian-raw-wechat`、`meta_json.subdir = raw/wechat`、`meta_json.created_at >= cutoff`，缺任一条件的历史行不能入周报
 - obsidian 创建时间来源优先级：macOS `st_birthtime` → frontmatter `created` / `date` → 文件名日期；`mtime` 只记录，不作为依据
 - 防 `ON CONFLICT DO UPDATE` 刷新 fetched_at、iCloud 同步刷新 mtime 让老内容复活
 - 不允许：把超过 7 日的 stale 条目混进周报
@@ -75,11 +75,13 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 
 - 模板：`src/geo_report/report/templates/weekly.html.j2`
 - 标题：`<YYYY-MM-DD> 刘生 GEO 资讯`（HTML `<title>`、正文 H1、WeChat 草稿标题统一；日期为报告生成日北京时间）
-- 拆篇后仍必须保留正文头部 kicker、H1、source meta、intro；单篇正文 H1 必须等于 HTML `<title>`
+- 拆篇后仍必须保留正文头部 kicker、H1；单篇正文 H1 必须等于 HTML `<title>`
 - WeChat 推送版不得保留本地锚点 TOC 链接（如 `href="#sec-2"`），否则 `draft/add` 可能报 `45166 invalid content`
-- 内参标注：「📚 来自内参」
-- toc 和 section 都过滤空 section（`{% if sec.items %}`）
-- 包含完整 zhili-publish 样式 A
+- 正文只保留基础标题、条目摘要、非 obsidian 外链的「阅读原文」
+- 删除 TOC、source-meta、intro、item-cat、发布日期、内参标注、source_url_extra、spicy、CTA、hashtags、footer
+- section H2 保留：它是基础结构标题、拆篇锚点、zhili-illustration 配图锚点
+- section 过滤空 section（`{% if sec.items %}`）
+- 包含完整 zhili-publish 样式 A 的剩余必要样式
 - 目录/正文都用零换行内联 style（WeChat 渲染友好）
 
 ## 13. 验证门禁 4 项（`scripts/13_render_only.py` 自动跑）
@@ -102,8 +104,9 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 - 上述任一不达 → 强 GEO 阶段直接剔除，不再进 Item 列表
 - 之前 6 项门禁仍生效：相关性 / 章节合法性 / 中文翻译 / 摘要质量 / 营销稿 / 时效
 
-## 15. 内参优先排序（v1.19 新增）
+## 15. raw/wechat-only 内参优先排序（v1.25 修订）
 
+- `obsidian_vault.SUBDIRS` 只允许 `raw/wechat`，禁止读取其他 obsidian 目录
 - `obsidian_vault.SUBDIRS["raw/wechat"]` 标记 `internal_brief=True`，`ingest_raw.meta_json.internal_brief=true`
 - `ingest_raw.meta_json.created_at` / `created_at_source` 记录内参创建时间证据
 - `source_weight`：`internal_brief 3.0` / `obsidian 2.0` / `wechat_oa 1.5` / `其余 1.0`
@@ -129,3 +132,10 @@ brief / RFP / 标书 / 投标 / NDA / MOU / 占位 / 待补充 / 草稿 / placeh
 - 标题后缀：(上)/(中)/(下)，每个 26 字节（实际 API 接受 64 字节）
 - 拆篇输出必须保留正文头部；不得把文章从第一个 `<h2>` 开始截断
 - 推送版必须移除本地锚点目录链接（`href="#sec-*"`），保留 H2 的 `id` 可接受
+
+## 18. zhili-illustration 发布链路
+
+- `publish-weekly` 调 `push.py --html <part> --cover /tmp/zhili_cover.png`。
+- 不传 `--skip-illustration` / `--skip-cover`。
+- 封面与正文配图统一由 `push.py` 按 zhili-illustration 规范生成、上传、注入。
+- 封面生成失败必须中断发布，不允许用旧封面或不存在文件继续。

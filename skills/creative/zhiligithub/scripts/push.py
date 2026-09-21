@@ -2,9 +2,10 @@
 """
 zhiligithub · 微信草稿推送脚本
 
-2026-06-28 集成 zhili-illustration：
+2026-09-21 集成 zhili-illustration：
   - 配图：自动提取 H2 小节（最多 5 张），生成 + 注入 HTML + 上传 mmbiz
-  - 封面：xiaohu-ip-studio 生成 16:9 → PIL 裁剪 900×383（2.35:1）
+  - 封面：按 zhili-illustration 视觉规范生成 16:9 底图 → 裁剪 900×383（2.35:1）
+  - 封面生成失败必须中断，禁止上传不存在或旧封面
   - 全流程 4 步：配图生成 → HTML 注入 → 封面上传 → 创建草稿
 
 Usage:
@@ -236,10 +237,10 @@ TARGET_W, TARGET_H = 900, 383  # 2.35:1
 
 
 def generate_cover(html: str, title: str, out_path: str = COVER_PATH) -> str:
-    """用 xiaohu-ip-studio 生成封面图：16:9 → 裁剪为 900×383。
+    """按 zhili-illustration 视觉规范生成封面图：16:9 → 裁剪为 900×383。
 
     封面 prompt：从标题提取核心视觉概念，深色背景 + 情绪氛围。
-    生成 16:9 → PIL 裁剪中间部分到 2.35:1。
+    生成失败必须中断，避免上传不存在或旧封面。
     """
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
@@ -273,8 +274,8 @@ def generate_cover(html: str, title: str, out_path: str = COVER_PATH) -> str:
     cmd = [sys.executable, RUN_MMX, "--prompt-file", cover_prompt_file, "--out", tmp_16x9]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
-        print(f"⚠️  封面生成失败: {r.stderr[:300]}")
-        return out_path  # 回退，不阻断流程
+        print(f"❌ 封面生成失败，已中断: {r.stderr[:300]}")
+        sys.exit(1)
 
     # PIL 裁剪：16:9 → 2.35:1（从中间裁宽边）
     try:

@@ -1,6 +1,6 @@
 # 章节划分（v1.19 决策）
 
-> v1.19 决策：按 GEO 生态角色划分 5 个互斥章节；内参板块上限 25，非内参 12；宁缺毋滥。
+> v1.25 决策：按 GEO 生态角色划分 5 个互斥章节；内参只允许 obsidian `raw/wechat`；内参板块上限 25，非内参 12；宁缺毋滥。
 
 ## 5 个章节
 
@@ -41,7 +41,7 @@
 
 - `items.industry` 字段保留章节 ID（`geo_service_provider` / `brand_practice` / `tool_platform` / `industry_research` / `international_market`）
 - 单条 item 只属于一个章节（互斥分配）
-- 标题前 label 从标题动态抽取品牌/行业词（如「阿里·搜索」），失败才回退章节名。
+- 标题前 label 仍可计算，但 v1.25 模板不显示 item-cat 胶囊，只保留条目标题和摘要。
 
 ## 分类逻辑（`classify.py` 已实现）
 
@@ -80,3 +80,10 @@ classify_industry(title, body, source_industry):
 - [x] 章节选择仍为 5 角色，标题前 label 不直接使用章节名
 - [x] obsidian 入选项必须最近 7 天创建，`mtime` 不作依据
 - [x] 外部搜索入选项必须有最近 7 天原文发布时间
+
+
+## v1.25 状态
+
+- [x] obsidian 只读 `raw/wechat`，禁止 wiki/source/concepts 等历史库进入周报
+- [x] section H2 保留，作为基础结构标题、拆篇锚点、zhili-illustration 配图锚点
+- [x] item-cat、日期、内参标注不再渲染

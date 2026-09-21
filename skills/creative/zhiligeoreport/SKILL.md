@@ -8,11 +8,10 @@ displayNames:
 
 # GEO 周报生产与发布
 
-> v1.24。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。5 章节分类（GEO 服务商动态 / 品牌方实战 / 工具平台更新 / 行业研究与数据 / 国际市场）。草稿标题统一为 `YYYY-MM-DD 刘生 GEO 资讯`，拆篇后保留正文 H1，推送版移除本地锚点 TOC。
+> v1.25。覆盖写作（fetch → render）+ 发布（inline → split → push）端到端。5 章节分类（GEO 服务商动态 / 品牌方实战 / 工具平台更新 / 行业研究与数据 / 国际市场）。草稿标题统一为 `YYYY-MM-DD 刘生 GEO 资讯`；obsidian 只读 `raw/wechat`；正文只保留基础标题、摘要、阅读原文；封面与配图统一走 zhili-illustration 规范链路。
 > **v1.21 关键变更**：
 > - **标题前 label 动态提取**：`extract_title_label(title, max_n=2)` 从标题抽品牌名/行业词（如「阿里·搜索」「腾讯·阿里」「医药·医疗」「报告·趋势」），不再直接显示章节名
 > - `Item.label` 字段新增，模板 `{{ it.label or it.category }}` 兜底
-> - raw/wechat 本周 7 天 mtime 窗口确认 4 篇新建（GEO 每日简报 14/17/18/20）已入库
 
 > **v1.20 关键变更**：
 > - **单篇发布模式**（默认）：`--parts 1` 把所有板块拼成一篇公众号文章，单篇 bytes ≤64KB
@@ -20,7 +19,7 @@ displayNames:
 > - 仍保留 `--parts 2 / 3` 多篇模式用于备选
 
 > **v1.19 关键变更**：
-> - obsidian 内参（`raw/wechat` + `wiki/sources` + `wiki/concepts`）作为权威信源优先（`source_weight = 3.0`，板块上限 25）
+> - obsidian 内参只允许 `raw/wechat`，禁止读取 `wiki/*`、`raw/Clippings`、`books`、`papers`、`law` 等其他 obsidian 内容
 > - 搜索引擎内容降权（`source_weight = 1.0`，板块上限 12），只作为补充
 > - 生产级质量门槛：标题 ≥ 10 字、正文 ≥ 300 字、中文占比 ≥ 30%；不达标直接剔除
 > - obsidian 转载首行 URL 自动跳过，向下取 `# ` 标题
@@ -42,7 +41,7 @@ displayNames:
 ```bash
 cd /Users/apple/Downloads/User/geo-report
 uv run python3 -m geo_report.cli publish-weekly \
-  --parts 1 --per-section-cap 12 --cover /tmp/zhili_cover.jpg
+  --parts 1 --per-section-cap 12 --cover /tmp/zhili_cover.png
 ```
 
 这条命令完成 7 步：
@@ -68,12 +67,12 @@ uv run python3 -m geo_report.cli publish-weekly \
 - ≤64KB/篇（WeChat 草稿 content 上限），建议 ≤60KB 更稳
 - parts=1：所有板块合并为单篇；parts=3 仅作备选：上 = GEO 服务商动态 + 国际市场；中 = 品牌方实战 + 工具平台更新；下 = 行业研究与数据
 - 标题后缀：(上)/(中)/(下)，每个 26 字节
-- 拆篇输出必须保留正文头部的 kicker、H1、source meta、intro；推送版必须移除本地锚点目录链接（`href="#sec-*"`），否则 WeChat `draft/add` 可能报 `45166 invalid content`
+- 拆篇输出必须保留正文头部的 kicker、H1；推送版必须移除本地锚点目录链接（`href="#sec-*"`），否则 WeChat `draft/add` 可能报 `45166 invalid content`
 - 重要 bug 修复：h2 切分用 `re.finditer` 自然顺序，不再用 200 字节窗口查 class=（inline 后超窗口）
 - 详细见 [references/constraints.md §14](references/constraints.md)
 
 **Step 5 — 推 WeChat 草稿箱**（`push.py`）
-- 每篇调一次 `push.py --html <part> --cover /tmp/zhili_cover.jpg --skip-illustration --skip-cover`
+- 每篇调一次 `push.py --html <part> --cover /tmp/zhili_cover.png`；不传 `--skip-illustration` / `--skip-cover`，封面和配图统一走 zhili-illustration 规范链路
 - 凭据见 [references/credentials.md](references/credentials.md)
 
 **Step 6 — 产物自检**（可选，`scripts/validate-weekly.js`）
@@ -82,7 +81,7 @@ uv run python3 -m geo_report.cli publish-weekly \
 
 **Step 7 — 草稿箱验证**（用户在微信公众平台后台）
 - 打开 https://mp.weixin.qq.com → 草稿箱
-- 打开单篇周报预览，确认样式 A 渲染（H2 下划线 / 墨蓝分类标签 / 红褐翻译标题 / 行距 1.8）
+- 打开单篇周报预览，确认样式 A 渲染（H2 下划线 / 红褐翻译标题 / 行距 1.8 / 阅读原文跳转）
 
 ## Output contract
 
@@ -109,7 +108,7 @@ uv run python3 -m geo_report.cli publish-weekly \
 - 标题：`<YYYY-MM-DD> 刘生 GEO 资讯`（单篇默认；多篇备选才加上/中/下后缀）
 - 作者：刘生
 - digest：首段中文前 40 字
-- thumb_media_id：`/tmp/zhili_cover.jpg`（900×383，墨蓝 #1B365D）
+- thumb_media_id：`/tmp/zhili_cover.png`（900×383，由 zhili-illustration 规范链路生成）
 - need_open_comment：1
 - only_fans_can_comment：0
 - original：1
@@ -136,12 +135,21 @@ uv run python3 -m geo_report.cli publish-weekly \
 ### 何时停下来问用户
 
 - **板块分类错位**（用户明显感知）→ 触发 v1.17 待办里的代码改造
-- **WeChat 凭据缺失**（APP_SECRET / 封面图）→ 阻塞流程，问用户补
+- **WeChat 凭据缺失**（APP_SECRET）或 zhili-illustration 生成失败 → 阻塞流程，问用户补
 - **style A 改动请求**（用户要求改样式）→ 是 spec 变更，先改 spec 再改模板
+
+
+## v1.25 已落地
+
+- [x] `collector/obsidian_vault.py`：只扫描 `raw/wechat`，禁止读取其他 obsidian 内容
+- [x] `scripts/13_render_only.py`：render SQL 二次防护，只允许 `obsidian-raw-wechat` + `meta_json.subdir = raw/wechat` + `created_at >= cutoff`
+- [x] `weekly.html.j2`：正文只保留基础标题、摘要、阅读原文；删除 TOC、来源栏、intro、标签、日期、内参标注、辣评、CTA、hashtags、footer
+- [x] `publish-weekly`：推送不再默认跳过配图/封面；统一调用 zhili-illustration 规范链路
+- [x] `push.py`：封面生成失败中断，避免上传不存在或旧封面
 
 ## v1.24 已落地
 
-- [x] `scripts/15_split_zhili.py`：拆篇输出保留正文头部 kicker、H1、source meta、intro，单篇正文 H1 与 HTML `<title>` 一致
+- [x] `scripts/15_split_zhili.py`：拆篇输出保留正文头部 kicker、H1，单篇正文 H1 与 HTML `<title>` 一致
 - [x] `scripts/15_split_zhili.py`：推送版移除本地锚点 TOC，避免 WeChat `draft/add` 报 `45166 invalid content`
 
 ## v1.23 已落地

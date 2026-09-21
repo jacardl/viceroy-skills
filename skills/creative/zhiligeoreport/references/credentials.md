@@ -6,7 +6,7 @@
 |---|---|
 | APPID | `wx38a91c353554588a`（硬编码于 `~/.hermes/skills/zhiligithub/scripts/push.py`） |
 | APP_SECRET | `~/.hermes/keys/wx_appsecret.txt` |
-| 封面图 | `/tmp/zhili_cover.jpg`（900×383，墨蓝 #1B365D） |
+| 封面图 | `/tmp/zhili_cover.png`（900×383，由 zhili-illustration 规范链路生成） |
 
 ## 数据库
 
