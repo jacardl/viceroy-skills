@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fill_ai_zh.py — AI / Politics / GitHub 板块 description 字段中文改写
+fill_ai_zh.py — AI / GitHub 板块 description 字段中文改写
 
 铁律（来自 operations/radar-daily-report SKILL.md STEP 0.5b）：
   - 仅文字操作，不爬取/补抓/改 schema
@@ -14,14 +14,12 @@ fill_ai_zh.py — AI / Politics / GitHub 板块 description 字段中文改写
 
 触发场景：
   - AI 板块：aihot 接口偶发返英文 summary（如 2026-08-19 cron）
-  - Politics 板块：collect.py 偶发把 raw URL HTML 实体写入 description
   - GitHub 板块：gh_collect.py 中文改写偶发失败，desc 残留英文
 
 用法：
   python3 fill_ai_zh.py --days=1                              # 补 AI 板块
-  python3 fill_ai_zh.py --days=1 --category=politics          # 补政治
   python3 fill_ai_zh.py --days=1 --category=github            # 补 GitHub
-  python3 fill_ai_zh.py --days=1 --category=all               # 三类全补
+  python3 fill_ai_zh.py --days=1 --category=all               # ai + github 全补
   python3 fill_ai_zh.py --days=1 --category=ai --dry-run      # 只预览
 
 模型链：ds/deepseek-chat → 失败 fallback 用 title 前 200 字符
@@ -49,17 +47,12 @@ SYS_AI = (
     "要求: 客观陈述核心信息；不要'本文'开头；不要英文。"
     "输出仅 1 行纯中文文本，不要引号/前缀/解释。"
 )
-SYS_POLITICS = (
-    "你是国际政治新闻编辑。根据英文标题+英文摘要生成 1 句中文事件摘要 ≤80 字。"
-    "要求: 客观陈述核心事件；不要'本文'开头；不要英文；不要 HTML。"
-    "输出仅 1 行纯中文文本，不要引号/前缀/解释。"
-)
 SYS_GITHUB = (
     "你是技术编辑。根据英文项目标题+英文描述生成 1 句中文项目简介 ≤80 字。"
     "要求: 客观陈述项目功能；不要'本文/此项目'开头；不要英文；不要 HTML。"
     "输出仅 1 行纯中文文本，不要引号/前缀/解释。"
 )
-SYS_BY_CAT = {"ai": SYS_AI, "politics": SYS_POLITICS, "github": SYS_GITHUB}
+SYS_BY_CAT = {"ai": SYS_AI, "github": SYS_GITHUB}
 
 MODELS = ["ds/deepseek-chat"]
 TIMEOUT = 30
@@ -220,7 +213,7 @@ def main():
         elif a.startswith("--category="):
             v = a.split("=", 1)[1]
             if v == "all":
-                cats = ["ai", "politics", "github"]
+                cats = ["ai", "github"]
             else:
                 cats = [v]
     force = "--all" in sys.argv

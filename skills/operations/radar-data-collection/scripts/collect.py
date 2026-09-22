@@ -78,8 +78,8 @@ def esc(s):
 def insert_news(cat, title, content, source, url, lang, score=1.0, summary="", description="", region=None):
     """确定性 INSERT — 全字段硬编码，不走 LLM 决策。
     字段：
-      cat:        github/ai/politics
-      region:     🔴亚太 / 🔵中东·欧洲 / 🟢美洲（仅 politics 用），默认 🟢
+      cat:        github/ai
+      region:     🟢（仅 github 用作默认标签）
     """
     if not region:
         region = "🟢"
@@ -407,96 +407,7 @@ def step_ai():
     return retry(attempt)
 
 
-# ── 规则 3：国际政治 ────────────────────────────────────
-# 铁律：只采权威媒体（Reuters/AP/AFP/BBC/Al Jazeera/FT），不用通用搜索
-RULE_POLITICS = {
-    "required_count": 10,
-    # 分区关键词（用于结构化搜索，不是泛搜索）
-    "queries": {
-        "🔴 亚太": [
-            "site:reuters.com OR site:apnews.com OR site:afpbb.com China Japan Korea Taiwan news",
-            "site:reuters.com OR site:apnews.com South China Sea Philippines Vietnam",
-        ],
-        "🔵 中东·欧洲": [
-            "site:reuters.com OR site:apnews.com OR site:bbc.com Middle East Russia Ukraine Europe",
-            "site:reuters.com OR site:ft.com OR site:aljazeera.com EU Nato Turkey Iran",
-        ],
-        "🟢 美洲": [
-            "site:reuters.com OR site:apnews.com OR site:bbc.com United States Mexico Brazil",
-        ],
-    },
-    "max_per_query": 4,   # 每个子查询最多取几条
-    "score": 1.0,         # 政治新闻统一分
-}
-
-def step_politics():
-    """采集国际政治新闻。
-    重试策略：3次 × 60s，不降间隔（politics 比 gold/ai 更需要多样性）。
-    """
-    print(f"[POLITICS] Fetching for {TODAY}")
-    clean_news("politics")
-
-    def attempt():
-        all_hits = []
-        seen_urls = set()
-
-        for region, queries in RULE_POLITICS["queries"].items():
-            for q in queries:
-                raw = http_post(NINE_ROUTER_SEARCH, {
-                    "model": "tavily",
-                    "query": q,
-                    "max_results": RULE_POLITICS["max_per_query"],
-                }, timeout=30)  # 缩短到30s，超时即记录
-                if not raw:
-                    print(f"  WARN politics query failed (no response): {q[:60]}")
-                    continue
-                try:
-                    data = json.loads(raw)
-                except json.JSONDecodeError:
-                    print(f"  WARN politics JSON parse failed: {q[:60]}")
-                    continue
-                for r in (data.get("results", []) or []):
-                    url = r.get("url", "")
-                    if url and url not in seen_urls and any(
-                        d in url for d in ["reuters.com","apnews.com","afpbb.com",
-                                           "bbc.com","aljazeera.com","ft.com"]
-                    ):
-                        seen_urls.add(url)
-                        all_hits.append({
-                            "region": region,
-                            "title":   r.get("title", ""),
-                            "content": r.get("content", r.get("snippet", "")),
-                            "url":     url,
-                            "domain":  url.split("/")[2] if "/" in url else "",
-                        })
-
-        if not all_hits:
-            raise ValueError("No authoritative politics hits")
-
-        for h in all_hits[:RULE_POLITICS["required_count"]]:
-            title   = (h.get("title") or "").strip()[:200]
-            content = (h.get("content") or "").strip()[:5000]
-            source  = h.get("domain", "")
-            region  = h.get("region", "🟢")  # ← 关键：按搜索分区写入 region
-            # push.py build_msg3 用 `summary or content or ""`
-            # description 也用，但 push 优先 summary
-            summary = content[:200] if content else title
-            description = summary  # 政治新闻 desc ≡ summary
-            insert_news("politics", title, content, source, h["url"], "zh",
-                        score=RULE_POLITICS["score"],
-                        summary=summary,
-                        description=description,
-                        region=region)
-
-        cnt = count_news("politics")
-        print(f"  ✅ Politics: {cnt} items collected ({len(all_hits)} total hits)")
-        # politics 放宽最低要求：至少3条即可（权威媒体质量 > 数量）
-        if cnt < 3:
-            raise ValueError(f"Only {cnt}/3 politics items")
-    return retry(attempt, max_retries=3, delay_sec=60)
-
-
-# ── 规则 4：GitHub 黑马 ─────────────────────────────────
+# ── 规则 3：GitHub 黑马 ─────────────────────────────────
 RULE_GITHUB = {
     "required_count": 10,
     "script": GH_SCRIPT,
@@ -542,7 +453,6 @@ def run():
     results = {}
     results["gold"]     = step_gold()
     results["ai"]       = step_ai()
-    results["politics"] = step_politics()
     results["github"]   = step_github()
 
     # 自检
@@ -551,7 +461,6 @@ def run():
     checks = [
         ("gold",     count_gold,         RULE_GOLD["required_count"]),
         ("ai",       lambda: count_news("ai"),       RULE_AI["required_count"]),
-        ("politics", lambda: count_news("politics"), RULE_POLITICS["required_count"]),
         ("github",   lambda: count_news("github"),   RULE_GITHUB["required_count"]),
     ]
 

@@ -14,17 +14,16 @@ radar-daily-report 推送脚本 v4.5
 
 变更记录（v4.8, 2026-08-19）：
   - build_msg3 增加 is_bad_desc() 过滤：summary/content 是 raw URL HTML 实体时不显示
-  - 配套 fill_ai_zh.py 扩展：--category=ai|politics|github|all 批量改 description 坏数据
+  - 配套 fill_ai_zh.py 扩展：--category=ai|github|all 批量改 description 坏数据
     （空 / URL HTML / 全英文 → 用 9Router ds/deepseek-chat 改写为中文 ≤80 字）
 
 变更记录（v4.4, 2026-08-13）：
   - MSG2: description 优先（v4.1 铁律字段对齐，原代码只读 summary/content）
-  - MSG3: 政治新闻改"事件/背景/影响"三段式（佳哥拍板 2026-06-17 铁律）
   - MSG4: 标题/分数分两行；desc/url 缺时显示（暂无简介）/（链接待补）兜底
   - MSG1: gold_note fallback 标识"（无趋势点评）"
   - 缺数据点诊断更友好，便于定位 collect.py / gh_collect.py 采集 bug
 
-输出：===MSG1=== ~ ===MSG4=== + ===META=== 五段到 stdout
+输出：===MSG1=== ~ ===MSG3=== + ===META=== 四段到 stdout
 
 字段映射（与 collect.py / gh_collect.py 同步）：
   gold_prices:
@@ -236,88 +235,7 @@ def build_msg2():
     return len(items), "\n".join(lines).strip()
 
 # ═══════════════════════════════════════════════════════════
-# MSG3：国际政治（news_articles category='politics'）
-# 字段：content | source | url | region
-# 展示：🔴亚太 | 🔵中东·欧洲 | 🟢美洲
-# ═══════════════════════════════════════════════════════════
-
-PO_SQL = (
-    "SELECT row_to_json(t) FROM ("
-    "  SELECT title, content, summary, source, url, lang, "
-    "    stars_count, period_new_stars, blacklist_score, region, description "
-    "  FROM news_articles "
-    "  WHERE article_date='{DATE_CST}' AND category='politics' "
-    "  ORDER BY blacklist_score DESC NULLS LAST LIMIT 12"
-    ") t;"
-).format(DATE_CST=DATE_CST)
-
-def build_msg3():
-    raw = sql(PO_SQL)
-    by_region = {"🔴": [], "🔵": [], "🟢": []}
-    for line in raw.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        p = parse_news_row(line)
-        if p:
-            # DB region 可能存 "🔴 亚太" / "🔵 中东·欧洲" / "🟢 美洲" 或纯 emoji
-            # 用第一个字符（即 emoji）作为 key
-            reg = (p["region"] or "🟢").strip()
-            reg_key = reg[0] if reg else "🟢"
-            if reg_key not in by_region:
-                reg_key = "🟢"
-            by_region[reg_key].append(p)
-
-    header = f"🌍 雷达每日报告 · 国际政治（{DATE_CST}）\n"
-    has_any = any(by_region[r] for r in by_region)
-    if not has_any:
-        return 0, header + "\n⚠️ 国际政治数据缺失。"
-
-    lines = [header]
-    region_meta = [("🔴", "亚太"), ("🔵", "中东 · 欧洲"), ("🟢", "美洲")]
-    for emoji, name in region_meta:
-        items = by_region[emoji]
-        lines.append(f"**{emoji} {name}**")
-        if items:
-            for p in items:
-                title    = safe(p["title"])
-                # v4.2：政治主显示字段改为 description（中文改写）
-                desc_zh  = safe(p["description"])
-                summary  = safe(p["summary"])
-                content  = safe(p["content"])
-                src      = p["source"] or "Web"
-                # v4.8：坏数据过滤 — collect.py 偶发把 raw URL/HTML 写入 summary/content
-                if is_bad_desc(summary):
-                    summary = ""
-                if is_bad_desc(content):
-                    content = ""
-                # 三段式：事件 / 背景 / 影响（铁律：佳哥拍板 2026-06-17）
-                # 标题行用 desc_zh（中文事件）替代英文 title（铁律：❌ English Headline）
-                title_zh = desc_zh[:60] if desc_zh else title
-                lines.append(f"- **{title_zh}**")
-                if desc_zh:
-                    lines.append(f"  - 事件：{desc_zh[:200]}")
-                if summary:
-                    lines.append(f"  - 背景：{summary[:200]}")
-                if content:
-                    lines.append(f"  - 影响：{content[:200]}")
-                if p["url"]:
-                    lines.append(f"  - 来源：{src} | {p['url']}")
-                else:
-                    lines.append(f"  - 来源：{src}")
-                lines.append("")
-        else:
-            lines.append("暂无数据\n")
-    # 检查所有 political description 是否有中文（用于标注「⚠️ 政治中文未改写」）
-    all_descs = " ".join(p["description"] or "" for v in by_region.values() for p in v)
-    has_cjk = any('\u4e00' <= c <= '\u9fff' for c in all_descs)
-    if not has_cjk and sum(len(v) for v in by_region.values()) > 0:
-        lines.append("\n⚠️ 政治中文未改写（description 均为英文，内容以原文呈现）")
-
-    return sum(len(v) for v in by_region.values()), "\n".join(lines).strip()
-
-# ═══════════════════════════════════════════════════════════
-# MSG4：GitHub 黑马（news_articles category='github'）
+# MSG3：GitHub 黑马（news_articles category='github'）
 # 字段：title | description | source(lang) | url |
 #       stars_count | period_new_stars | blacklist_score
 # 展示：⭐ 黑马分 | 今日+⭐ | 总⭐ + description(中文简介)
@@ -333,7 +251,7 @@ GH_SQL = (
     ") t;"
 ).format(DATE_CST=DATE_CST)
 
-def build_msg4():
+def build_msg3():
     raw = sql(GH_SQL)
     repos = []
     for line in raw.split("\n"):
@@ -413,19 +331,16 @@ def build_msg4():
 def main():
     gold_ok,  msg1 = build_msg1()
     ai_count, msg2 = build_msg2()
-    po_count, msg3 = build_msg3()
-    gh_count, msg4 = build_msg4()
+    gh_count, msg3 = build_msg3()
 
     print(f"===MSG1===\n{msg1}")
     print(f"\n===MSG2===\n{msg2}")
     print(f"\n===MSG3===\n{msg3}")
-    print(f"\n===MSG4===\n{msg4}")
     print(f"\n===META===\n"
           f"date={DATE_CST} "
           f"dow={DOW} "
           f"report_type={'monthly' if is_monthly else ('weekly' if is_weekly else 'daily')} "
           f"ai={ai_count} "
-          f"po={po_count} "
           f"gh={gh_count} "
           f"gold_ok={'true' if gold_ok else 'false'}")
 

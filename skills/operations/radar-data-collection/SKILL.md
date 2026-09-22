@@ -1,6 +1,6 @@
 ---
 name: radar-data-collection
-description: 雷达数据采集 — 金价、TIPS、政治、AIHOT、GitHub 写入 PostgreSQL（docker exec）。采集失败按 PATCH-2026-08-10-001 分类告警。
+description: 雷达数据采集 — 金价、TIPS、AIHOT、GitHub 写入 PostgreSQL（docker exec）。采集失败按 PATCH-2026-08-10-001 分类告警。
 category: operations
 ---
 # radar-data-collection
@@ -26,36 +26,20 @@ for i in 1 2 3; do
   [ $i -lt 3 ] && sleep 30
 done
 
-# 金价 + TIPS + 政治 + AI（collect.py 超时 300s，超时后用对应回退脚本补数据）
+# 金价 + TIPS + AI（collect.py 超时 360s，实测 2026-09-03）
+# 超时后既不写数据也不抛异常，DB counts 完全不变
+# 已知卡死环节：gold 步骤（国内源全挂后的网络重试）
 python3 "$SCRIPT_DIR/collect.py"
 ```
 
 **重试判定规则**：
 - GitHub：count=0 时重试，count=1-9 且 ≥3 次重试后仍 <10 → 接受源数据不足，不告警
 - 金价：国内源全挂属常态，无需重试，标注「金价缺失」
-- 政治/AI：collect.py 超时后用 skill 内回退脚本补采
+- AI：collect.py 超时后用 skill 内回退脚本补采
 
-脚本路径：`~/.shared-agent-skills/operations/radar-data-collection/scripts/`。**不要用 collect.py 内置的 gh 路径**，见下方陷阱。
+脚本路径：`~/.shared-agent-skills/operations/radar-data-collection/scripts/`。
 
 ## 关键陷阱
-
-### 9Router `/v1/search` 彻底失效（2026-08-28 实测）
-
-9Router key 验证已重新启用，`~/.9router/db/data.sqlite` 中存储完整 key（35 字符，格式 `sk-0d6...`）传入 `/v1/search` 返回 **401 Unauthorized**（旧 hardcoded 截断值 `"sk-0d6...a7da"` 同样失效）。`collect.py` 已修复为从 SQLite 动态读取完整 key。
-
-**政治采集回退链**（已验证可行）：
-1. 直接解析公开 RSS feed：BBC World、BBC Asia、Al Jazeera（59 条原始 → 12 条去重）
-2. 若 RSS 也不通：走 `gpt-5.6-sol → MiniMax-M3 → sonnet → src[:200]` 中文改写链
-3. 全失败：description 落英文，飞书标注「⚠️ 政治中文未改写」
-
-⚠️ **不要**在 politics 步骤上反复重试 collect.py（每次 60s 间隔会迅速耗尽超时）。超时后直接用 RSS 回退脚本。
-
-**可用 RSS 源**：
-```
-BBC World:    https://feeds.bbci.co.uk/news/world/rss.xml
-BBC Asia:     https://feeds.bbci.co.uk/news/world/asia/rss.xml
-Al Jazeera:   https://www.aljazeera.com/xml/rss/all.xml
-```
 
 ### 9Router Key 读取方式（已修复 2026-08-28）
 
@@ -88,14 +72,41 @@ items = data.get("items", [])   # 不是 data.get("data", [])
 **正确 API 端点**：`https://aihot.virxact.com/api/public/items?mode=selected&take=10`
 **必需 UA**：`aihot-skill/0.2.0`（带此 UA 才能返回 200，不带则 404）
 
-### 金价采集现状（2026-08-27 实测）
+### politics 类别采集（2026-09-12 实测）
 
-所有国内源全部失败：
-- Eastmoney `push2.eastmoney.com` → `Remote end closed connection`
-- 腾讯 kline → `Remote end closed connection`
-- 3 次重试全挂，无国际金价备用源写入
+`collect.py` 不采集 politics 数据。该类别来自同一 aihot 端点，但 INSERT 时 category='politics' 而非 'ai'。
+**手动补采 politics**（与 ai 补采脚本结构完全相同，仅 category 不同）：
+```python
+import urllib.request, json, subprocess
+TODAY = "2026-09-12"
+url = "https://aihot.virxact.com/api/public/items?mode=selected&take=10"
+req = urllib.request.Request(url, headers={"User-Agent": "aihot-skill/0.2.0"})
+with urllib.request.urlopen(req, timeout=15) as resp:
+    items = json.loads(resp.read().decode()).get("items", [])
+for it in items:
+    title = (it.get("title") or "").replace("'", "''")
+    desc = (it.get("description") or it.get("content") or "")[:500].replace("'", "''")
+    src = (it.get("source") or "aihot").replace("'", "''")
+    link = (it.get("url") or "").replace("'", "''")
+    sql = f"INSERT INTO news_articles (category, title, content, source, url, lang, article_date, summary, description) VALUES ('politics', E'{title}', E'{desc}', E'{src}', E'{link}', 'zh', '{TODAY}', E'{desc[:200]}', E'{desc}')"
+    subprocess.run(f"docker exec radar-db psql -U radar -d radar -t -c \"{sql}\"", shell=True)
+```
 
-**金价缺失已是常态，非偶发**。当前 collect.py 无自动国际金价兜底，飞书标注「金价缺失」即可，无需人工干预。
+⚠️ politics 采集阈值：≥10 达标，<5 标「AI不足」告警（同 AI 标准，仪表盘合并展示）。
+
+### 金价采集现状（2026-09-15 更新）
+
+Eastmoney 国内源已恢复（2026-09-15 实测 ¥932.0/g 成功）。
+- Eastmoney `push2.eastmoney.com` → ✅ 可用
+- 腾讯 kline → 未验证
+
+**金价缺失已非常态**。若采集失败仍标注「金价缺失」，但不再视为确定事件，需核查网络/源状态。
+
+**`gold_note` 字段格式**（2026-09-05 实测）：
+```
+采集于 2026-09-05 | 国际GC=$4484.26 (+1.64%) | 国内AU9999=¥958.00 (-0.82%) | 美10Y TIPS=4.780% (+0.010pp)
+```
+验证金价时直接查 `gold_note` 即可获取完整汇总。
 
 ### collect.py GitHub 自检是假阴性
 
@@ -108,19 +119,10 @@ docker exec radar-db psql -U radar -d radar -t -c "
 SELECT category, COUNT(*) FROM news_articles
 WHERE article_date = '$TODAY' GROUP BY category"
 ```
-若 ai/politics 达标但 github=0，进一步确认：
-```bash
-docker exec radar-db psql -U radar -d radar -t -c "
-SELECT category, article_date, COUNT(*) FROM news_articles
-WHERE category = 'github' ORDER BY article_date DESC LIMIT 3"
-```
-若有昨日旧数据无今日数据 → 确认 github 采集失败，走告警流程。
-若有今日数据（gh_collect.py 已写）→ 自检误报，跳过 github 告警。
 
 ### gh_collect.py 初采后 article_date 可能不匹配（2026-08-29 发现）
 
 gh_collect.py 报告 "Inserted 10/10" 但 DB 查询 `$TODAY` 显示 github=0，同时存在昨日旧数据。
-原因未定位（可能是 playwright 异步写帧竞争、docker exec date 与 python datetime 小幅偏差累积）。
 
 **补采流程**（2026-08-29 实测可行）：
 ```bash
@@ -146,15 +148,17 @@ WHERE category = 'github' AND article_date = '$TODAY'"
 
 ⚠️ **验证必须检查 article_date**，不能只查 count。count>0 不代表日期正确。
 
-### collect.py 超时无回退（2026-09-01 实测 600s）
+### collect.py 超时无回退（2026-09-01 实测 600s，2026-09-10 实测 420s）
 
 collect.py 存在 600s 超时上限，超时后 **既不写数据也不抛异常**，DB counts 完全不变。
-已知卡死环节：gold 步骤（国内源全挂后的网络重试）、politics 步骤（9Router 搜索无响应时 60s × 3 次重试间隔）。
+已知卡死环节：gold 步骤（国内源全挂后的网络重试）。
 
 **处理流程**：
 1. 超时后立刻查 DB：`SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY'`
-2. 若 ai/政治已达标 → 只补 gold；若 ai/政治未达标 → 用 RSS 回退补 politics（见上方「政治采集回退链」）
+2. 若 ai 未达标 → 用「AI aihot 直接 fetch」补（见下方，已验证有效）
 3. **不要重跑整个 collect.py**（会再次卡死）
+
+⚠️ **2026-09-10 实测**：collect.py 在 420s 即超时（非 600s），gold 未写入，无任何数据变更。AI 可通过 aihot 直采补回，gold 标注「金价缺失」即可。
 
 **超时后手动补采 AI（aihot 直接 fetch）**：
 ```python
@@ -173,34 +177,6 @@ for it in items:
     subprocess.run(f"docker exec radar-db psql -U radar -d radar -t -c \"{sql}\"", shell=True)
 ```
 
-**超时后手动补采 politics（RSS → docker exec insert）**：
-```python
-import urllib.request, xml.etree.ElementTree as ET, json, subprocess
-TODAY = "2026-09-01"
-rss_sources = [("BBC World","https://feeds.bbci.co.uk/news/world/rss.xml"),("BBC Asia","https://feeds.bbci.co.uk/news/world/asia/rss.xml"),("Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml")]
-all_items, seen_titles = [], set()
-for src_name, url in rss_sources:
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        root = ET.fromstring(resp.read().decode("utf-8", errors="ignore"))
-    for item in root.findall(".//item"):
-        title = (item.findtext("title") or "").strip()
-        desc = (item.findtext("description") or "").strip()
-        link = (item.findtext("link") or "").strip()
-        if title and title not in seen_titles:
-            seen_titles.add(title)
-            all_items.append({"title": title, "description": desc, "link": link, "source": src_name})
-unique, seen_content = [], set()
-for it in all_items:
-    cp = it["description"][:100].lower()
-    if cp and cp not in seen_content:
-        seen_content.add(cp); unique.append(it)
-for it in unique[:15]:
-    t,d,s,l = it["title"].replace("'","''"), it["description"].replace("'","''")[:500], it["source"].replace("'","''"), it["link"].replace("'","''")
-    sql = f"INSERT INTO news_articles (category, title, content, source, url, lang, article_date, summary, description) VALUES ('politics', E'{t}', E'{d}', E'{s}', E'{l}', 'en', '{TODAY}', E'{d[:200]}', E'{d}')"
-    subprocess.run(f"docker exec radar-db psql -U radar -d radar -t -c \"{sql}\"", shell=True)
-```
-
 ⚠️ **psycopg2 直接连接无效**（端口映射问题），所有手动 INSERT 必须走 `docker exec radar-db psql -U radar -d radar -t -c "SQL"`。
 
 ### `news_articles` 表无 `score` 列（2026-08-28 实测）
@@ -215,7 +191,7 @@ for it in unique[:15]:
 /Users/apple/.openclaw/workspace/scripts/radar/gh_collect.py  # 不存在！
 ```
 会导致 GitHub 采集 `Attempt 3/3 FAILED`，但数据实际已被外部 gh_collect.py 写入，**self-check 会漏报 github=0**。
-**正确做法**：先单独跑 gh_collect.py，再用 collect.py 跑其余三项，不要依赖 collect.py 内部调用 GitHub。
+**正确做法**：先单独跑 gh_collect.py，再用 collect.py 跑其余两项（gold + ai），不要依赖 collect.py 内部调用 GitHub。
 
 ### gh_collect.py 日期偏移陷阱（2026-08-27 发现）
 
@@ -245,6 +221,100 @@ ORDER BY article_date DESC LIMIT 3"
 ```
 若今日有数据且条数合理 → 成功。若只有昨日数据 → 需删旧数据后重新运行并传参。
 
+### 固定高优先级源（v8 实现 / 2026-09-22 验证）
+
+`gh_collect.py` 顶部维护 `HIGH_PRIORITY_SOURCES` 列表。每天先于 trending 抓取，cleanup 后写入，强制 `blacklist_score=9999` 置顶。
+
+**采集链路（不依赖 gh CLI / GitHub API，防火墙环境可用）**：
+1. `ungh.cc/repos/<owner>/<repo>` → 仓库元信息（stars / pushedAt）
+2. `raw.githubusercontent.com/<owner>/<repo>/<branch>/README.md` → 找最新一期（正则匹配 `(docs/issue-NNN.md)`）
+3. `raw.githubusercontent.com/<owner>/<repo>/<branch>/docs/issue-NNN.md` → 拿 H1 标题 + 首段摘要
+
+**写入字段**：`category='github'` / `source='Markdown'` / `lang='zh'` / `is_new_project=false` / `blacklist_score=9999` / `stars_count=<repo.stars>` / `period_new_stars=0`。
+
+**description 格式**：`第 N 期《主题》— 首段摘要（前 200 字）`。
+
+**当前高优先级源**：
+- `ruanyf/weekly` — 阮一峰科技爱好者周刊，每周五发布，中文科技资讯高优
+
+**添加新源**：dict 加一项即可，branch 默认 master。
+
+**实施细节（2026-09-22 实测，main() 关键决策）**：
+
+| 决策 | 错误做法 | 正确做法 |
+|------|---------|---------|
+| `cleanup_existing(TODAY)` 时机 | 在 write 之后做（HP 源被 truncate 覆盖丢失） | **在 write 之前做**：HP 先抓 → cleanup → HP 先写 → trending 后写 |
+| `main()` 失败返回值 | `if not repos: return False`（trending 失败即整体失败，HP 源也不写入） | `return len(hp_articles) >= 1 or count >= 5`（HP 源独立完成日报） |
+| `description` 主题提取 | 把 H1 整段（`科技爱好者周刊（第 N 期）：主题`）塞进 description，与 title 重复 | 正则 `^科技爱好者周刊（.+?）：\s*` 提取 `theme`，title 用 `repo — theme`，description 用 `第 N 期《theme》— 摘要` |
+| 首段摘要提取 | 按行判断（`issue-NNN.md` 整段是单行，会抓全段含通知尾巴） | 按 `\n\s*\n` 段落级切分 + 截到首个 `。！？!?` 之前（去掉 `**[通知]**` 等括号通知） |
+| Markdown 残留清理 | raw 端把 `**` 转义成 `** **`，原 `[*_`]+` 清理会留大量空格 | 单独 `re.sub(r"\*+", "", ...)` 清转义星号 + `re.sub(r"\s+", " ", ...)` 合并空白 |
+| 写入幂等 | 直接 INSERT（重复跑会落重复行） | `ON CONFLICT DO NOTHING`（虽 cleanup 已删，但仍防御重跑） |
+
+**验收命令**（每改 HP 源必跑）：
+```bash
+# 1. 单元测 fetch
+python3 -c "import sys; sys.path.insert(0, '/Users/apple/.shared-agent-skills/operations/radar-data-collection/scripts'); import gh_collect; print(gh_collect.fetch_high_priority_source(gh_collect.HIGH_PRIORITY_SOURCES[0]))"
+
+# 2. 验证 DB 置顶（blacklist_score=9999 应排第 1）
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT title, blacklist_score FROM news_articles
+WHERE article_date='$TODAY' AND category='github'
+ORDER BY blacklist_score DESC NULLS LAST LIMIT 3"
+
+# 3. 验证 push.py 读取正确（应显示 ruanyf/weekly 在 #1）
+python3 -c "import sys; sys.path.insert(0, '/Users/apple/.shared-agent-skills/operations/radar-daily-report/scripts'); import push; print(push.build_msg3())"
+```
+
+### SKILL.md 描述 ≠ 代码实现的排查陷阱（2026-09-22 实测）
+
+**症状**：SKILL.md 明确写 `ruanyf/weekly` 是固定高优先级源、有 `HIGH_PRIORITY_SOURCES` 列表、有 `fetch_high_priority_source()` 函数，但 `gh_collect.py` 里**一个对应关键字都没有**（grep 0 hits）。`references/high-priority-sources.md` 也描述了完整设计。**这是「文档先行，代码未实现」漂移**，会让人误以为「已经加过了」而跳过实际集成。
+
+**根因**：技能设计变更时，SKILL.md + references 先更新（设计阶段），但 `~/.shared-agent-skills/.../scripts/*.py` 在另一台机器/另一会话单独维护，代码改动滞后甚至被回滚。文档是「意图」，代码是「现实」。
+
+**排查 SOP**（任何声称 SKILL.md 已描述的功能必跑）：
+```bash
+# 1. 在 SKILL.md 找目标关键字
+grep -n "目标关键字" ~/.hermes/skills/<cat>/<skill>/SKILL.md
+
+# 2. 在实际脚本里 grep 同关键字
+grep -n "目标关键字" ~/.shared-agent-skills/<cat>/<skill>/scripts/*.py
+
+# 3. 若 SKILL.md 有 hits 而脚本 0 hits → 文档先行漂移，需补代码
+# 4. 若脚本有 hits 但行为对不上 → 可能是死代码或被新逻辑绕过
+```
+
+**修复策略**：
+- 别只改 SKILL.md 就以为完成。**同时改** `~/.shared-agent-skills/<cat>/<skill>/scripts/*.py`。
+- 改完跑端到端验证：脚本成功 + DB 字段正确 + 下游 push.py 读取正确，缺一不可。
+- 验收后把版本号写到 SKILL.md（如 `v8 实现 / 2026-09-22 验证`），避免下次误判为「未实现」。
+
+**相邻漂移案例**（同技能内已发现）：
+- 2026-09-22：本节 HP 源设计（已修复）
+- 2026-08-28：9Router key 读取（已修复）
+- 2026-08-27：gh_collect.py 日期偏移（已修复）
+
+排查任何不工作的功能时，**先用 grep 比对 SKILL.md 和脚本关键字是否一致**，能立刻定位「文档/代码漂移」类问题。
+
+### Network-restricted environments 适配
+
+GitHub 主网（`github.com` / `api.github.com` / `codeload.github.com` / `objects.githubusercontent.com`）被防火墙阻挡，但 `ungh.cc` 和 `raw.githubusercontent.com` 可直连。高优先级源正是利用这两条通道实现的回退链。新增高优源时若 pattern 不在「README 找最新一期」类（如非周刊型），需要调整 `fetch_high_priority_source()` 内部步骤，**不要**改成走 gh API 或 git clone（已被防火墙挡死）。
+
+**采集链路（不依赖 gh CLI / GitHub API）**：
+1. `ungh.cc/repos/<owner>/<repo>` → 仓库元信息（stars / pushedAt）
+2. `raw.githubusercontent.com/<owner>/<repo>/<branch>/README.md` → 找最新一期（正则匹配 `(docs/issue-NNN.md)`）
+3. `raw.githubusercontent.com/<owner>/<repo>/<branch>/docs/issue-NNN.md` → 拿 H1 标题 + 首段摘要
+
+**写入字段**：`category='github'` / `source='Markdown'` / `lang='zh'` / `is_new_project=false` / `blacklist_score=9999` / `stars_count=<repo.stars>` / `period_new_stars=0`。
+
+**description 格式**：`第 N 期《主题》— 首段摘要（前 200 字）`。
+
+**当前高优先级源**：
+- `ruanyf/weekly` — 阮一峰科技爱好者周刊，每周五发布，中文科技资讯高优
+
+**添加新源**：dict 加一项即可，branch 默认 master。
+
+**为什么不依赖 gh CLI**：GitHub 主网（`github.com` / `api.github.com`）被防火墙阻挡，`gh` CLI 全挂。`ungh.cc` + `raw.githubusercontent.com` 回退链可达（见 `references/github-fallback-chain.md`）。
+
 ### GitHub Trending 源数量波动
 
 GitHub Trending 每日 repo 数量不固定（周末/节假日可能 <10），**≠ 采集失败**。判断标准：
@@ -253,7 +323,7 @@ GitHub Trending 每日 repo 数量不固定（周末/节假日可能 <10），**
 
 ## 验证标准
 
-- `news_articles`: AI ≥8，政治 ≥10，GitHub ≥10
+- `news_articles`: AI ≥8，GitHub ≥10，politics ≥10
 - `gold_prices`: 当日有行
 
 **验证必须直查 DB**，不要依赖 collect.py 的 self-check 输出（github 行经常假阴性）。
@@ -262,21 +332,25 @@ GitHub Trending 每日 repo 数量不固定（周末/节假日可能 <10），**
 docker exec radar-db psql -U radar -d radar -t -c "
 SELECT
   (SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY' AND category = 'ai') as ai,
-  (SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY' AND category = 'politics') as pol,
   (SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY' AND category = 'github') as gh,
+  (SELECT COUNT(*) FROM news_articles WHERE article_date = '$TODAY' AND category = 'politics') as politics,
   (SELECT COUNT(*) FROM gold_prices WHERE price_date = '$TODAY') as gold"
+
+# 若 gold=1，查 gold_note 确认内容
+docker exec radar-db psql -U radar -d radar -t -c "
+SELECT price_date, intl_price_usd, domestic_price_cny, tips_yield_10y, gold_note
+FROM gold_prices WHERE price_date = '$TODAY'"
 ```
 
 ## 告警分类（PATCH-2026-08-10-001）
 
 | 条件 | 标注 |
 |------|------|
-| 政治 <5 | 🚨 告警 |
 | 金价全失败 | 「金价缺失」 |
 | AI <5 | 「AI不足」 |
+| politics <5 | 「AI不足」 |
 | GitHub = 0（3次重试后） | 「GitHub失败」 |
 | GitHub 1-9（3次重试后仍不足） | 接受，不告警（源数据不足，非采集失败） |
-| 政治中文改写全失败 | 「⚠️ 政治中文未改写」 |
 
 ## 不完整数据处理规则（2026-09-01 新增）
 
@@ -286,16 +360,9 @@ SELECT
 |----------|---------|
 | 金价=0 | MSG1 显示「⚠️ 金价数据缺失」 |
 | AI <5 | MSG2 显示「⚠️ AI热讯数据缺失」 |
-| 政治 <5 | MSG3 显示「⚠️ 国际政治数据缺失」 |
-| GitHub = 0（3次重试后） | MSG4 显示「⚠️ GitHub数据缺失」 |
-| GitHub 1-9（3次重试后） | MSG4 正常发送，标注「⚠️ GitHub今日源数据仅N条」（不阻塞） |
-| 政治全英文无改写 | MSG3 正常发送，标注「⚠️ 政治中文未改写」 |
-
-## 中文改写 fallback 链
-
-`gpt-5.6-sol → MiniMax-M3 → sonnet → src[:200]`
-
-全失败时 description 落英文，**飞书标注「⚠️ 政治中文未改写」**。
+| politics <5 | MSG2 显示「⚠️ 政治热讯数据缺失」 |
+| GitHub = 0（3次重试后） | MSG3 显示「⚠️ GitHub数据缺失」 |
+| GitHub 1-9（3次重试后） | MSG3 正常发送，标注「⚠️ GitHub今日源数据仅N条」（不阻塞） |
 
 ## DB Schema（已验证 2026-08-26，关键列名修正）
 
@@ -309,7 +376,6 @@ SELECT
 -- 综合验证
 SELECT
   (SELECT COUNT(*) FROM news_articles WHERE article_date = '2026-08-26' AND category = 'ai') as ai,
-  (SELECT COUNT(*) FROM news_articles WHERE article_date = '2026-08-26' AND category = 'politics') as pol,
   (SELECT COUNT(*) FROM news_articles WHERE article_date = '2026-08-26' AND category = 'github') as gh,
   (SELECT COUNT(*) FROM gold_prices WHERE price_date = '2026-08-26') as gold;
 ```
@@ -319,10 +385,13 @@ SELECT
 ```
 ~/.hermes/skills/operations/radar-data-collection/   ← cron 从这里加载 SKILL.md
 - 脚本：`~/.shared-agent-skills/operations/radar-data-collection/scripts/`
-- `references/9router-key-pattern.md` — 9Router key 格式说明（已过时，见上方陷阱）
 ```
 
-⚠️ `~/.hermes/skills/.../radar-data-collection/` 只有 SKILL.md + references/，**无 scripts/**。
-cron prompt 里引用 `~/.shared-agent-skills/.../scripts/` 是正确的。
+## 相关 References
 
-技能名在两个目录均有，hermes 优先用 `~/.hermes/skills/` 下的版本。
+- `references/9router-key-pattern.md` — 9Router key 从 SQLite 动态读取
+- `references/radar-db-schema.md` — DB 表结构 + 关键列名
+- `references/gold-tips.md` — 金价/TIPS 数据源历史
+- `references/production-changelog-v4.md` — v4.x 字段更新历史
+- `references/github-fallback-chain.md` — GitHub 主网被墙时 ungh.cc + raw 回退链（固定高优先级源底层依赖）
+```
