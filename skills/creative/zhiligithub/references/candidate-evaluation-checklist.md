@@ -143,6 +143,66 @@ zhiliGitHub 默认六段式：**「三、架构设计」和「五、实战场景
 
 ---
 
+## 真实踩坑案例（2026-08-31）
+
+### 扫描工具混合信号：URL/语言/描述来自不同候选（2026-08-31）
+
+用户发来候选格式：`zhiligithub :N️⃣ apps/dependabot（黑马分 970 | 今日+485⭐ | Python）— 自动移除语言模型审查机制`
+
+实际调研结果：
+- URL `github.com/apps/dependabot` → 官方 GitHub App，实际 repo 是 `dependabot/dependabot-core`
+- 该项目：Ruby 语言，依赖自动更新功能，22,876 stars（黑马速度真实）
+- **但黑马分970/语言Python/描述"自动移除LLM审查机制"与 dependabot-core 三个维度全不符**
+
+**判断**：黑马分 970 和 Python 语言描述是从其他候选混进来的。描述「LLM审查移除」与依赖更新功能完全无关，不存在「URL对但内容错」——三者同时矛盾即代表**扫描工具把不同候选的数据缝合在一起**。
+
+**处理原则**：
+1. 先用 URL 拉 GitHub API 拿到实际 repo 信息
+2. 如果「语言 + 描述 + 黑马分」三者与实际 repo **两个以上维度不符**，立即判定为「混合信号候选」，不写
+3. 不需要费力对齐「哪个数据是哪来的」——直接放弃，让用户提供正确链接
+
+**判断写不写的捷径**：三个核心字段（语言、功能描述、项目定位）如果有两项跟实际 repo 不符，结论直接是不写，不用继续深挖。
+
+---
+
+### sponsors/username 格式的 Trending 候选（2026-08-23）
+
+用户发来的 Trending 候选格式有时是 `**sponsors/username**`（GitHub Sponsors 页面），而不是直接的 repo URL。例如：
+- `sponsors/santifer` → 实际要找的 repo 是 `santifer/career-ops`（Stars: 67,795）
+- `sponsors/JuliusBrussee` → 实际要找的 repo 是 `JuliusBrussee/caveman`（Stars: 100,348）
+
+**处理步骤**：
+1. `GET https://api.github.com/users/{username}/repos?sort=updated&per_page=5` 列出该用户最新 repo
+2. 结合黑马分和语言信息定位目标 repo（用户给的描述会包含语言和 Stars 线索）
+3. 确认后按正常流程调研
+
+**踩坑点**：不能直接调用 `https://api.github.com/repos/sponsors/santifer`，那是 Sponsors 页面不是 repo。
+
+---
+
+### sponsors/asgeirtj → asgeirtj/system_prompts_leaks（65k stars）（2026-09-13）
+
+**问题现象**：
+- Trending 候选：`sponsors/asgeirtj`（黑马分 714）
+- `api.github.com/repos/sponsors/asgeirtj` → 404（sponsors 页面不是 repo）
+- `api.github.com/users/asgeirtj` → 冰岛开发者 Ásgeir Thor Johnson，1 个 public repo（不是目标）
+- `sponsors/asgeirtj` GitHub Sponsors 页面是纯 JS 渲染，curl 拿不到内容
+
+**解决路径**：
+1. HN Algolia API 搜索 `asgeirtj` → 命中 `System_prompts_leaks: Anthropic/Claude-Opus-4.6.md`
+2. 确认 repo：`asgeirtj/system_prompts_leaks`（Stars: 65,563，Forks: 10,758）
+3. 拉 `raw.githubusercontent.com/.../README.md` 拿到完整项目信息
+
+**学到的**：
+- `sponsors/` 前缀永远不是 repo 路径，是 GitHub Sponsors 页面
+- 遇到 JS 渲染的 Sponsors 页面，**HN Algolia 是比 GitHub API 更可靠的恢复路径**
+- README 拉到的是完整的结构化数据（厂商列表、更新记录、媒体报道），比 API 更适合写文章
+- **OG 封面图**：`https://opengraph.githubassets.com/1/{owner}/{repo}` 直接可下载（PNG，1200×600）
+
+**关键检查点**：用户描述里的 Stars 数（如"65k"）能直接用于确认 repo 规模，缩小搜索范围。
+
+---
+
 ## 真实踩坑案例（2026-06-16）
 
 ### optimizerDuck（642）→ ✅ 推荐写
