@@ -143,3 +143,24 @@ content = item['content']['news_item'][0]['content']
 ```
 
 **没有步骤可以直接给已有草稿"追加一张图"**，步骤 7-8 必须重建。
+
+## 手动 draft/add 时 thumb_media_id 兜底方案（2026-08-06 实测）
+
+调用 `draft/add` 时必须提供有效的 `thumb_media_id`。如果封面上传失败（比如路径错误、格式问题），或绕过 `push.py` 直接调 API 时没有封面，可以从已有永久素材里挑一张：
+
+```python
+# 拉取现有图片素材，取任意一个 media_id 作为 thumb_media_id
+url = f"https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={token}"
+payload = json.dumps({"type": "image", "offset": 0, "count": 20}).encode("utf-8")
+req = urllib.request.Request(url, data=payload, method="POST")
+req.add_header("Content-Type", "application/json")
+with urllib.request.urlopen(req, timeout=10) as r:
+    result = json.loads(r.read())
+
+items = result.get("item", [])
+if items:
+    thumb_id = items[0]["media_id"]   # 用第一张图
+    print(f"复用 cover media_id: {thumb_id}")
+```
+
+这样拿到的 `media_id` 来自 `material/add_material`（`type=image`），可以直接填入 `draft/add` 的 `thumb_media_id` 字段，不会报 40007。推送完成后再在公众平台后台替换封面图即可。
