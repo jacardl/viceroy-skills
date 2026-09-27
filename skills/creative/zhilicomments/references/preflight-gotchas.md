@@ -9,8 +9,10 @@
 - 高危场景：每个段落的「：」都容易漏网
 - **解法**：正文写完后，执行 `grep "：" /tmp/article.html`，发现即替换为「，」
 
-### 中文破折号 `——` → 零容忍（preflight 检查的是两个连续 em-dash U+2014）
+### 中文破折号 `——` → 零容忍
 - 高危场景：解释性语句「YOLO 模式——就是那个危险地跳过权限确认的选项」
+- preflight 检测的是两个连续 em-dash (U+2014) 字符，即中文全角破折号 `——`
+- 但单个小写 em-dash `—` (U+2014) 和 en-dash `–` (U+2013) 也可能出现在正文里，同样需要清理
 - **解法**：用逗号断句，或拆成两句。「就是」后面直接接解释
 - 实证有效：把 `——` 整体替换为 `，`（中文逗号）可通过 preflight。逗号比顿号更不影响阅读节奏。
 
@@ -58,14 +60,66 @@ content = content.replace(b'\xef\xbc\x9a', b':')  # U+FF1A（preflight 检测的
 content = content.replace(b'\xe5\xa4\xb9', b':')  # U+65306
 
 # 替换所有形式的中文破折号 → 顿号
-content = content.replace(b'\xe2\x80\x94', b'\xe3\x80\x81')  # em-dash → 中点
+content = content.replace(b'\xe2\x80\x94', b'\xe3\x80\x81')  # em-dash U+2014 → 中点
+content = content.replace(b'\xe2\x9c\x93', b'\xe3\x80\x81')  # en-dash U+2013 → 中点
 content = content.replace(b'\xe2\x9e\x9a', b'\xe3\x80\x81')  # 水平破折号 → 中点
 
 with open('article.html', 'wb') as f:
     f.write(content)
 ```
 
+**注意**：`\xe2\x9c\x93` 是 en-dash (U+2013)，今天写作时多次出现。em-dash 和 en-dash 视觉相近但 Unicode 码点不同，都要清理。
+
 **什么时候用这个**：正则替换后 preflight 仍然报相同错误；或 preflight 报告「中文冒号 N 次」但 grep 找不到（U+FF1A 的 grep 模式不一样）。二进制替换永远终结问题。
+
+## push.py 推送流程（2026-08-09 更新）
+
+### 已有封面时的正确流程
+
+当你已经有封面图（自己生成好了），推送时**两个 flag 都要加**：
+
+```bash
+python3 push.py \
+  --html /tmp/article.html \
+  --cover /tmp/zhili_cover.png \
+  --skip-illustration \
+  --skip-cover
+```
+
+**只加 `--skip-illustration` 不够**：push.py 内部的 `generate_cover()` 仍会被调用，重新生成一张封面图（浪费 20 秒），然后覆盖你已有的文件。必须同时加 `--skip-cover` 才能跳过封面生成步骤，直接用你传的 `--cover` 文件。
+
+**两个 flag 的区别**：
+- `--skip-illustration`：跳过正文配图（zhilicomments 固定 2 张）的生成和上传
+- `--skip-cover`：跳过封面生成，直接用 `--cover` 指定的文件
+
+### 自己上传封面 + 跳过所有图（最快路径）
+
+如果你提前生成了封面并手动上传了 media_id，可以跳过整个图片流程：
+
+1. 生成并上传封面：`media/upload?access_token=...&type=image` → 拿 `media_id`
+2. 推送时加 `--skip-illustration --skip-cover`，push.py 会用你指定的 `--cover` 文件路径作为本地路径上传（不管文件内容，只拿 media_id）
+
+```bash
+python3 push.py \
+  --html /tmp/article.html \
+  --cover /tmp/zhili_cover.png \
+  --skip-illustration \
+  --skip-cover
+```
+
+### PIL 图像操作：不要用 execute_code sandbox
+
+在 execute_code sandbox 里运行 PIL 代码会报 `Could not determine home directory`，导致图像保存失败。
+
+**正确做法**：用 terminal Python + heredoc：
+
+```bash
+python3 - << 'PYEOF'
+from PIL import Image
+img = Image.open("/tmp/cover_16x9.png")
+img.crop(...).resize(...).save("/tmp/zhili_cover.png")
+PYEOF
+```
 
 ## 调试建议
 
