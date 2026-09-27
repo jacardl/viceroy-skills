@@ -42,3 +42,11 @@ live_title = title_match.group(1).strip() if title_match else TITLE  # ← 没�
 
 - `DIGEST` 也有同样问题，但 digest 是从 HTML 正文第一个 `<p>` 提取，通常不会漏
 - 草稿创建后应在微信后台确认标题是否与 HTML 内容一致
+
+## 已知残留问题（2026-09-04）
+
+即使 HTML 包含 `<title>` 标签，push.py 有时仍输出旧缓存标题（与 HTML 内容完全不符）。今天实测：HTML 写明 `<title>OpenAI Astra：能力最强，透明度最差</title>`，但 push.py 终端输出显示 "GPT-6 Astra:编码追平 Fable 5，价格却翻 2.5 倍"。
+
+**临时解法**：推送后在微信公众平台后台手动修正标题后再发布。
+
+**注**：根因未完全确认，可能是 `/tmp/article.html` 在某次操作后被覆盖，或 push.py 对 title 标签有特殊解析逻辑。建议后续调试时，先 `cat /tmp/article.html | grep title` 确认标签内容，再执行 push.py。
