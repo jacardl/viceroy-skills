@@ -45,7 +45,7 @@ zhililong 现有规则（renwei 三原则、5节骨架）是三关在长文语�
 Step 1：素材接收 + 真实性核对
 Step 2：列 5 节骨架（先列骨架再写内容）
 Step 3：renwei 改稿（zhili-style.md 第3节）
-Step 4：markdown 落稿（必须用 ## 章节语法）
+Step 4：markdown 落稿（**默认无 `##` 章节标记**，用行内小标题 + 空行分隔）
 Step 5：HTML 转码（scripts/markdown_to_html.py）
 Step 6：renwei 自检全文（zhili-style.md 第4节）
 Step 7：配图（zhili-illustration）
@@ -107,22 +107,26 @@ Step 8：一键推送草稿（scripts/publish_lanlong.py）
 
 完整套话清单（11 项，≥3 项命中 → 打回重写）→ `zhili-shared/references/zhili-style.md` 第 3 节。
 
+**作者个人覆盖层**（刘生主笔时叠加）→ `references/zhililong-voice-overrides.md`。
+
 ---
 
 ## Step 4：markdown 落稿
 
-### ⚠️ 章节标记必须用 `##` 语法
+### 章节标记：基础仍用 `##`（下游依赖），最终人工改稿按作者偏好删
 
-✅ 正确：`## 一`、`## 二`、`## 三`、`## 反转`、`## 行动`
-❌ 错误：文章正文中写 `一`、`二`、`三` 作为纯文本
+**写作时**：`## [论点]`、`## 反转`、`## 行动`——这是 markdown_to_html → publish_lanlong 的硬依赖（`extract_shot_list()` 找 `<h2>` 注入配图）。
 
-**原因**：`markdown_to_html.py` 将 `## xxx` 转换为 `<h2>`，纯文本 `一` 会被转换为 `<p>`，导致 `publish_lanlong.py` 的 `extract_shot_list()` 返回 0 shots，配图注入失败。
+**最终人工改稿时**（推送前用户在微信草稿箱里二次编辑）：按 `references/zhililong-voice-overrides.md` 偏好删 `##`，合并反转段到正文，只留行内小标题。
+
+✅ 基础输出：`## 一、xxx`、`## 二、xxx`、`## 反转、xxx`、`## 行动、xxx`
+❌ 不要在基础输出里直接用行内小标题——会导致配图注入 0 张。
 
 ### markdown 规范
 
 - 标题：`# [标题]`
 - 章节：`## [论点]`
-- 引用：`> [原话]`
+- 引用：谨慎使用 `> [原话]`（作者偏好不用）
 - 强调：**仅关键词**，每节最多 1 处
 - 底部：参考资料 + 不涉玄学声明（如题材是玄学/命理类）
 
