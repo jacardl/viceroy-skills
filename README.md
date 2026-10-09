@@ -63,7 +63,7 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 
 ---
 
-### 🧑‍💼 Assistant（13个）
+### 🧑‍💼 Assistant（12个）
 
 | Name | How to trigger |
 |------|----------------|
@@ -76,7 +76,6 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 | [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | 清理会话里的无用内容，保留知识点 |
 | [**obsidian**](skills/assistant/obsidian/SKILL.md) | 操作 Obsidian 笔记库 |
 | [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | Obsidian 命令行工具 |
-| [**patent-disclosure-skill**](skills/assistant/patent-disclosure-skill/SKILL.md) | 专利披露分析 |
 | [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | 分析本地存储占用，清理大文件 |
 | [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | 微信公众号文章转 Markdown |
 | [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | 提取 YouTube 字幕并翻译 |
@@ -135,13 +134,14 @@ npx skills add jacardl/viceroy-skills --skill <skill-name>
 
 ---
 
-### 📦 Product（7个）
+### 📦 Product（8个）
 
 | Name | How to trigger |
 |------|----------------|
 | [**brand-product-audience-relevance**](skills/product/brand-product-audience-relevance/SKILL.md) | 人群-产品-品牌匹配分析 |
 | [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | 竞品发现与分析 |
 | [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | 人群价值分析 |
+| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | 专利披露分析 |
 | [**radar-data-collection**](skills/product/radar-data-collection/SKILL.md) | 舆情数据采集 |
 | [**research-synth**](skills/product/research-synth/SKILL.md) | 研究综合 |
 | [**skill-creator**](skills/product/skill-creator/SKILL.md) | 创建新的 Skill |

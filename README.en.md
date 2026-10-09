@@ -63,7 +63,7 @@ Examples:
 
 ---
 
-### 🧑‍💼 Assistant（13）
+### 🧑‍💼 Assistant（12）
 
 | Name | How to trigger |
 |------|----------------|
@@ -76,7 +76,6 @@ Examples:
 | [**neat-freak**](skills/assistant/neat-freak/SKILL.md) | Clean up session noise, keep knowledge points |
 | [**obsidian**](skills/assistant/obsidian/SKILL.md) | Operate Obsidian vault |
 | [**obsidian-cli**](skills/assistant/obsidian-cli/SKILL.md) | Obsidian CLI tool |
-| [**patent-disclosure-skill**](skills/assistant/patent-disclosure-skill/SKILL.md) | Patent disclosure analysis |
 | [**storage-analyzer**](skills/assistant/storage-analyzer/SKILL.md) | Analyze local storage, clean up large files |
 | [**wechat-article-to-markdown**](skills/assistant/wechat-article-to-markdown/SKILL.md) | Convert WeChat article to Markdown |
 | [**youtube-transcript**](skills/assistant/youtube-transcript/SKILL.md) | Extract and translate YouTube subtitles |
@@ -134,13 +133,14 @@ Examples:
 
 ---
 
-### 📦 Product（7）
+### 📦 Product（8）
 
 | Name | How to trigger |
 |------|----------------|
 | [**brand-product-audience-relevance**](skills/product/brand-product-audience-relevance/SKILL.md) | Audience-product-brand match analysis |
 | [**competitor-discovery**](skills/product/competitor-discovery/SKILL.md) | Competitor discovery and analysis |
 | [**hv-analysis**](skills/product/hv-analysis/SKILL.md) | High-value audience analysis |
+| [**patent-disclosure-skill**](skills/product/patent-disclosure-skill/SKILL.md) | Patent disclosure analysis |
 | [**radar-data-collection**](skills/product/radar-data-collection/SKILL.md) | Public opinion data collection |
 | [**research-synth**](skills/product/research-synth/SKILL.md) | Research synthesis |
 | [**skill-creator**](skills/product/skill-creator/SKILL.md) | Create a new Skill |
