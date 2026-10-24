@@ -7,7 +7,7 @@
 |--------|------|-------|
 | id | SERIAL | PK |
 | article_date | DATE | 采集日期（⚠️ 不是 `date`） |
-| category | VARCHAR(50) | `ai`, `github`, `politics` |
+| category | VARCHAR(50) | `ai`, `github` |
 | title | TEXT | |
 | content | TEXT | |
 | source | VARCHAR(255) | 来源 |
