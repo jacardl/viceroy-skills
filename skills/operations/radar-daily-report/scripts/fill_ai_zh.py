@@ -22,7 +22,7 @@ fill_ai_zh.py — AI / GitHub 板块 description 字段中文改写
   python3 fill_ai_zh.py --days=1 --category=all               # ai + github 全补
   python3 fill_ai_zh.py --days=1 --category=ai --dry-run      # 只预览
 
-模型链：ds/deepseek-chat → 失败 fallback 用 title 前 200 字符
+模型链：9router/agency → ds/deepseek-chat → 失败 fallback 用 title 前 200 字符
 """
 import sys, json, subprocess, time
 import urllib.request as ureq
@@ -81,14 +81,14 @@ SYS_GITHUB = (
 )
 SYS_BY_CAT = {"ai": SYS_AI, "github": SYS_GITHUB}
 
-MODELS = ["ds/deepseek-chat"]
-TIMEOUT = 30
+MODELS = ["agency", "ds/deepseek-chat"]  # 主: 9router combo agency→ark/ark-code-latest(reasoning); 备: ds/deepseek-chat
+TIMEOUT = 60  # reasoning 模型单次调用更慢
 BATCH_BUDGET = 300
 
 def call_llm(model, user_text, sys_prompt=SYS_AI):
     body = {
         "model": model,
-        "max_tokens": 200,
+        "max_tokens": 800,  # reasoning 模型预留思考 token
         "stream": False,
         "messages": [
             {"role": "system", "content": sys_prompt},
