@@ -39,7 +39,34 @@ def sql(q):
     r = subprocess.run(DB_CMD + ["-c", q], capture_output=True, text=True, timeout=30)
     return r.stdout.strip()
 
-KEY = yaml.safe_load(open('/Users/apple/.hermes/config.yaml'))['providers']['9router']['api_key']
+def _load_9router_key():
+    """取 9router api_key。
+
+    优先读 ~/.hermes/config.yaml；该文件缺失时回退到 9router 本地 DB
+    （~/.9router/db/data.sqlite 的 apiKeys 表，取 isActive 的第一条）。
+    Hermes 已卸载，config.yaml 可能不再维护 → DB 是真实来源。
+    """
+    cfg = "/Users/apple/.hermes/config.yaml"
+    try:
+        k = yaml.safe_load(open(cfg))['providers']['9router']['api_key']
+        if k:
+            return k
+    except Exception:
+        pass
+    db = "/Users/apple/.9router/db/data.sqlite"
+    try:
+        r = subprocess.run(
+            ["sqlite3", db, "SELECT key FROM apiKeys WHERE isActive=1 ORDER BY createdAt LIMIT 1;"],
+            capture_output=True, text=True, timeout=10
+        )
+        k = (r.stdout or "").strip()
+        if k:
+            return k
+    except Exception:
+        pass
+    raise RuntimeError("无法获取 9router api_key（config.yaml 与 9router DB 均失败）")
+
+KEY = _load_9router_key()
 URL = "http://127.0.0.1:20128/v1/chat/completions"
 
 SYS_AI = (
