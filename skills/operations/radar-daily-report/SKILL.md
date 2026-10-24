@@ -1,12 +1,12 @@
 ---
 name: radar-daily-report
-description: "从 radar DB 读取今日数据，发送金价+AI+GitHub 三条飞书消息"
+description: "从 radar DB 读取今日数据，输出金价+AI+GitHub 三段日报（结果发 Mavis 本对话）"
 metadata: { }
 ---
 
 # 雷达每日报告推送
 
-执行入口：直接运行本 skill，由 cron `fbfedc879847`（每日 06:00 CST）触发。
+执行入口：Mavis cron `radar-daily-report-push`（每日 06:00 CST，sessionId 指向用户主对话）触发。
 
 ## 执行脚本
 
@@ -28,6 +28,17 @@ python3 ~/.shared-agent-skills/operations/radar-daily-report/scripts/push.py
 ===META===
 date=YYYY-MM-DD dow=N report_type=daily|weekly|monthly ai=X gh=X gold_ok=true|false
 ```
+
+## 中文字段补全（agent 侧，无独立模型调用）
+
+`scripts/fill_ai_zh.py` 只做 DB 读写，**不调任何 LLM**（2026-10-24 起，原 9router 直连已移除）：
+
+1. `python3 scripts/fill_ai_zh.py --list --category=all --days=1 > /tmp/radar_zh_todo.json`
+   输出 `[{"id","cat","title","content"}]`；默认只列坏数据（空/URL/无中文），`--all` 列全部。
+2. agent 用自己的模型逐条生成 1 句中文 description（≤80 字，客观陈述核心信息，
+   不以「本文/此项目」开头，不含英文），写 `/tmp/radar_zh_done.json`：`[{"id","zh"}]`
+3. `python3 scripts/fill_ai_zh.py --apply /tmp/radar_zh_done.json`
+   带坏数据守卫写回（`--force` 全覆盖）；todo 为空数组时跳过 2/3。
 
 ## 数据字段映射（push.py 读取规则）
 
@@ -56,6 +67,8 @@ date=YYYY-MM-DD dow=N report_type=daily|weekly|monthly ai=X gh=X gold_ok=true|fa
 | `github` | title / **description**(中文) / source(=lang) / url / **stars_count** / **period_new_stars** / blacklist_score | 黑马分 · 今日+⭐ · 总⭐ + 中文简介 |
 
 ## 消息发送
+
+> 2026-10-24 起：push.py 只输出 ===MSG1/2/3=== 分段文本，日报由 Mavis 在本对话分 3 条 assistant 消息发出；hermes send / lark-cli 已随 Hermes 卸载弃用。
 
 ### 两种触发方式，发送机制不同
 
