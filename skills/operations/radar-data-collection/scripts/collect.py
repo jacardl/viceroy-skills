@@ -8,7 +8,7 @@
   3. 任何业务判断（选哪条新闻、翻译什么）必须走固定 API/规则，不走 LLM
 
 CRON调用:
-  export TZ=Asia/Shanghai && python3 /Users/apple/.openclaw/workspace/scripts/radar/collect.py [YYYY-MM-DD]
+  export TZ=Asia/Shanghai && python3 ~/.shared-agent-skills/operations/radar-data-collection/scripts/collect.py [YYYY-MM-DD]
 """
 
 import os, sys, time, subprocess, json, re
@@ -36,7 +36,7 @@ AIHOT_API           = "https://aihot.virxact.com/api/public/items?mode=selected&
 AIHOT_UA            = "aihot-skill/0.2.0"
 
 # GitHub 外部脚本
-GH_SCRIPT = "/Users/apple/.openclaw/workspace/scripts/radar/gh_collect.py"
+GH_SCRIPT = os.path.expanduser("~/.shared-agent-skills/operations/radar-data-collection/scripts/gh_collect.py")
 
 # 重试
 MAX_RETRIES = 3
@@ -421,6 +421,11 @@ RULE_GITHUB = {
 
 def step_github():
     print(f"[GITHUB] Fetching for {TODAY}")
+    # cron 04:00 已先独立跑过 gh_collect.py；行数达标则跳过，绝不清空重采
+    existing = count_news("github")
+    if existing >= RULE_GITHUB["required_count"]:
+        print(f"  ✅ GitHub: {existing} items（cron 已采集，skip clean+recollect）")
+        return True
     clean_news("github")
 
     def attempt():
@@ -428,8 +433,7 @@ def step_github():
             raise FileNotFoundError(RULE_GITHUB["script"])
         r = subprocess.run(
             ["bash", "-c",
-             f'export TZ=Asia/Shanghai && cd /Users/apple/.openclaw/workspace && '
-             f'python3 scripts/radar/gh_collect.py "{TODAY}"'],
+             f'export TZ=Asia/Shanghai && python3 "{RULE_GITHUB["script"]}" "{TODAY}"'],
             capture_output=True, text=True, timeout=600
         )
         cnt = count_news("github")
