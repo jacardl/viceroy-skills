@@ -56,7 +56,7 @@ uv run python3 scripts/15_split_zhili.py \
 
 # Step 5: 推草稿箱（单篇 / 多篇都用同一个 push.py）
 for f in /tmp/zhili_part*.html; do
-  python3 /Users/apple/.hermes/skills/zhiligithub/scripts/push.py \
+  python3 /Users/apple/.shared-agent-skills/creative/zhiligithub/scripts/push.py \
     --html "$f" --cover /tmp/zhili_cover.png
 done
 ```
@@ -81,7 +81,7 @@ uv run python3 -m geo_report.cli report-render
 
 ```bash
 # 删旧草稿（push.py 的 --delete-first 参数）
-python3 /Users/apple/.hermes/skills/zhiligithub/scripts/push.py \
+python3 /Users/apple/.shared-agent-skills/creative/zhiligithub/scripts/push.py \
   --html <HTML> --cover <COVER> \
   --delete-first <old_media_id>
 ```

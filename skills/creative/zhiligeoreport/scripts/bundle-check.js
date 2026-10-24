@@ -34,7 +34,7 @@ const CHECKS = [
   { type: 'file', path: `${PROJECT}/scripts/16_inline_css.py`, label: 'inline 化脚本（16_inline_css.py）' },
 
   // 依赖
-  { type: 'file', path: `${HOME}/.hermes/skills/zhiligithub/scripts/push.py`, label: '复用推草稿脚本（zhiligithub push.py）' },
+  { type: 'file', path: `${HOME}/.shared-agent-skills/creative/zhiligithub/scripts/push.py`, label: '复用推草稿脚本（zhiligithub push.py）' },
 
   // 凭据
   { type: 'file', path: `${HOME}/.hermes/keys/wx_appsecret.txt`, label: 'WeChat APP_SECRET' },

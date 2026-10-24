@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| APPID | `wx38a91c353554588a`（硬编码于 `~/.hermes/skills/zhiligithub/scripts/push.py`） |
+| APPID | `wx38a91c353554588a`（硬编码于 `~/.shared-agent-skills/creative/zhiligithub/scripts/push.py`） |
 | APP_SECRET | `~/.hermes/keys/wx_appsecret.txt` |
 | 封面图 | `/tmp/zhili_cover.png`（900×383，由 zhili-illustration 规范链路生成） |
 
@@ -33,7 +33,7 @@
 | `scripts/15_split_zhili.py` | 按字节拆篇 |
 | `scripts/16_inline_css.py` | 样式 A inline 化 |
 | `scripts/14_publish_to_zhili.py` | 推草稿箱脚手架（dry-run 用） |
-| `~/.hermes/skills/zhiligithub/scripts/push.py` | 推草稿箱（复用） |
+| `~/.shared-agent-skills/creative/zhiligithub/scripts/push.py` | 推草稿箱（复用） |
 | `docs/specs/SPEC_ITEM_PIPELINE.md` | 管线规范（v1.17 待更新） |
 | `docs/specs/SPEC_REPORT_TEMPLATE.md` | 模板规范 |
 | `docs/specs/SPEC_DATA_SCHEMA.md` | 数据 schema |
@@ -52,4 +52,4 @@
 
 - 项目根：`/Users/apple/Downloads/User/geo-report/`
 - skill 目录：`~/.minimax/skills/zhiligeoreport/`
-- 推送依赖：`~/.hermes/skills/zhiligithub/scripts/push.py`
+- 推送依赖：`~/.shared-agent-skills/creative/zhiligithub/scripts/push.py`
