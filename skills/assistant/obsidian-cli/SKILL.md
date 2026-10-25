@@ -49,8 +49,8 @@ obsidian read file="My Note"
 obsidian create name="New Note" content="# Hello" template="Template" silent
 obsidian append file="My Note" content="New line"
 obsidian search query="search term" limit=10
-obsidian daily:read
-obsidian daily:append content="- [ ] New task"
+obsidian tasks daily todo
+obsidian files ext=md | grep "$(date +%F)"   # resolve today's daily note
 obsidian property:set name="status" value="done" file="My Note"
 obsidian tasks daily todo
 obsidian tags sort=count counts
@@ -58,6 +58,25 @@ obsidian backlinks file="My Note"
 ```
 
 Use `--copy` on any command to copy output to clipboard. Use `silent` to prevent files from opening. Use `total` on list commands to get a count.
+
+## Verified command surface (CLI 1.14.5, checked 2026-10-25)
+
+This skill's examples are verified against **Obsidian CLI 1.14.5** (installer 1.12.7).
+
+**These command families do NOT exist in this build.** Probing them returns
+`No commands matching "..."`. Report the gap — never simulate success output.
+
+| Family | Probe | Substitute |
+|---|---|---|
+| `daily` / `daily:path` / `daily:read` / `daily:append` | `obsidian help daily:read` | resolve the path manually: `obsidian files ext=md \| grep "<YYYY-MM-DD>"`, then use `path=` |
+| `sync` / `sync:status` / `sync:history` / `sync:read` / `sync:restore` / `sync:deleted` | `obsidian help sync:status` | local history only: `history` / `history:list` / `history:read` / `diff` / `history:restore` |
+| `publish:site` / `publish:list` / `publish:status` / `publish:add` / `publish:remove` | `obsidian help publish:status` | none — Publish is unavailable |
+| `workspace:save` / `workspace:load` / `workspace:delete` | `obsidian help workspace:load` | read-only `workspace` only; layout switching is a UI action |
+| `web` | `obsidian help web` | open in the system browser |
+| `unique` | `obsidian help unique` | `create name=...` (auto-uniquifies) then `rename` |
+| `vault:open` | `obsidian help vault:open` | `vault` / `vaults` are read-only |
+
+**Re-probe after every Obsidian CLI upgrade** — the surface area can change.
 
 ## Plugin development
 
