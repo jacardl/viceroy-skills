@@ -86,6 +86,7 @@ Step 8：一键推送草稿（scripts/publish_lanlong.py）
 - 5 个论点必须**层层递进**或**互为补充**，不能并列
 - 反转段必须**真的反转**
 - 行动段必须**今天就能做**（"今天回家观察一下你爸"而不是"用心观察身边的人"）
+- **编年体变体**：素材是时间线事件流（年度综述/编年史/事件复盘）时，改用 `references/chronicle-variant.md`——短意象 H2、数字裸写、金句收尾，不设反转段/行动段
 
 ---
 
@@ -205,6 +206,7 @@ grep -n '\*\*' /tmp/article.html  # 应为空
 正文配图（zhili-illustration）：
 - 读取 HTML，按 `## H2` 章节提取 shot list（最多 5 张）
 - 调用 `xiaohu-ip-studio` + `mmx-cli` 生成图片
+- mmx 额度耗尽/限流时切 fallback：`zhili-illustration/scripts/qwen_image.py`（qwen-image-2.1-pro 直连，整套切换不混用，见 zhili-illustration SKILL.md Step 2b）
 - 按 `zhili-illustration/references/html-image-injection.md` 规范注入 HTML
 
 ---
@@ -246,7 +248,7 @@ python3 scripts/publish_lanlong.py ... --delete-first <old_draft_id>
 # [文章标题]
 
 **字数**：[N] 中文字符（含标点 [M]）
-**结构**：[5 节 + 1 反转 + 1 行动]
+**结构**：[5 节 + 1 反转 + 1 行动]（编年体变体：[N 节时间线 + 金句收尾]）
 **自检**：✅ [通过项]
 
 ## 大纲
