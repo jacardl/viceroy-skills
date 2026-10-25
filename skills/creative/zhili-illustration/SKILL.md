@@ -82,6 +82,21 @@ wait
 - 产品/工具 → `minimalist product shot, clean background`
 - 自动适配 HTML 内容关键词
 
+### Step 2b · Fallback：mmx 额度耗尽 → qwen-image
+
+mmx 报额度不足 / rate limit 时，改用 `scripts/qwen_image.py`
+（直连 Aliyun MaaS 的 qwen-image-2.1-pro，凭证自动从 9router 本地 DB 读取，参数与 mmx 对齐）：
+
+```bash
+python3 ~/.shared-agent-skills/creative/zhili-illustration/scripts/qwen_image.py \
+  --prompt "..." --aspect-ratio 16:9 \
+  --out-dir /tmp/zhili-illustration/ --out-prefix "shot-01" --quiet
+```
+
+- 返回的 OSS URL 仅 24h 有效，脚本已内置下载落盘，无需额外处理
+- **整套图用同一通道**：mmx 单张失败先重试 1 次，仍失败再整套切 fallback，不要混用（画风不一致）
+- 16:9 尺寸 `1664x928`（实测可用）；模型名固定 `qwen-image-2.1-pro`，`qwen-image-2.0` 在工作区不存在（实测 400）
+
 ### Step 3 · 上传微信素材
 
 用 `publish_zhili.py` 内部函数，避免硬编码凭证。
@@ -141,5 +156,6 @@ with open("article-final.html", "w", encoding="utf-8") as f:
 ## 已知限制
 
 - mmx image generate 推理约 30-60s/张，并发过多可能触发 rate limit（MiniMax RPM）
+- mmx 额度耗尽时用 qwen-image fallback（Step 2b）；9router 本身不支持生图转发（v0.5.109 images 管线无 ark/openai-compatible adapter），脚本为直连
 - 微信素材 API 要求图片格式为 jpg/png，大小 ≤ 2MB
 - HTML 中占位符必须为 `<img src="图片N">` 格式（N 从 1 开始连续）
