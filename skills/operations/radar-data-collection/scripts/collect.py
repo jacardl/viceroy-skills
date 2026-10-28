@@ -29,9 +29,6 @@ if not TODAY:
     TODAY = r.stdout.strip() or datetime.now().strftime("%Y-%m-%d")
 
 # 网络
-NINE_ROUTER_URL     = "http://localhost:20128/v1/web/fetch"
-NINE_ROUTER_SEARCH  = "http://localhost:20128/v1/search"
-NINE_ROUTER_KEY     = "sk-0d68daa6645450e7-bc1xz4-8ac6a7da"
 AIHOT_API           = "https://aihot.virxact.com/api/public/items?mode=selected&take=10"
 AIHOT_UA            = "aihot-skill/0.2.0"
 
@@ -133,19 +130,6 @@ def lock_set(tag):
 
 import urllib.request
 from urllib.error import URLError, HTTPError
-
-def http_post(url, payload, timeout=60):
-    body = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=body,
-        headers={"Content-Type": "application/json",
-                 "Authorization": f"Bearer {NINE_ROUTER_KEY}"},
-        method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read().decode("utf-8", errors="replace")
-    except Exception as e:
-        print(f"  WARN http_post {url[-30:]}: {e}")
-        return None
 
 def http_get(url, headers=None, timeout=30):
     req = urllib.request.Request(url, headers=headers or {})
