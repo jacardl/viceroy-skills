@@ -10,8 +10,7 @@ category: operations
 ## 环境
 
 - DB: `docker exec radar-db psql -U radar -d radar -t -c "SQL"`
-- 9Router: `http://localhost:20128`
-- 9Router key: **不要硬编码** — 从 `~/.9router/db/data.sqlite` 动态读取
+- 外部搜索/抓取：**不使用 9Router/Tavily/Firecrawl**（2026-10-28 起）。金价=腾讯/东财/treasury.gov 直连，AI=aihot API，GitHub=playwright+ungh.cc
 - TZ: `Asia/Shanghai`
 
 ## 采集顺序（含重试规则）
@@ -344,11 +343,7 @@ AND article_date < DATE '{TODAY}'
 
 ### 中文改写链路与 `<think>` 清理（2026-10-22 实测）
 
-AI/GitHub 两类 description 都必须落中文。改写走本地 9Router：
-```
-POST http://127.0.0.1:20128/v1/chat/completions
-```
-模型 fallback 链：`cx/gpt-5.6-sol` → `minimax-cn/MiniMax-M3` → `minimax-cn/MiniMax-M2.7` → `src[:200]`（原文截断兜底）。
+AI/GitHub 两类 description 都必须落中文。**采集脚本不调任何 LLM**：中文改写由 06:00 日报 cron 轮次在 agent 侧用自身模型生成，经 `fill_ai_zh.py --list` → `/tmp/radar_zh_done.json` → `--apply` 写回（见 radar-daily-report SKILL）。
 
 ⚠️ **`cx/gpt-5.6-sol` 经常返回 HTTP 503**，不要当作链路故障，链上继续往下试即可。
 
