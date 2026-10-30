@@ -176,7 +176,7 @@ RULE_GOLD = {
     # TIPS 十年期国债收益率：treasury.gov CSV
     "tips_url":    ("https://home.treasury.gov/resource-center/data-chart-center/"
                     "interest-rates/daily-treasury-rates.csv/2026/all"
-                    "?type=daily_treasury_yield_curve"
+                    "?type=daily_treasury_real_yield_curve"
                     "&field_tdr_date_value=2026&download=true"),
     "tips_header": {"User-Agent": "Mozilla/5.0", "Accept": "text/csv"},
 }
@@ -296,16 +296,16 @@ def _fetch_tips():
         raise ValueError(f"Treasury CSV too short: {len(lines)}")
     # 第一行是 header
     header = [h.strip().strip('"') for h in lines[0].split(",")]
-    # 找到 '10 Yr' 列
-    col_name = "10 Yr"
-    if col_name not in header:
+    # 找到 '10 YR' 列，兼容 '10 Yr' 等大小写变体
+    col_name = next((h for h in header if h.upper() == "10 YR"), None)
+    if col_name is None:
         # 尝试替代列名
         for h in header:
-            if "10" in h and "Yr" in h:
+            if "10" in h and "YR" in h.upper():
                 col_name = h
                 break
         else:
-            raise ValueError(f"No '10 Yr' in header: {header}")
+            raise ValueError(f"No '10 YR' in header: {header}")
     col_idx = header.index(col_name)
     # 从最后一行读（最新交易日）
     last = [h.strip().strip('"') for h in lines[1].split(",")]
