@@ -2,9 +2,10 @@
 """
 zhiligithub · 微信草稿推送脚本
 
-2026-06-28 集成 zhili-illustration：
+2026-11-03 修复 zhili-illustration 生图链路：
   - 配图：自动提取 H2 小节（最多 5 张），生成 + 注入 HTML + 上传 mmbiz
-  - 封面：xiaohu-ip-studio 生成 16:9 → PIL 裁剪 900×383（2.35:1）
+  - 生图：mmx image generate 主通道；重试失败后整套切换 qwen-image-2.1-pro
+  - 封面：16:9 生图 → PIL 裁剪 900×383（2.35:1）
   - 全流程 4 步：配图生成 → HTML 注入 → 封面上传 → 创建草稿
 
 Usage:
@@ -47,7 +48,10 @@ DEFAULT_COVER_PATH = "/tmp/zhili_cover.png"
 ILLUSTRATION_IP = "问号人"
 ILLUSTRATION_STYLE = "手绘线稿·淡彩"
 ILLUSTRATION_DIR = "/tmp/zhili_illustrations"
-RUN_MMX = os.path.expanduser("~/.hermes/skills/creative/xiaohu-ip-studio/scripts/run_mmx.py")
+MMX_CLI = shutil.which("mmx") or os.path.expanduser("~/.local/bin/mmx")
+QWEN_IMAGE = os.path.expanduser(
+    "~/.shared-agent-skills/creative/zhili-illustration/scripts/qwen_image.py"
+)
 
 # zhiligithub 长文最多 5 张配图（每个 H2 小节一张）
 MAX_SHOTS = 5
@@ -112,37 +116,81 @@ def extract_shot_list(html: str) -> list:
     return shots
 
 
+def _generate_image(prompt_file: str, out_path: str, aspect_ratio: str, provider: str):
+    """通过 zhili-illustration 指定的生图通道生成单张图片。"""
+    with open(prompt_file, encoding="utf-8") as f:
+        prompt = f.read().strip()
+
+    if provider == "mmx":
+        cmd = [
+            MMX_CLI, "image", "generate",
+            "--prompt", prompt,
+            "--aspect-ratio", aspect_ratio,
+            "--out", out_path,
+            "--quiet",
+        ]
+    elif provider == "qwen":
+        cmd = [
+            sys.executable, QWEN_IMAGE,
+            "--prompt", prompt,
+            "--aspect-ratio", aspect_ratio,
+            "--out-dir", os.path.dirname(out_path) or ".",
+            "--out-prefix", os.path.splitext(os.path.basename(out_path))[0],
+            "--quiet",
+        ]
+    else:
+        raise ValueError(f"未知生图通道: {provider}")
+
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=240)
+
+
+def _generate_first_image(prompt_file: str, out_path: str, aspect_ratio: str) -> str:
+    """mmx 重试 1 次；仍失败则切换 qwen，返回本套图使用的通道。"""
+    if os.path.isfile(MMX_CLI) and os.access(MMX_CLI, os.X_OK):
+        for attempt in (1, 2):
+            try:
+                r = _generate_image(prompt_file, out_path, aspect_ratio, "mmx")
+            except (OSError, subprocess.TimeoutExpired) as e:
+                print(f"⚠️  mmx 第 {attempt} 次生图异常: {e}")
+                continue
+            if r.returncode == 0:
+                print("      ✓ 生图通道：mmx image generate（image-01）")
+                return "mmx"
+            print(f"⚠️  mmx 第 {attempt} 次失败: {r.stderr[:300]}")
+    else:
+        print(f"⚠️  mmx 不可执行: {MMX_CLI}")
+
+    print("      → 整套切换 zhili-illustration qwen-image fallback")
+    try:
+        r = _generate_image(prompt_file, out_path, aspect_ratio, "qwen")
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise RuntimeError(f"qwen-image 生图异常: {e}") from e
+    if r.returncode != 0:
+        raise RuntimeError(f"qwen-image 生图失败: {r.stderr[:500]}")
+    print("      ✓ 生图通道：Aliyun MaaS qwen-image-2.1-pro")
+    return "qwen"
+
+
 def generate_illustrations(shots: list) -> list:
-    """调用 run_mmx.py 生成每张配图。"""
+    """整套配图使用同一生图通道，失败即中断，避免上传缺图或旧图。"""
+    if not shots:
+        return shots
+
     os.makedirs(ILLUSTRATION_DIR, exist_ok=True)
+    first = shots[0]
+    print(f"\n[配图] 生成第 1 张基准图（{first['out_path']}）...")
+    provider = _generate_first_image(first["prompt_file"], first["out_path"], "4:3")
+    print("      ✓ 第 1 张生成成功")
 
-    # 先生第 1 张确认风格
-    if shots:
-        print(f"\n[配图] 生成第 1 张基准图（{shots[0]['out_path']}）...")
-        cmd = [
-            sys.executable, RUN_MMX,
-            "--prompt-file", shots[0]["prompt_file"],
-            "--out", shots[0]["out_path"],
-        ]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if r.returncode != 0:
-            print(f"⚠️  run_mmx 第 1 张失败: {r.stderr[:300]}")
-        else:
-            print(f"      ✓ 第 1 张生成成功")
-
-    # 批量生成其余图片
     for shot in shots[1:]:
-        print(f"[配图] 生成 {shot['name']}（{shot['out_path']}）...")
-        cmd = [
-            sys.executable, RUN_MMX,
-            "--prompt-file", shot["prompt_file"],
-            "--out", shot["out_path"],
-        ]
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        print(f"[配图] 生成 {shot['name']}（{shot['out_path']}，{provider}）...")
+        try:
+            r = _generate_image(shot["prompt_file"], shot["out_path"], "4:3", provider)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            raise RuntimeError(f"{shot['name']} 生图异常: {e}") from e
         if r.returncode != 0:
-            print(f"      ⚠️  {shot['name']} 失败: {r.stderr[:200]}")
-        else:
-            print(f"      ✓ {shot['name']} 生成成功")
+            raise RuntimeError(f"{shot['name']} 生图失败: {r.stderr[:500]}")
+        print(f"      ✓ {shot['name']} 生成成功")
 
     return shots
 
@@ -270,11 +318,7 @@ def generate_cover(html: str, title: str, out_path: str = COVER_PATH) -> str:
 
     tmp_16x9 = "/tmp/cover_16x9.png"
     print(f"[封面] 生成 16:9 底图（{tmp_16x9}）...")
-    cmd = [sys.executable, RUN_MMX, "--prompt-file", cover_prompt_file, "--out", tmp_16x9]
-    r = subprocess.run(cmd, capture_output=True, text=True)
-    if r.returncode != 0:
-        print(f"⚠️  封面生成失败: {r.stderr[:300]}")
-        return out_path  # 回退，不阻断流程
+    _generate_first_image(cover_prompt_file, tmp_16x9, "16:9")
 
     # PIL 裁剪：16:9 → 2.35:1（从中间裁宽边）
     try:
