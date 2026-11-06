@@ -135,14 +135,15 @@ conn.close()
 2026-08-26 04:22 cron 运行时 skill 目录于 04:23 才创建，导致 cron 找不到 skill，触发 fallback 手动执行，最终 RuntimeError。
 排查类似问题时先查 `~/.hermes/skills/operations/radar-data-collection/` 是否存在 + mtime 是否早于 cron 时间。
 
-### AIHOT 响应结构与可用 API（2026-08-28 实测）
+### AIHOT 响应结构与可用 API（2026-11-07 复测；旧域 virxact 已 404）
 
-aihot.virxact.com 返回 `items` 而非 `data`：
+`aihot.news` 返回 `items` 而非 `data`：
 ```python
 items = data.get("items", [])   # 不是 data.get("data", [])
 ```
-**正确 API 端点**：`https://aihot.virxact.com/api/public/items?mode=selected&take=10`
-**必需 UA**：`aihot-skill/0.2.0`（带此 UA 才能返回 200，不带则 404）
+**正确 API 端点**：`https://aihot.news/api/v1/items?mode=selected&limit=10`（分页参数是 `limit`，不是 `take`）
+**必需 UA**：`aihot-skill/2.0.0`
+**字段映射**：`source` 是对象 → 取 `.name`；链接优先 `links.original`，其次 `links.aihot`；摘要字段仍 `summary`
 
 ### 金价采集现状（2026-09-15 更新，2026-10-20 新增 fallback 链）
 
@@ -281,15 +282,18 @@ collect.py 存在 600s 超时上限，超时后 **既不写数据也不抛异常
 ```python
 import urllib.request, json, subprocess
 TODAY = "2026-10-20"
-url = "https://aihot.virxact.com/api/public/items?mode=selected&take=10"
-req = urllib.request.Request(url, headers={"User-Agent": "aihot-skill/0.2.0"})
+url = "https://aihot.news/api/v1/items?mode=selected&limit=10"
+req = urllib.request.Request(url, headers={"User-Agent": "aihot-skill/2.0.0"})
 with urllib.request.urlopen(req, timeout=15) as resp:
     items = json.loads(resp.read().decode()).get("items", [])
 for it in items:
     title = (it.get("title") or "").replace("'", "''")
     desc = (it.get("description") or it.get("content") or "")[:500].replace("'", "''")
-    src = (it.get("source") or "aihot").replace("'", "''")
-    link = (it.get("url") or "").replace("'", "''")
+    _src = it.get("source")
+    src = (_src.get("name") if isinstance(_src, dict) else _src) or "aihot"
+    src = src.replace("'", "''")
+    _ln = it.get("links") or {}
+    link = (_ln.get("original") or _ln.get("aihot") or "").replace("'", "''")
     sql = f"INSERT INTO news_articles (category, title, content, source, url, lang, article_date, summary, description) VALUES ('ai', E'{title}', E'{desc}', E'{src}', E'{link}', 'zh', '{TODAY}', E'{desc[:200]}', E'{desc}')"
     subprocess.run(f"docker exec radar-db psql -U radar -d radar -t -c \"{sql}\"", shell=True)
 ```

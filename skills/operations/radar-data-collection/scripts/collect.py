@@ -29,8 +29,8 @@ if not TODAY:
     TODAY = r.stdout.strip() or datetime.now().strftime("%Y-%m-%d")
 
 # 网络
-AIHOT_API           = "https://aihot.virxact.com/api/public/items?mode=selected&take=10"
-AIHOT_UA            = "aihot-skill/0.2.0"
+AIHOT_API           = "https://aihot.news/api/v1/items?mode=selected&limit=10"
+AIHOT_UA            = "aihot-skill/2.0.0"
 
 # GitHub 外部脚本
 GH_SCRIPT = os.path.expanduser("~/.shared-agent-skills/operations/radar-data-collection/scripts/gh_collect.py")
@@ -378,8 +378,10 @@ def step_ai():
             title   = entry.get(RULE_AI["title_field"], "")
             summary = entry.get(RULE_AI["summary_field"], "")
             content = summary  # summary 即 content
-            source  = entry.get(RULE_AI["source_field"], "aihot")
-            url     = entry.get(RULE_AI["url_field"], "")
+            src_raw = entry.get(RULE_AI["source_field"], "aihot")
+            source  = src_raw.get("name") if isinstance(src_raw, dict) else (src_raw or "aihot")
+            links   = entry.get("links") or {}
+            url     = links.get("original") or links.get("aihot") or entry.get(RULE_AI["url_field"], "") or ""
             score   = float(entry.get(RULE_AI["score_field"], 0)) or 0.0
             insert_news("ai", title, content, source, url, "zh", score,
                         summary=summary, description=summary[:100])
