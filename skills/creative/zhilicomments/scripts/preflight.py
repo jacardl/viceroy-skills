@@ -95,7 +95,7 @@ def main():
     css_checks = [
         ("max-width:680px", "容器宽度 680px"),
         ("padding:24px 16px 60px", "容器内边距 24/16/60"),
-        ("background:#f5f4ed", "背景色 #f5f4ed"),
+        ("background:transparent", "背景透明（禁任何底色）"),
         ("'Noto Serif SC', Georgia, serif", "字体栈（Noto 在前）"),
         ("font-size:20px;color:#1B365D", "H2 基础"),
         ("border-left:4px solid #00d4aa", "H2 青色左边框（样式A 标志）"),
@@ -106,12 +106,18 @@ def main():
         ("margin:0 0 28px", "P 段距 28px"),
         ("color:#1B365D", "墨蓝色"),
         ("color:#c9553d", "红棕色"),
-        ("background:#fff3b0", "黄底高亮"),
         ("font-family:monospace", "来源行 monospace"),
         ("font-size:13px;color:#7c6f64", "作者行"),
     ]
     for pat, desc in css_checks:
         check(desc, pat in html)
+
+    banned_tokens = [
+        "#f5f4ed", "#fff3b0", "#f0efe8", "#efeee5",
+        "#f0f7f4", "#f7f5f3", "#1e1e1e", "#ffffff", "background-color:",
+    ]
+    for tok in banned_tokens:
+        check(f"禁底色 token {tok}", tok not in html)
 
     print()
     print("=" * 64)

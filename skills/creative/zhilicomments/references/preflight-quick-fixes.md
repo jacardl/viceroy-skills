@@ -44,13 +44,14 @@
 
 ---
 
-### 4. 黄底高亮缺失
+### 4. 底色锚点残留
 
-**错误**：`黄底高亮` → CSS 检查通过但 preflight 报缺失
-**根因**：要求 HTML 中存在 `background:#fff3b0` 独立属性
-**修复**：找一个合适的句子包裹
+**错误**：`底色` → preflight 报「禁底色 token」命中
+**根因**：preflight 负向扫描 `#f5f4ed` / `#fff3b0` / `#f0efe8` / `#efeee5` / `#f0f7f4` / `#f7f5f3` / `#1e1e1e` / `#ffffff` / `background-color:`，命中即失败
+**修复**：全篇底色改 `background:transparent`，强调改用字色与左边框
 ```html
-<strong style="background:#fff3b0;">这段话需要高亮</strong>
+<strong style="color:#c9553d;font-weight:700;">这段话需要强调</strong>
+<strong style="color:#1B365D;font-weight:700;">关键词</strong>
 ```
 
 ---

@@ -12,7 +12,7 @@ preflight.py 的第 6/7 项（CSS 对齐检查 + 标题字数）是按 zhiligith
 | 容器宽度 680px | div 含 width:680px | 无容器 div | ❌ 非阻塞 |
 | 容器内边距 | div 含 padding | 无容器 div | ❌ 非阻塞 |
 | 墨蓝色 | color:#1B365D | 正文是 #2c2c2c | ❌ 非阻塞 |
-| 背景色 #f5f4ed | 容器 div 背景色 | body 已设背景色 | ❌ 非阻塞 |
+| 透明底 background:transparent | 容器或 body 声明透明 | 无容器 div | ❌ 非阻塞 |
 | 字体栈（Noto 在前） | font-family 含 Noto | 已在 body 设置 | ❌ 非阻塞 |
 | 标题 ≤10 中文 | preflight Section 7 检查 | zhilicomments 实测 13 字标题推送成功 | ❌ 非阻塞 |
 

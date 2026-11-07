@@ -6,21 +6,21 @@
 
 ---
 
-## 1. 样式A CSS（羊皮纸 · 标准模板 · 2026-05-30 固化）
+## 1. 样式A CSS（透明底 · 标准模板 · 2026-05-30 固化，2026-11-07 改透明）
 
 ### 样式A 核心参数
 
 | 属性 | 值 |
 |------|-----|
-| 背景色 | `#f5f4ed`（暖羊皮纸） |
+| 背景色 | 透明（`background:transparent`，**禁任何底色**） |
 | 正文字体 | `'Noto Serif SC', Georgia, serif`（逗号后有空格，Noto 在前） |
 | H2 标题 | `font-weight:700;font-size:20px;color:#1B365D;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0` |
 | 强调色（数据/核心） | `#c9553d`（砖红） |
 | 强调色（关键词/重点） | `#1B365D`（墨蓝） |
-| 警示/核心洞察背景 | `#fff3b0`（淡黄底） |
-| 引言/摘要样式 | 左边框 `#1B365D` + `background:#f0efe8` + 斜体 |
+| 核心洞察强调 | 不加底色：`color:#c9553d` + 加粗，或 `border-left:3px solid #c9553d` |
+| 引言/摘要样式 | 左边框 `#1B365D` + `background:transparent` + 斜体 |
 | 分隔线 | `· · ·` 居中，`color:#c9553d` |
-| 代码块 | `background:#1e1e1e`，白色文字 `#e8e8e8` |
+| 代码块 | 不加底色，`border-left:3px solid #1B365D`，文字 `#2c2c2c` |
 | 正文段落 | `font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px 0` |
 
 ### preflight CSS 精确匹配规则
@@ -30,7 +30,7 @@
 | 元素 | 精确 style 字符串 | 易错点 |
 |------|-------------------|--------|
 | H2 | `font-weight:700;font-size:20px;color:#1B365D;border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0` | `font-size` 和 `color` 必须相邻；`font-weight:700` 必须在最前 |
-| body/div | `background:#f5f4ed` | 不是 `background-color:` |
+| body/div | `background:transparent` | 不是 `background-color:`，且禁任何 hex 底色 |
 | P | `font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px 0` | 段距是 `28px` 不是 `14px` |
 | 作者行 | `font-size:13px;color:#7c6f64` | 颜色是 `#7c6f64` 不是 `#6b665b` |
 | 来源行 | `font-family:monospace` | |
@@ -39,7 +39,8 @@
 
 ### ❌ 禁止事项
 
-- 禁止 `#ffffff` 纯白背景（破坏羊皮纸一致性）
+- **禁止任何底色**：`#ffffff`、`#f5f4ed`、`#fff3b0`、`#f0efe8`、`#efeee5`、`#f0f7f4`、`#f7f5f3`、`#1e1e1e` 全禁；容器/段落/引言/标签盒/代码块一律 `background:transparent`
+- 强调只用字色（`#c9553d` / `#1B365D`）加粗，或左边框（`border-left:3px solid ...`），不加底色
 - 禁止 `#00d4aa` 用于主色调或文字色（**只允许 H2 左边框**）
 - 禁止删除 `font-family` 中的 `Georgia`
 - 禁止 `background-color:`，一律用 `background:`

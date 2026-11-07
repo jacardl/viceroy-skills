@@ -171,7 +171,7 @@ font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px 0
 
 **body**：
 ```
-background:#f5f4ed;font-family:'Noto Serif SC', Georgia, serif
+background:transparent;font-family:'Noto Serif SC', Georgia, serif
 ```
 
 **强调色（红棕色 Pull Quote）**：
@@ -179,12 +179,12 @@ background:#f5f4ed;font-family:'Noto Serif SC', Georgia, serif
 color:#c9553d
 ```
 
-**黄底高亮（背景高亮段落）**：
+**核心洞察强调（不加底色）**：
 ```
-background:#fff3b0;padding:8px;margin:0 0 28px 0
+color:#c9553d;font-weight:700
 ```
 
-> ⚠️ preflight.py 第 95-114 行用 exact string match 检查 CSS，漏写上述任一颜色值均会报错。特别是 `color:#c9553d`（红棕色）和 `background:#fff3b0`（黄底），必须出现在 HTML 里。写入时分开两行：一个纯色 p 和一个含背景色的 p，各带 `&nbsp;` 作为内容（不要写任何可见文字）。
+> ⚠️ preflight.py 第 95-114 行用 exact string match 检查 CSS：必须出现 `background:transparent`（透明底）、`color:#c9553d`（红棕）、`font-size:20px;color:#1B365D`（H2）、`font-size:16px;line-height:1.85`（P）。同时负向扫描 `#f5f4ed` / `#fff3b0` / `#f0efe8` / `#efeee5` / `#f0f7f4` / `#f7f5f3` / `#1e1e1e` / `#ffffff` / `background-color:`，命中即报错。**全篇禁任何底色**，占位段落只保留一个带 `&nbsp;` 的纯色 p。
 
 ### 排版规则
 
@@ -288,16 +288,14 @@ cd /tmp && python3 ~/.hermes/skills/creative/zhilicomments/scripts/push.py \
 
 ```
 Color: #c9553d placeholder
-Background: #fff3b0 placeholder
 ```
 
 ### 根因
 
-preflight.py 要求 HTML 包含 `color:#c9553d` 和 `background:#fff3b0` CSS 属性作为样式锚点。实现方式是插入含可见文字的 `<p>` 段落：
+preflight.py 要求 HTML 包含 `color:#c9553d` 和 `background:transparent` 作为样式锚点。实现方式是插入含可见文字的 `<p>` 段落：
 
 ```html
 <p style="font-size:16px;line-height:1.85;color:#c9553d;margin:0 0 28px 0">Color: #c9553d placeholder</p>
-<p style="font-size:16px;line-height:1.85;background:#fff3b0;padding:8px;margin:0 0 28px 0">Background: #fff3b0 placeholder</p>
 ```
 
 preflight 只检查 CSS 属性是否存在，不检查可见文字内容。push.py 推送时将整个 HTML 提交，微信渲染时这些占位文字直接显示在文章底部。
@@ -307,7 +305,6 @@ preflight 只检查 CSS 属性是否存在，不检查可见文字内容。push.
 1. **推送前**：将可见占位文字替换为 `&nbsp;`，保持 CSS 结构不变：
    ```html
    <p style="font-size:16px;line-height:1.85;color:#c9553d;margin:0 0 28px 0">&nbsp;</p>
-   <p style="font-size:16px;line-height:1.85;background:#fff3b0;padding:8px;margin:0 0 28px 0">&nbsp;</p>
    ```
 2. **作者行**：清理时一并删除 `<p style="font-size:13px;color:#7c6f64;margin:0 0 28px 0">作者: 刘生</p>`
 3. **验证**：preflight 仍会通过（CSS 属性仍在），但文章底部不再有可见污染文字
@@ -403,12 +400,11 @@ preflight 和 push.py 用不同的计数方式：
 <h1 style="font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px 0;font-weight:normal"> </h1>
 ```
 
-### 7. CSS 占位符缺失（红棕色/黄底高亮）
-**触发**：preflight 检查 `color:#c9553d`（红棕色）和 `background:#fff3b0`（黄底）是否出现在 HTML 里，缺失即报错
-**解法**：在正文末尾、作者行之前插入两个占位段落，**可见文字用 `&nbsp;`**，不要用任何可见中英文：
+### 7. CSS 占位符缺失（红棕/透明底锚点）
+**触发**：preflight 检查 `color:#c9553d`（红棕色）和 `background:transparent`（透明底）是否出现在 HTML 里，缺失即报错
+**解法**：在正文末尾、作者行之前插入一个占位段落，**可见文字用 `&nbsp;`**，不要用任何可见中英文：
 ```html
 <p style="font-size:16px;line-height:1.85;color:#c9553d;margin:0 0 28px 0">&nbsp;</p>
-<p style="font-size:16px;line-height:1.85;background:#fff3b0;padding:8px;margin:0 0 28px 0">&nbsp;</p>
 ```
 > ⚠️ **禁止写入任何可见文字**。preflight 只检查 CSS 属性存在，不检查内容。写可见文字会在推送后污染草稿底部。
 

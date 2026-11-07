@@ -28,10 +28,10 @@ import sys
 
 # 样式A 核心 CSS（与 practical-writing-workflow.md / memory 一致）
 H2_STYLE = (
-    "font-size:20px;font-weight:bold;color:#1B365D;"
-    "border-left:4px solid #00d4aa;padding-left:12px;margin:28px 0 12px 0;"
+    "font-weight:700;font-size:20px;color:#1B365D;"
+    "border-left:4px solid #00d4aa;padding-left:12px;margin:0 0 16px 0;"
 )
-P_STYLE = "font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 14px 0;"
+P_STYLE = "font-size:16px;line-height:1.85;color:#2c2c2c;margin:0 0 28px 0;"
 DIVIDER = (
     '<div style="text-align:center;color:#c9553d;margin-bottom:24px;'
     'font-size:18px;letter-spacing:6px">· · ·</div>'
@@ -41,11 +41,12 @@ CAPTION_STYLE = (
     "font-size:13px;color:#7c6f64;font-style:italic;margin:0 0 20px 0;text-align:center;"
 )
 CODE_PRE_STYLE = (
-    "background:#1e1e1e;border-radius:6px;padding:14px 16px;margin:12px 0;overflow-x:auto;"
+    "background:transparent;border-left:3px solid #1B365D;border-radius:6px;"
+    "padding:14px 16px;margin:12px 0;overflow-x:auto;"
 )
 CODE_STYLE = (
     "font-family:Consolas,Monaco,Courier New,monospace;"
-    "color:#e8e8e8;font-size:14px;line-height:1.5;"
+    "color:#2c2c2c;font-size:14px;line-height:1.5;"
 )
 
 
@@ -53,8 +54,8 @@ def render_p(text: str) -> str:
     """段落内联渲染：内联 `code` + **bold**。"""
     text = re.sub(
         r"`([^`]+)`",
-        r'<code style="background:#f0efe8;color:#c9553d;padding:1px 6px;'
-        r'border-radius:3px;font-family:Consolas,Monaco,monospace;font-size:14px;">\1</code>',
+        r'<code style="color:#c9553d;padding:0 2px;'
+        r'font-family:Consolas,Monaco,monospace;font-size:14px;">\1</code>',
         text,
     )
     parts = re.split(r"(\*\*[^*]+\*\*)", text)
@@ -81,14 +82,14 @@ def render_meta_card(stars: str, forks: str, language: str, license: str, url: s
     """GitHub 元信息卡片：⭐ stars / 🍴 forks / language / license / url"""
     return (
         '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;'
-        'padding:14px 16px;background:#efeee5;border-radius:6px;border:1px solid #d4d1c5;">'
-        f'<span style="background:#1B365D;color:#f5f4ed;padding:3px 10px;'
+        'padding:14px 16px;background:transparent;border-radius:6px;border:1px solid #d4d1c5;">'
+        f'<span style="color:#1B365D;font-weight:700;padding:3px 10px;'
         f'font-size:13px;border-radius:3px;">⭐ <strong>{stars}</strong></span>'
-        f'<span style="background:#1B365D;color:#f5f4ed;padding:3px 10px;'
+        f'<span style="color:#1B365D;font-weight:700;padding:3px 10px;'
         f'font-size:13px;border-radius:3px;">🍴 <strong>{forks}</strong></span>'
-        f'<span style="background:#1B365D;color:#f5f4ed;padding:3px 10px;'
+        f'<span style="color:#1B365D;font-weight:700;padding:3px 10px;'
         f'font-size:13px;border-radius:3px;">{language}</span>'
-        f'<span style="background:#1B365D;color:#f5f4ed;padding:3px 10px;'
+        f'<span style="color:#1B365D;font-weight:700;padding:3px 10px;'
         f'font-size:13px;border-radius:3px;">{license}</span>'
         f'<span style="color:#6b665b;font-size:13px;padding:3px 0;">{url}</span>'
         "</div>"
@@ -237,8 +238,8 @@ def render(md: str, title: str = "") -> str:
         "<head><meta charset=\"utf-8\">"
         f"<title>{article_title}</title>"
         "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n"
-        "<body style=\"margin:0;padding:0;background-color:#f5f4ed;"
-        "font-family:Georgia,'Times New Roman',serif;\">\n"
+        "<body style=\"margin:0;padding:0;background:transparent;"
+        "font-family:'Noto Serif SC', Georgia, serif;\">\n"
         "<div style=\"max-width:680px;margin:0 auto;padding:24px 16px 60px\">\n"
         f"{body}\n"
         "</div>\n"
