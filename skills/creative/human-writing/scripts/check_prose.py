@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""检查中文成稿的硬禁令与常见模型化形状。只报警，不自动改文。"""
+"""检查中文成稿的硬禁令与常见模型化形状。只报警，不自动改文。支持 Markdown、纯文本与 HTML 稿件。"""
 
 from __future__ import annotations
 
 import argparse
 import collections
+import html
 import re
 import sys
 from dataclasses import dataclass
@@ -135,6 +136,19 @@ REPEATED_OPENERS = (
     "更重要的是",
     "说到这里",
 )
+
+FORMULA_OPENERS = (
+    re.compile(r"先把[^，。！？\n]{0,12}(?:说准|说清|说明|说透|看|讲)"),
+    re.compile(r"从[^，。！？\n]{2,14}(?:看|来看|来说|讲|讲起)"),
+    re.compile(r"对[^，。！？\n]{2,14}来说"),
+    re.compile(r"这(?:一|个|种)[^，。！？\n]{0,14}(?:是|层|点|变化|做法|区别)"),
+    re.compile(r"除了[^，。！？\n]{0,24}"),
+    re.compile(r"这里最[^，。！？\n]{0,10}的是"),
+    re.compile(r"[^，。！？\n]{2,12}(?:也|同样|还)(?:是|有|在|成|值得|需要)"),
+    re.compile(r"[^，。！？\n]{1,10}(?:那一栏|这一栏|第一句|第一行|那一段|这一句)"),
+)
+
+FORMULA_OPENERS_LIMIT = 4
 
 LEFT_BRANCH_PATTERNS = (
     re.compile(r"(?:^|[。！？]\s*)在[^，。！？\n]{12,70}(?:以后|之后|之前|以前|过程中|情况下|背景下)，"),
@@ -285,6 +299,119 @@ def opener_counts(paragraphs: list[Paragraph]):
     return counts, examples
 
 
+SENTENCE_PATTERN = re.compile(r"[^。！？!?\n]+")
+CLAUSE_PATTERN = re.compile(r"[，。！？；!?;\n]+")
+SHORT_SENTENCE = 12
+LONG_SENTENCE = 30
+MEAN_CEILING = 26
+SHORT_RATIO_FLOOR = 0.20
+LONG_RATIO_CEILING = 0.25
+SD_FLOOR = 10
+BOLD_DENSITY_CEILING = 1.5
+NEGATION_LEADS = "不没无非别莫勿"
+
+
+def sentence_profile(text: str):
+    """统计句长分布。句子太齐、太长或缺少短句，都会让节奏像模具。"""
+
+    lengths = [
+        han_count(value)
+        for value in SENTENCE_PATTERN.findall(text)
+        if han_count(value) >= 3
+    ]
+    if len(lengths) < 12:
+        return None
+    count = len(lengths)
+    mean = sum(lengths) / count
+    variance = sum((value - mean) ** 2 for value in lengths) / count
+    return {
+        "count": count,
+        "mean": mean,
+        "sd": variance**0.5,
+        "short": sum(value <= SHORT_SENTENCE for value in lengths) / count,
+        "long": sum(value > LONG_SENTENCE for value in lengths) / count,
+    }
+
+
+def triple_parallels(text: str):
+    """找出骨架相同的三个连续短分句，模型常把判断凑成三份。"""
+
+    hits = []
+    for sentence in SENTENCE_PATTERN.finditer(text):
+        clauses = [value.strip() for value in CLAUSE_PATTERN.split(sentence.group())]
+        clauses = [value for value in clauses if value]
+        for index in range(len(clauses) - 2):
+            trio = clauses[index : index + 3]
+            if not all(2 <= han_count(value) <= 16 for value in trio):
+                continue
+            heads = {value[0] for value in trio}
+            tails = {value[-1] for value in trio}
+            negated = all(value[0] in NEGATION_LEADS for value in trio)
+            if len(heads) == 1 or len(tails) == 1 or negated:
+                hits.append((sentence.start(), "，".join(trio)))
+                break
+    return hits
+
+
+BOLD_PATTERNS = (
+    re.compile(r"<strong[^>]*>[^\n]*?</strong>", re.IGNORECASE),
+    re.compile(r"<b[^>]*>[^\n]*?</b>", re.IGNORECASE),
+    re.compile(r"\*\*[^\n]{1,120}\*\*"),
+)
+
+
+def bold_stats(raw: str, han: int):
+    count = sum(len(pattern.findall(raw)) for pattern in BOLD_PATTERNS)
+    if count == 0 or han == 0:
+        return None
+    return count, count / han * 100
+
+
+def formula_opener_hits(paragraphs: list[Paragraph]):
+    hits = []
+    for paragraph in paragraphs:
+        head = re.split(r"[，。！？；!?;]", paragraph.text)[0]
+        for pattern in FORMULA_OPENERS:
+            if pattern.match(head):
+                hits.append((paragraph.position, head[:28]))
+                break
+    return hits
+
+
+HTML_BLOCK = re.compile(r"</?(?:p|div|li|h[1-6])[^>]*>", re.IGNORECASE)
+HTML_BREAK = re.compile(r"<br[^>]*>", re.IGNORECASE)
+HTML_INLINE = re.compile(
+    r"</?(?:span|strong|b|em|i|u|small|font|mark)[^>]*>", re.IGNORECASE
+)
+HTML_SKIP = re.compile(
+    r"<(?:script|style)[^>]*>.*?</(?:script|style)>", re.IGNORECASE | re.DOTALL
+)
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+HTML_TAG = re.compile(r"<[^>]+>")
+
+
+def looks_like_html(raw: str, path: str) -> bool:
+    if path != "-" and path.lower().endswith((".html", ".htm")):
+        return True
+    head = raw.lstrip()[:200].lower()
+    return "<!doctype" in head or head.startswith("<html")
+
+
+def strip_html(raw: str) -> str:
+    """把 HTML 稿件转成按段落分行的纯文本，保留可供定位的段序。"""
+
+    value = HTML_SKIP.sub("\n", raw)
+    value = HTML_COMMENT.sub(" ", value)
+    value = HTML_BLOCK.sub("\n\n", value)
+    value = HTML_BREAK.sub("\n", value)
+    value = HTML_INLINE.sub("", value)
+    value = HTML_TAG.sub("", value)
+    value = html.unescape(value)
+    value = re.sub(r"\n{3,}", "\n\n", value)
+    value = re.sub(r"[ \t]{2,}", " ", value)
+    return value
+
+
 def read_text(path: str) -> str:
     if path == "-":
         return sys.stdin.read()
@@ -297,10 +424,15 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        text = read_text(args.path)
+        raw_text = read_text(args.path)
     except (OSError, UnicodeError) as error:
         print(f"无法读取稿件。{error}", file=sys.stderr)
         return 2
+
+    if looks_like_html(raw_text, args.path):
+        text = strip_html(raw_text)
+    else:
+        text = raw_text
 
     prose = mask_non_prose(text)
     total_han = han_count(prose)
@@ -432,7 +564,65 @@ def main() -> int:
             f"例词有 {samples}。"
         )
 
+    profile = sentence_profile(prose)
+    parallels = triple_parallels(prose)
+    formulas = formula_opener_hits(paragraphs)
+    bolds = bold_stats(raw_text, total_han)
+
+    if profile:
+        if profile["short"] < SHORT_RATIO_FLOOR:
+            warnings.append(
+                f"十二字以内的短句只占 {profile['short']:.0%}，低于 20%。"
+                "短句承担停顿和判断，一段里至少留一个。"
+            )
+        if profile["sd"] < SD_FLOOR:
+            warnings.append(
+                f"句长标准差 {profile['sd']:.1f}，低于 10。"
+                "句长挤在同一区间，读起来像同一个模具压出来的。"
+            )
+        if profile["mean"] > MEAN_CEILING:
+            warnings.append(
+                f"平均句长 {profile['mean']:.1f} 字，超过 26 字。"
+                "长句要能讲完复杂关系，不能通篇都是解释句。"
+            )
+        if profile["long"] > LONG_RATIO_CEILING:
+            warnings.append(
+                f"三十字以上的长句占 {profile['long']:.0%}，超过 25%。"
+                "读者容易在句子中途找不到主语。"
+            )
+
+    if len(parallels) >= 3:
+        samples = "；".join(
+            f"第 {line_number(text, position)} 行“{excerpt(value, 44)}”"
+            for position, value in parallels[:4]
+        )
+        warnings.append(
+            f"骨架相同的三连分句共 {len(parallels)} 处。"
+            f"一处是修辞，三处是模式。{samples}"
+        )
+
+    if len(formulas) >= FORMULA_OPENERS_LIMIT:
+        samples = "、".join(dict.fromkeys(value for _, value in formulas[:6]))
+        warnings.append(
+            f"段落首句落在同一类语法槽位共 {len(formulas)} 段。"
+            f"节拍会盖过内容。例如 {samples}。"
+        )
+
+    if bolds and bolds[1] > BOLD_DENSITY_CEILING:
+        warnings.append(
+            f"正文加粗 {bolds[0]} 处，每百字 {bolds[1]:.1f} 处，超过 1.5。"
+            "加粗只留给要抓回的专名、数字和时间。"
+        )
+
     print(f"汉字数 {total_han}")
+    if profile:
+        print(
+            f"句子 {profile['count']} 句，均长 {profile['mean']:.1f} 字，"
+            f"标准差 {profile['sd']:.1f}，十二字以内 {profile['short']:.0%}，"
+            f"三十字以上 {profile['long']:.0%}"
+        )
+    bold_note = f"{bolds[0]} 处（每百字 {bolds[1]:.1f}）" if bolds else "0 处"
+    print(f"三连排比 {len(parallels)}，段首模板 {len(formulas)} 段，加粗 {bold_note}")
     print(
         f"翻案句 {len(pivots)}，黑话 {len(jargon_matches)}，"
         f"硬停词 {len(stop_matches)}，模型路标 {len(road_signs)}，"
